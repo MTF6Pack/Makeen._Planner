@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Makeen.Planner.Domain\Makeen.Planner.Domain.csproj" />
+    <ProjectReference Include="..\Makeen.Planner.Persistence\Makeen.Planner.Persistence.csproj" />
+    <ProjectReference Include="..\Makeen._Planner.Application\Makeen._Planner.Application.csproj" />
+  </ItemGroup>
+
+</Project>

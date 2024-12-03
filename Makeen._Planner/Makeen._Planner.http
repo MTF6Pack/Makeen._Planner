@@ -1,0 +1,6 @@
+@Makeen._Planner_HostAddress = http://localhost:5127
+
+GET {{Makeen._Planner_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

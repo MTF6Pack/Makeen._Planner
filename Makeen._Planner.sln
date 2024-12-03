@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35312.102
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Makeen._Planner", "Makeen._Planner\Makeen._Planner.csproj", "{DDA492CF-5A69-44AF-A23E-226AD25D0160}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Makeen.Planner.Persistence", "Makeen.Planner.Persistence\Makeen.Planner.Persistence.csproj", "{429290F3-E624-4BCF-9CAD-83E7746055FE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Makeen.Planner.Domain", "Makeen.Planner.Domain\Makeen.Planner.Domain.csproj", "{41476F69-C861-4990-AF13-B3C46B4A4E5F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C624820F-5DA0-494C-AA25-4A81859C6BDE}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Makeen._Planner.Application", "Makeen._Planner.Application\Makeen._Planner.Application.csproj", "{350EB820-3D87-4320-91ED-BF60962E6384}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DDA492CF-5A69-44AF-A23E-226AD25D0160}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDA492CF-5A69-44AF-A23E-226AD25D0160}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDA492CF-5A69-44AF-A23E-226AD25D0160}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDA492CF-5A69-44AF-A23E-226AD25D0160}.Release|Any CPU.Build.0 = Release|Any CPU
+		{429290F3-E624-4BCF-9CAD-83E7746055FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{429290F3-E624-4BCF-9CAD-83E7746055FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{429290F3-E624-4BCF-9CAD-83E7746055FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{429290F3-E624-4BCF-9CAD-83E7746055FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41476F69-C861-4990-AF13-B3C46B4A4E5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41476F69-C861-4990-AF13-B3C46B4A4E5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41476F69-C861-4990-AF13-B3C46B4A4E5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41476F69-C861-4990-AF13-B3C46B4A4E5F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{350EB820-3D87-4320-91ED-BF60962E6384}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{350EB820-3D87-4320-91ED-BF60962E6384}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{350EB820-3D87-4320-91ED-BF60962E6384}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{350EB820-3D87-4320-91ED-BF60962E6384}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F6ABF7A0-771B-4D3F-B695-499B9ADD91C6}
+	EndGlobalSection
+EndGlobal
