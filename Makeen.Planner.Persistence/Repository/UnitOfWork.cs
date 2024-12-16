@@ -1,12 +1,13 @@
-﻿namespace Makeen.Planner.Persistence.Repository
+﻿using Makeen.Planner.Persistence;
+
+namespace Repository
 {
     public class UnitOfWork(DataBaseContext context) : IUnitOfWork
     {
-        private readonly DataBaseContext context = context;
-
+        private readonly DataBaseContext _context = context;
         public void SaveChanges()
         {
-            context.SaveChanges();
+            _context.SaveChanges();
         }
     }
 }

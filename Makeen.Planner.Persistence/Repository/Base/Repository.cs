@@ -1,7 +1,7 @@
-﻿using Makeen.Planner.Domain.Domains;
+﻿using Makeen.Planner.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Makeen.Planner.Persistence.Repository.Base
+namespace Repository.Base
 {
     public class Repository<T>(DataBaseContext context) : IRepository<T> where T : class
     {

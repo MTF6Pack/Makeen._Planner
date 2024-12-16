@@ -1,22 +1,18 @@
-﻿using Makeen._Planner.Duty_Service;
+﻿using Domains;
+using Makeen._Planner.Duty_Service;
 using Makeen._Planner.Service;
-using Makeen.Planner.Domain.Domains;
 using Makeen.Planner.Persistence;
-using Makeen.Planner.Persistence.Repository;
-using Makeen.Planner.Persistence.Repository.Base;
-using Makeen.Planner.Persistence.Repository.Interface;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Repository;
+using Repository.Base;
+using Repository.Interface;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 using System.Text.Json.Serialization;
-
 
 namespace Makeen._Planner
 {
@@ -38,6 +34,15 @@ namespace Makeen._Planner
                     JsonIgnoreCondition.WhenWritingNull;
             });
 
+            builder.Services.AddDbContext<DataBaseContext>(options =>
+            {
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+            });
+
+            builder.Services.AddIdentity<User, UserRole>()
+            .AddEntityFrameworkStores<DataBaseContext>()
+            .AddDefaultTokenProviders();
+
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             builder.Services.AddScoped<IUserService, UserService>();
@@ -52,13 +57,16 @@ namespace Makeen._Planner
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddDbContext<DataBaseContext>(options =>
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<DataBaseContext>();
+            if (context.Database.GetPendingMigrations().Any()) context.Database.Migrate();
+
+            app.UseStaticFiles();
+
+            //Configure the HTTP request pipeline.
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -70,10 +78,9 @@ namespace Makeen._Planner
             app.UseAuthentication();
             app.UseAuthorization();
 
-
-
             app.Run();
         }
+
         public static void ConfigureJWT(this WebApplicationBuilder builder)
         {
             builder.Services.AddAuthentication(option =>

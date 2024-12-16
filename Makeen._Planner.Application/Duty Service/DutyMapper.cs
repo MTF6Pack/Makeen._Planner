@@ -1,4 +1,4 @@
-﻿using Makeen.Planner.Domain.Domains;
+﻿using Domains;
 
 namespace Makeen._Planner.Duty_Service
 {
@@ -6,7 +6,7 @@ namespace Makeen._Planner.Duty_Service
     {
         public static Duty ToModel(this AddDutyCommand command)
         {
-            Duty newduty = new(command.Name, command.DeadLine, command.DutyCategory, command.PriorityCategory, command.User);
+            Duty newduty = new(command.Name, command.DeadLine, command.DutyCategory, command.PriorityCategory, command.UserId);
             return newduty;
         }
     }

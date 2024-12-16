@@ -1,7 +1,7 @@
-﻿using Makeen.Planner.Domain.Domains;
-using Makeen.Planner.Persistence.Repository.Base;
+﻿using Domains;
+using Repository.Base;
 
-namespace Makeen.Planner.Persistence.Repository.Interface
+namespace Repository.Interface
 {
     public interface IUserRepository : IRepository<User>
     {

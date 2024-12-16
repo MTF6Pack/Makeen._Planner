@@ -1,10 +1,11 @@
 ﻿using Makeen._Planner.Duty_Service;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace Makeen._Planner.Controllers
+namespace Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -12,28 +13,16 @@ namespace Makeen._Planner.Controllers
     {
         private readonly IUserService _userService = userService;
 
-        [HttpPost("SignUp")]
-        public IActionResult AddUser([FromForm] AddUserCommand command)
-        {
-            return Ok(_userService.AddUser(command));
-        }
-
         [HttpDelete("{id}")]
-        public void Delete(Guid id, string password)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            _userService.DeleteUser(id, password);
+            return Ok(await _userService.DeleteUser(id));
         }
 
         [HttpPut("UpdateUser")]
         public void Update(Guid id, [FromForm] UpdateUserCommand command)
         {
             _userService.UpdateUser(id, command);
-        }
-
-        [HttpGet("Login")]
-        public IActionResult Login([EmailAddress] string email, string password)
-        {
-            return Ok(_userService.GenerateToken(email, password));
         }
 
         [HttpGet("{id}")]
@@ -44,9 +33,9 @@ namespace Makeen._Planner.Controllers
 
         //[Authorize]
         [HttpGet()]
-        public async Task<IActionResult> GetAllUsers()
+        public IActionResult GetAllUsers()
         {
-            return Ok(await _userService.GetAllUsers());
+            return Ok(_userService.GetAllUsers());
         }
     }
 }

@@ -1,8 +1,9 @@
-﻿using Makeen.Planner.Domain.Domains;
-using Makeen.Planner.Persistence.Repository.Base;
-using Makeen.Planner.Persistence.Repository.Interface;
+﻿using Domains;
+using Makeen.Planner.Persistence;
+using Repository.Base;
+using Repository.Interface;
 
-namespace Makeen.Planner.Persistence.Repository
+namespace Repository
 {
     public class UserRepository(DataBaseContext context) : Repository<User>(context), IUserRepository
     {

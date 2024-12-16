@@ -1,9 +1,10 @@
-﻿using Makeen.Planner.Domain.Domains;
+﻿using Domains;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace Makeen.Planner.Persistence
 {
-    public class DataBaseContext(DbContextOptions options) : DbContext(options)
+    public class DataBaseContext(DbContextOptions<DataBaseContext> options) : IdentityDbContext<User, UserRole, Guid>(options)
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -15,8 +16,8 @@ namespace Makeen.Planner.Persistence
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             modelBuilder.UseEnumToStringConverter();
         }
+        public DbSet<Duty>? Duties { get; set; }
 
-        public DbSet<User>? Users { get; set; }
-        public DbSet<Messege>? Messeges { get; set; }
+        //public DbSet<Messege>? Messeges { get; set; }
     }
 }

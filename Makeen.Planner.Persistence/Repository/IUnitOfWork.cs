@@ -1,5 +1,4 @@
-﻿
-namespace Makeen.Planner.Persistence.Repository
+﻿namespace Repository
 {
     public interface IUnitOfWork
     {

@@ -1,34 +1,40 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System.Runtime.InteropServices;
-using static System.Net.Mime.MediaTypeNames;
 
-namespace Makeen.Planner.Domain.Domains
+namespace Domains
 {
     public class User : IdentityUser<Guid>
     {
-        public string Name { get; private set; }
-        //public string Email { get; private set; }
-        public string Password { get; private set; }
-        public string RepeatPassword { get; private set; }
-        //public Guid Id { get; private set; } = Guid.NewGuid();
-        public DateTime CreationTime { get; private set; } = DateTime.Now;
-        public List<Duty>? Duties { get; private set; }
+        public int Age { get; set; }
+        public DateTime CreationTime { get; set; }
+        public List<Duty>? Duties { get; set; }
 
-        public User(string name, string email, string password, string repeatPassword) : base(email)
+        public User(string username, string email, int age, string phonenumber)
         {
-            Name = name;
+            UserName = username;
+            AgeValidation(age);
+            Age = age;
             Email = email;
-            Password = password;
-            RepeatPassword = repeatPassword;
+            PhoneNumber = phonenumber;
+            Id = Guid.NewGuid();
+            CreationTime = DateTime.Now;
         }
 
         public static void AgeValidation(int age)
         {
             if (age <= 6) throw new Exception("Fuck your age asshole");
         }
-        public void UpdateUser(string name)
+        public void UpdateUser(string username, string email, int age, string phonenumber)
         {
-            if (name != null) Name = name;
+            UserName = username;
+            AgeValidation(age);
+            Age = age;
+            Email = email;
+            PhoneNumber = phonenumber;
+            Id = Guid.NewGuid();
+        }
+        private User()
+        {
+
         }
     }
 }

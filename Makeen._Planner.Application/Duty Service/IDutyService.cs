@@ -1,4 +1,4 @@
-﻿using Makeen.Planner.Domain.Domains;
+﻿using Domains;
 
 namespace Makeen._Planner.Duty_Service
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Makeen.Planner.Persistence.Repository.Base
+namespace Repository.Base
 {
     public interface IRepository<T> where T : class
     {

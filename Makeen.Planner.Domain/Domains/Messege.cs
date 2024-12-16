@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace Makeen.Planner.Domain.Domains
+namespace Domains
 {
     public class Messege
     {

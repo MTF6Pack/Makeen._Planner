@@ -1,6 +1,6 @@
-﻿using Makeen.Planner.Domain.Domains;
-using Makeen.Planner.Persistence.Repository;
-using Makeen.Planner.Persistence.Repository.Interface;
+﻿using Domains;
+using Repository;
+using Repository.Interface;
 
 namespace Makeen._Planner.Duty_Service
 {

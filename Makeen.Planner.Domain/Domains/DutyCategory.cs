@@ -1,4 +1,4 @@
-﻿namespace Makeen.Planner.Domain.Domains
+﻿namespace Domains
 {
     public enum DutyCategory
     {

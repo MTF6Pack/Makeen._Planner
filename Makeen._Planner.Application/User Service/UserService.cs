@@ -1,57 +1,57 @@
-﻿using Makeen._Planner.Application.DataSeeder;
-using Makeen.Planner.Domain.Domains;
-using Makeen.Planner.Persistence.Repository;
-using Makeen.Planner.Persistence.Repository.Interface;
+﻿using DataSeeder;
+using Domains;
+using Microsoft.AspNetCore.Identity;
+using Repository;
+using Repository.Interface;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace Makeen._Planner.Service
 {
-    public class UserService(IUserRepository userRepository, IUnitOfWork unitOfWork) : IUserService
+    public class UserService(UserManager<User> userManager, SignInManager<User> signInManager) : IUserService
     {
-        private readonly IUserRepository _userRepository = userRepository;
-        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly UserManager<User> _userManager = userManager;
+        private readonly SignInManager<User> _signInManager = signInManager;
+
         public string AddUser(AddUserCommand command)
         {
-            _userRepository.Add(command.ToModel());
-            _unitOfWork.SaveChanges();
-            return $"Done! here your Id: {command.ToModel().Id}";
+            var result = _userManager.CreateAsync(command.ToModel(), command.Password).Result;
+            if (result.Succeeded) return $"Done! here your Id: {command.ToModel().Id}";
+            else return JsonSerializer.Serialize(result.Errors.ToList());
         }
         public async Task<User?> GetUserById(Guid id)
         {
-            return await _userRepository.GetObjectByIdAsync(id);
+            return await _userManager.FindByIdAsync(id.ToString());
         }
+        public List<object>? GetAllUsers()
+        {
+            var Userslist = new List<object>();
+            var users = _userManager.Users;
+            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Age, user.Email, user.Id });
+            return Userslist;
+        }
+        public async Task<IdentityResult> DeleteUser(Guid id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (user != null) await _userManager.DeleteAsync(user);
+            return IdentityResult.Success;
+        }
+        public async void UpdateUser(Guid id, UpdateUserCommand command)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString());
+            if (command.UserName != null) user?.UpdateUser(command.UserName, command.Email, command.Age, command.PhoneNumber);
+        }
+        public async Task<string> GenerateToken([EmailAddress] string username, string password)
+        {
+            var signinResult = await _signInManager.PasswordSignInAsync(username, password, false, false);
 
-        public async Task<List<User>?> GetAllUsers()
-        {
-            return await _userRepository.GetAll();
-        }
-        public void DeleteUser(Guid id, string password)
-        {
-            var user = _userRepository.GetObjectById(id);
-            if (user != null && password == user.Password)
+            if (!signinResult.Succeeded) { throw new Exception(JsonSerializer.Serialize(signinResult)); }
+            else if (signinResult.Succeeded)
             {
-                _userRepository.Delete(id);
-                _unitOfWork.SaveChanges();
+                var theuser = await _userManager.FindByNameAsync(username);
+                if (theuser != null && theuser.Email != null) { return JwtToken.Generate(theuser.Id.ToString(), theuser.Email); }
             }
-        }
-
-        public void UpdateUser(Guid id, UpdateUserCommand command)
-        {
-            var user = _userRepository.GetObjectById(id);
-            if (command != null) user?.UpdateUser(command.Name);
-            _unitOfWork.SaveChanges();
-        }
-
-        public string GenerateToken([EmailAddress] string email, string password)
-        {
-            var theuser = _userRepository.StraitAccess().FirstOrDefault(x => x.Email == email && x.Password == password);
-            if (theuser != null && email != null)
-            {
-                var token = JwtToken.Generate(theuser.Id.ToString(), theuser.Email);
-                return token;
-            }
-            return "Get lost!";
-
+            return "Fuck you";
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Makeen._Planner.Duty_Service;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Makeen._Planner.Controllers
+namespace Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

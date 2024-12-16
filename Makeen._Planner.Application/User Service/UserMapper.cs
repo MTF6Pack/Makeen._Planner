@@ -1,4 +1,4 @@
-﻿using Makeen.Planner.Domain.Domains;
+﻿using Domains;
 
 namespace Makeen._Planner.Service
 
@@ -7,7 +7,7 @@ namespace Makeen._Planner.Service
     {
         public static User ToModel(this AddUserCommand command)
         {
-            User user = new(command.Name, command.Email, command.Password, command.RepeatPassword);
+            User user = new(command.UserName, command.Email, command.Age, command.Phonenumber);
             return user;
         }
     }

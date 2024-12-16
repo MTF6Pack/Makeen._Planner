@@ -1,5 +1,6 @@
-﻿using Makeen.Planner.Domain.Domains;
+﻿using Domains;
 using Microsoft.AspNetCore.DataProtection.Repositories;
+using Microsoft.AspNetCore.Identity;
 using System.Runtime.CompilerServices;
 
 namespace Makeen._Planner.Service
@@ -8,9 +9,9 @@ namespace Makeen._Planner.Service
     {
         string AddUser(AddUserCommand command);
         Task<User?> GetUserById(Guid id);
-        string GenerateToken(string email, string password);
-        Task<List<User>?> GetAllUsers();
+        Task<string> GenerateToken(string username, string password);
+        List<object>? GetAllUsers();
         void UpdateUser(Guid id, UpdateUserCommand command);
-        void DeleteUser(Guid id, string password);
+        Task<IdentityResult> DeleteUser(Guid id);
     }
 }
