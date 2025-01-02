@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
+using MediatR;
 
 namespace Makeen._Planner.Service
 {
-    public class UpdateUserCommand
+    public class UpdateUserCommand : IRequest
     {
+        public Guid Userid { get; set; }
         public string? UserName { get; set; }
         public int Age { get; set; }
         public string Email { get; set; } = string.Empty;

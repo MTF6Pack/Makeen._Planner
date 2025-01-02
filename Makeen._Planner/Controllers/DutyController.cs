@@ -1,13 +1,16 @@
 ﻿using Makeen._Planner.Duty_Service;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class DutyController(IDutyService dutyService) : ControllerBase
+    public class DutyController(IDutyService dutyService , IMediator mediator) : ControllerBase
     {
         private readonly IDutyService _dutyservice = dutyService;
+        private readonly IMediator _mediator = mediator;
+
 
         [HttpPost("AddDuty")]
         public void AddDuty([FromBody] AddDutyCommand command)
@@ -22,11 +25,11 @@ namespace Controllers
         }
 
         [HttpPut("UpdateDuty")]
-        public void UpdateDuty(Guid id, [FromForm] UpdateDutyCommand command)
+        public void UpdateDuty([FromForm] UpdateDutyCommand command)
         {
-            _dutyservice.UpdateDuty(id, command);
+            _mediator.Send(command);
         }
-
+        
         [HttpGet("GetAllDuties")]
         public async Task<IActionResult> GetAllDutes()
         {

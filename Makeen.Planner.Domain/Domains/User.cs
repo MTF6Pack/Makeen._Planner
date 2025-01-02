@@ -21,7 +21,7 @@ namespace Domains
 
         public static void AgeValidation(int age)
         {
-            if (age <= 6) throw new Exception("Fuck your age asshole");
+            if (age <= 6) throw new Exception("Age must be more than 5");
         }
         public void UpdateUser(string username, string email, int age, string phonenumber)
         {

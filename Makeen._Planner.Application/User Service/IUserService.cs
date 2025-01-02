@@ -7,7 +7,7 @@ namespace Makeen._Planner.Service
 {
     public interface IUserService
     {
-        string AddUser(AddUserCommand command);
+        //string AddUser(AddUserCommand command);
         Task<User?> GetUserById(Guid id);
         Task<string> GenerateToken(string username, string password);
         List<object>? GetAllUsers();

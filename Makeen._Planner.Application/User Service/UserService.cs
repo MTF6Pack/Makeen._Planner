@@ -13,12 +13,12 @@ namespace Makeen._Planner.Service
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
 
-        public string AddUser(AddUserCommand command)
-        {
-            var result = _userManager.CreateAsync(command.ToModel(), command.Password).Result;
-            if (result.Succeeded) return $"Done! here your Id: {command.ToModel().Id}";
-            else return JsonSerializer.Serialize(result.Errors.ToList());
-        }
+        //public string AddUser(AddUserCommand command)
+        //{
+        //    var result = _userManager.CreateAsync(command.ToModel(), command.Password).Result;
+        //    if (result.Succeeded) return $"Done! here your Id: {command.ToModel().Id}";
+        //    else return JsonSerializer.Serialize(result.Errors.ToList());
+        //}
         public async Task<User?> GetUserById(Guid id)
         {
             return await _userManager.FindByIdAsync(id.ToString());
@@ -51,7 +51,7 @@ namespace Makeen._Planner.Service
                 var theuser = await _userManager.FindByNameAsync(username);
                 if (theuser != null && theuser.Email != null) { return JwtToken.Generate(theuser.Id.ToString(), theuser.Email); }
             }
-            return "Fuck you";
+            return "Invalid input";
         }
     }
 }

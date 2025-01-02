@@ -1,4 +1,5 @@
-﻿using Domains;
+﻿using Application;
+using Domains;
 using Makeen._Planner.Duty_Service;
 using Makeen._Planner.Service;
 using Makeen.Planner.Persistence;
@@ -58,6 +59,7 @@ namespace Makeen._Planner
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddMediatR(CFG => CFG.RegisterServicesFromAssembly(typeof(UserCommandHandler).Assembly));
             var app = builder.Build();
 
             var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<DataBaseContext>();
