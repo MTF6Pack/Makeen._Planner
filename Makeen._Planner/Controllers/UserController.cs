@@ -1,4 +1,4 @@
-﻿using Makeen._Planner.Duty_Service;
+﻿using Makeen._Planner.Task_Service;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -16,7 +16,8 @@ namespace Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            return Ok(await _userService.DeleteUser(id));
+            await _userService.DeleteUser(id);
+            return Ok();
         }
 
         [HttpPut("UpdateUser")]
@@ -32,7 +33,7 @@ namespace Controllers
         }
 
         //[Authorize]
-        [HttpGet()]
+        [HttpGet("Get-All-Users")]
         public IActionResult GetAllUsers()
         {
             return Ok(_userService.GetAllUsers());

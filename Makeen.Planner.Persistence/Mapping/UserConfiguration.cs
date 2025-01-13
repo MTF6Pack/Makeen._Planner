@@ -15,7 +15,7 @@ namespace Mapping
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
-            builder.HasMany(x => x.Duties);
+            builder.HasMany(x => x.Tasks);
         }
     }
 }

@@ -22,7 +22,7 @@ namespace Makeen.Planner.Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Domains.Duty", b =>
+            modelBuilder.Entity("Domains.Task", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -31,14 +31,14 @@ namespace Makeen.Planner.Persistence.Migrations
                     b.Property<DateTime>("DeadLine")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DutyCategory")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PriorityCategory")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TaskCategory")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -49,7 +49,7 @@ namespace Makeen.Planner.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Duties");
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("Domains.User", b =>
@@ -255,10 +255,10 @@ namespace Makeen.Planner.Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Domains.Duty", b =>
+            modelBuilder.Entity("Domains.Task", b =>
                 {
                     b.HasOne("Domains.User", "User")
-                        .WithMany("Duties")
+                        .WithMany("Tasks")
                         .HasForeignKey("UserId");
 
                     b.Navigation("User");
@@ -317,7 +317,7 @@ namespace Makeen.Planner.Persistence.Migrations
 
             modelBuilder.Entity("Domains.User", b =>
                 {
-                    b.Navigation("Duties");
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

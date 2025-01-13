@@ -6,7 +6,7 @@ namespace Domains
     {
         public int Age { get; set; }
         public DateTime CreationTime { get; set; }
-        public List<Duty>? Duties { get; set; }
+        public List<Task>? Tasks { get; set; }
 
         public User(string username, string email, int age, string phonenumber)
         {
@@ -32,7 +32,7 @@ namespace Domains
             PhoneNumber = phonenumber;
             Id = Guid.NewGuid();
         }
-        private User()
+        public User()
         {
 
         }

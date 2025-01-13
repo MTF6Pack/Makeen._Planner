@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Makeen._Planner.Service
 {
-    public class AddUserCommand : IRequest
+    public class AddUserCommand : IRequest<string>
     {
         public required string UserName { get; set; }
         public required int Age { get; set; }

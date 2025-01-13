@@ -8,7 +8,7 @@ namespace Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GateController(IUserService userService , IMediator mediator) : ControllerBase
+    public class GateController(IUserService userService, IMediator mediator) : ControllerBase
     {
         private readonly IUserService _userService = userService;
         private readonly IMediator _mediator = mediator;

@@ -16,7 +16,7 @@ namespace Makeen.Planner.Persistence
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             modelBuilder.UseEnumToStringConverter();
         }
-        public DbSet<Duty>? Duties { get; set; }
+        public DbSet<Domains.Task>? Tasks { get; set; }
 
         //public DbSet<Messege>? Messeges { get; set; }
     }

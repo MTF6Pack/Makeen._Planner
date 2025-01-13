@@ -13,12 +13,6 @@ namespace Makeen._Planner.Service
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
 
-        //public string AddUser(AddUserCommand command)
-        //{
-        //    var result = _userManager.CreateAsync(command.ToModel(), command.Password).Result;
-        //    if (result.Succeeded) return $"Done! here your Id: {command.ToModel().Id}";
-        //    else return JsonSerializer.Serialize(result.Errors.ToList());
-        //}
         public async Task<User?> GetUserById(Guid id)
         {
             return await _userManager.FindByIdAsync(id.ToString());

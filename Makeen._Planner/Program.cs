@@ -1,6 +1,6 @@
 ﻿using Application;
 using Domains;
-using Makeen._Planner.Duty_Service;
+using Makeen._Planner.Task_Service;
 using Makeen._Planner.Service;
 using Makeen.Planner.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -23,6 +23,15 @@ namespace Makeen._Planner
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.ConfigureJWT();
+
+            //builder.Services.AddAuthentication().AddGoogle(options =>
+            //{
+            //    IConfigurationSection googleAuthNSection =
+            //   config.GetSection("Authentication:Google");
+            //    options.ClientId = googleAuthNSection["ClientId"];
+            //    options.ClientSecret = googleAuthNSection["ClientSecret"];
+            //});
+
             // AddUser services to the container.
 
             TitleFilter yosef = new();
@@ -47,19 +56,20 @@ namespace Makeen._Planner
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IDutyService, DutyService>();
+            builder.Services.AddScoped<ITaskService, TaskService>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<IDutyRepository, DutyRepository>();
+            builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 
             builder.Services.AddScoped<IRepository<User>, Repository<User>>();
-            builder.Services.AddScoped<IRepository<Duty>, Repository<Duty>>();
+            builder.Services.AddScoped<IRepository<Domains.Task>, Repository<Domains.Task>>();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddMediatR(CFG => CFG.RegisterServicesFromAssembly(typeof(UserCommandHandler).Assembly));
+            builder.Services.AddMediatR(CFG => CFG.RegisterServicesFromAssembly(typeof(GateCommandHandler).Assembly));
+            builder.Services.AddMediatR(CFG => CFG.RegisterServicesFromAssembly(typeof(TaskCommandHandler).Assembly));
             var app = builder.Build();
 
             var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<DataBaseContext>();

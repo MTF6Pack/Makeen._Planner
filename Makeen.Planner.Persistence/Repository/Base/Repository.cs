@@ -11,6 +11,11 @@ namespace Repository.Base
             _DbSet.Add(entity);
         }
 
+        public async Task AddAsync(T entity)
+        {
+            await _DbSet.AddAsync(entity);
+        }
+
         public async void Delete(Guid id)
         {
             T? t = await GetObjectByIdAsync(id);

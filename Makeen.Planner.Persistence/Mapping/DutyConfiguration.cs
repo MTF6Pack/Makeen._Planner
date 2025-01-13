@@ -10,9 +10,9 @@ using System.Threading.Tasks;
 
 namespace Mapping
 {
-    public class DutyConfiguration : IEntityTypeConfiguration<Duty>
+    public class TaskConfiguration : IEntityTypeConfiguration<Domains.Task>
     {
-        public void Configure(EntityTypeBuilder<Duty> builder)
+        public void Configure(EntityTypeBuilder<Domains.Task> builder)
         {
             builder.HasOne(x => x.User);
         }
