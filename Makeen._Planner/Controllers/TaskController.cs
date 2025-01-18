@@ -2,7 +2,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Controllers
+namespace Makeen._Planner.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -11,13 +11,13 @@ namespace Controllers
         private readonly ITaskService _taskservice = taskService;
         private readonly IMediator _mediator = mediator;
 
-        [HttpPost("Add-Task")]
+        [HttpPost("Add-Tasks")]
         public void AddTask([FromBody] AddTaskCommand command)
         {
             _mediator.Send(command);
         }
 
-        [HttpDelete("Delete-Task")]
+        [HttpDelete("Delete-Tasks")]
         public void DeleteTask(Guid id)
         {
             _taskservice.RemoveTask(id);

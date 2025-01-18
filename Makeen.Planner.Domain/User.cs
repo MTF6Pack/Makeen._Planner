@@ -1,14 +1,20 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Domain.Report;
+using Domain.Task;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography.X509Certificates;
 
-namespace Domains
+namespace Domain
 {
     public class User : IdentityUser<Guid>
     {
-        public int Age { get; set; }
-        public DateTime CreationTime { get; set; }
-        public List<Task>? Tasks { get; set; }
+        public int Age { get; private set; }
+        public DateTime CreationTime { get; private set; }
+        public string? AvatarUrl { get; private set; }
+        public List<Task.Task>? Tasks { get; private set; }
+        public List<Group>? Groups { get; private set; }
+        public List<Chart>? Charts { get; private set; }
 
-        public User(string username, string email, int age, string phonenumber)
+        public User(string username, string email, int age, string phonenumber, string avatarurl)
         {
             UserName = username;
             AgeValidation(age);
@@ -17,6 +23,7 @@ namespace Domains
             PhoneNumber = phonenumber;
             Id = Guid.NewGuid();
             CreationTime = DateTime.Now;
+            AvatarUrl = avatarurl;
         }
 
         public static void AgeValidation(int age)

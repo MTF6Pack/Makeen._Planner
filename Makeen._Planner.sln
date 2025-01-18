@@ -3,20 +3,30 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35312.102
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "0.Makeen._Planner", "Makeen._Planner\0.Makeen._Planner.csproj", "{DDA492CF-5A69-44AF-A23E-226AD25D0160}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Makeen._Planner", "Makeen._Planner\Makeen._Planner.csproj", "{DDA492CF-5A69-44AF-A23E-226AD25D0160}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "2.Persistence", "Makeen.Planner.Persistence\2.Persistence.csproj", "{429290F3-E624-4BCF-9CAD-83E7746055FE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Makeen.Planner.Persistence\Persistence.csproj", "{429290F3-E624-4BCF-9CAD-83E7746055FE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "3.Domain", "Makeen.Planner.Domain\3.Domain.csproj", "{41476F69-C861-4990-AF13-B3C46B4A4E5F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Makeen.Planner.Domain\Domain.csproj", "{41476F69-C861-4990-AF13-B3C46B4A4E5F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C624820F-5DA0-494C-AA25-4A81859C6BDE}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "1.Application", "Makeen._Planner.Application\1.Application.csproj", "{350EB820-3D87-4320-91ED-BF60962E6384}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Makeen._Planner.Application\Application.csproj", "{350EB820-3D87-4320-91ED-BF60962E6384}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "4.Infrustucture", "Infrustucture\4.Infrustucture.csproj", "{D2B39D5B-E8EA-40C9-B7E6-5FA4F679A28A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrustucture", "Infrustucture\Infrustucture.csproj", "{D2B39D5B-E8EA-40C9-B7E6-5FA4F679A28A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0.Host", "0.Host", "{91AE8561-D939-46AC-8C40-5692A93E8E88}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "1.Application", "1.Application", "{FF03D78A-B678-4709-A639-DCF1A580CC8C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "2.Persistence", "2.Persistence", "{E5956898-A7A5-43D3-80C5-ECF67FFE21BC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3.Domain", "3.Domain", "{8AC95858-CD25-4A68-9B07-EBD1EC128FFE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.Infrustucture", "4.Infrustucture", "{77D2518C-348C-46C5-A8B8-D6CE6B896387}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -47,6 +57,13 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DDA492CF-5A69-44AF-A23E-226AD25D0160} = {91AE8561-D939-46AC-8C40-5692A93E8E88}
+		{429290F3-E624-4BCF-9CAD-83E7746055FE} = {E5956898-A7A5-43D3-80C5-ECF67FFE21BC}
+		{41476F69-C861-4990-AF13-B3C46B4A4E5F} = {8AC95858-CD25-4A68-9B07-EBD1EC128FFE}
+		{350EB820-3D87-4320-91ED-BF60962E6384} = {FF03D78A-B678-4709-A639-DCF1A580CC8C}
+		{D2B39D5B-E8EA-40C9-B7E6-5FA4F679A28A} = {77D2518C-348C-46C5-A8B8-D6CE6B896387}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F6ABF7A0-771B-4D3F-B695-499B9ADD91C6}

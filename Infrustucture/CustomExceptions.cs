@@ -1,4 +1,4 @@
-﻿namespace Mediat_RRR
+﻿namespace Infrustucture
 {
     public class CustomExceptions
     {

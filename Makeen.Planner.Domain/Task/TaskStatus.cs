@@ -1,13 +1,15 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domains
+namespace Domain.Task
 {
-    public class UserRole : IdentityRole<Guid>
+    public enum TaskStatus
     {
+        Done,
+        Pending,
+        Failed
     }
 }

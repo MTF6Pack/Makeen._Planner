@@ -1,11 +1,12 @@
-﻿using Domains;
-using Makeen.Planner.Persistence;
-using Repository.Base;
-using Repository.Interface;
+﻿using Domain;
+using Domain.Task;
+using Persistence;
+using Persistence.Repository.Base;
+using Persistence.Repository.Interface;
 
-namespace Repository
+namespace Persistence.Repository
 {
-    public class TaskRepository(DataBaseContext context) : Repository<Domains.Task>(context), ITaskRepository
+    public class TaskRepository(DataBaseContext context) : Repository<Domain.Task.Task>(context), ITaskRepository
     {
     }
 }

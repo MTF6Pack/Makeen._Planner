@@ -1,19 +1,21 @@
 ﻿using Application;
-using Domains;
 using Makeen._Planner.Task_Service;
 using Makeen._Planner.Service;
-using Makeen.Planner.Persistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Repository;
-using Repository.Base;
-using Repository.Interface;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Text;
 using System.Text.Json.Serialization;
+using Domain;
+using Persistence;
+using Persistence.Repository.Base;
+using Persistence.Repository;
+using Persistence.Repository.Interface;
+using Domain.Task;
+using Application.Group_Service;
 
 namespace Makeen._Planner
 {
@@ -57,19 +59,20 @@ namespace Makeen._Planner
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ITaskService, TaskService>();
+            builder.Services.AddScoped<IGroupService, GroupService>();
 
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+            builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 
             builder.Services.AddScoped<IRepository<User>, Repository<User>>();
-            builder.Services.AddScoped<IRepository<Domains.Task>, Repository<Domains.Task>>();
+            builder.Services.AddScoped<IRepository<Domain.Task.Task>, Repository<Domain.Task.Task>>();
+            builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddMediatR(CFG => CFG.RegisterServicesFromAssembly(typeof(GateCommandHandler).Assembly));
-            builder.Services.AddMediatR(CFG => CFG.RegisterServicesFromAssembly(typeof(TaskCommandHandler).Assembly));
             var app = builder.Build();
 
             var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<DataBaseContext>();

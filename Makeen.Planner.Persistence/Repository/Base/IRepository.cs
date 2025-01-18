@@ -1,15 +1,14 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace Repository.Base
+namespace Persistence.Repository.Base
 {
     public interface IRepository<T> where T : class
     {
         void Add(T entity);
         Task AddAsync(T entity);
-        Task<T?> GetObjectByIdAsync(Guid id);
-        T? GetObjectById(Guid id);
+        Task<T?> GetByIdAsync(Guid id);
         DbSet<T> StraitAccess();
-        Task<List<T>?> GetAll();
+        Task<List<T>> GetAllAsync();
         void Delete(Guid id);
     }
 }

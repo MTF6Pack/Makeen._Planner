@@ -1,6 +1,6 @@
 ﻿namespace Makeen._Planner.Extentions
 {
-    public class ResponseMessage 
+    public class ResponseMessage
     {
         public object? Content { get; set; }
 

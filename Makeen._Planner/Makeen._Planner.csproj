@@ -7,14 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="Properties\launchSettings.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Properties\launchSettings.json">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </None>
+    <None Include="wwwroot\custom.css" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,9 +28,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Makeen.Planner.Domain\3.Domain.csproj" />
-    <ProjectReference Include="..\Makeen.Planner.Persistence\2.Persistence.csproj" />
-    <ProjectReference Include="..\Makeen._Planner.Application\1.Application.csproj" />
+    <ProjectReference Include="..\Makeen.Planner.Domain\Domain.csproj" />
+    <ProjectReference Include="..\Makeen.Planner.Persistence\Persistence.csproj" />
+    <ProjectReference Include="..\Makeen._Planner.Application\Application.csproj" />
   </ItemGroup>
 
 </Project>

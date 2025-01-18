@@ -1,28 +1,29 @@
-﻿using Makeen._Planner.Service;
+﻿using Application;
+using Makeen._Planner.Service;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace Controllers
+namespace Makeen._Planner.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GateController(IUserService userService, IMediator mediator) : ControllerBase
+    public class GateController(IUserService userService) : ControllerBase
     {
         private readonly IUserService _userService = userService;
-        private readonly IMediator _mediator = mediator;
 
         [HttpPost("SignUp")]
-        public IActionResult AddUser(AddUserCommand command)
+        public IActionResult SignUp(AddUserCommand command)
         {
-            return Ok(_mediator.Send(command));
+            _userService.SignUP(command);
+            return Ok();
         }
 
         [HttpGet("Signin")]
-        public async Task<IActionResult> Signin(/*[EmailAddress]*/ string username, string password)
+        public async Task<IActionResult> Signin([EmailAddress] string email, string password)
         {
-            return Ok(await _userService.GenerateToken(username, password));
+            return Ok(await _userService.GenerateToken(email, password));
         }
 
     }

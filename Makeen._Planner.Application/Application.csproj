@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Makeen.Planner.Domain\3.Domain.csproj" />
-    <ProjectReference Include="..\Makeen.Planner.Persistence\2.Persistence.csproj" />
+    <ProjectReference Include="..\Makeen.Planner.Domain\Domain.csproj" />
+    <ProjectReference Include="..\Makeen.Planner.Persistence\Persistence.csproj" />
   </ItemGroup>
 
 </Project>

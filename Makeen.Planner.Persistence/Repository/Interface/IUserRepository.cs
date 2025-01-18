@@ -1,7 +1,7 @@
-﻿using Domains;
-using Repository.Base;
+﻿using Domain;
+using Persistence.Repository.Base;
 
-namespace Repository.Interface
+namespace Persistence.Repository.Interface
 {
     public interface IUserRepository : IRepository<User>
     {

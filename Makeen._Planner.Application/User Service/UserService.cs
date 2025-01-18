@@ -1,8 +1,6 @@
-﻿using DataSeeder;
-using Domains;
+﻿using Application.DataSeeder;
+using Domain;
 using Microsoft.AspNetCore.Identity;
-using Repository;
-using Repository.Interface;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
@@ -47,5 +45,15 @@ namespace Makeen._Planner.Service
             }
             return "Invalid input";
         }
+        public void SignUP(AddUserCommand command)
+        {
+            var result = _userManager.CreateAsync(command.ToModel(), command.Password).Result;
+            if (!result.Succeeded) throw new Exception("Invalid Input");
+        }
+
+        //public Task ForgetPassword(string email)
+        //{
+
+        //}
     }
 }

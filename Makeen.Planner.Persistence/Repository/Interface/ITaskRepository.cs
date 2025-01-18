@@ -1,9 +1,8 @@
-﻿using Domains;
-using Repository.Base;
+﻿using Persistence.Repository.Base;
 
-namespace Repository.Interface
+namespace Persistence.Repository.Interface
 {
-    public interface ITaskRepository : IRepository<Domains.Task>
+    public interface ITaskRepository : IRepository<Domain.Task.Task>
     {
     }
 }

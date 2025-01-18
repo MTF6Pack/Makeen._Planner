@@ -1,8 +1,7 @@
-﻿namespace Repository
+﻿namespace Persistence.Repository
 {
     public interface IUnitOfWork
     {
-        void SaveChanges();
         Task SaveChangesAsync();
     }
 }

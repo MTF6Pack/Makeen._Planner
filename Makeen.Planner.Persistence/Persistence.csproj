@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Makeen.Planner.Domain\3.Domain.csproj" />
+    <ProjectReference Include="..\Makeen.Planner.Domain\Domain.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace Domains
+﻿namespace Domain.Task
 {
     public enum TaskCategory
     {

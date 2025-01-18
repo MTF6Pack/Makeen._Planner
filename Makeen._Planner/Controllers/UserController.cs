@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 
-namespace Controllers
+namespace Makeen._Planner.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

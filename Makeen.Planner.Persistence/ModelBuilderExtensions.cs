@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.EntityFrameworkCore;
 
-namespace Makeen.Planner.Persistence
+namespace Persistence
 {
     public static class ModelBuilderExtensions
     {

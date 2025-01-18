@@ -1,8 +1,8 @@
-﻿using Domains;
+﻿using Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Makeen.Planner.Persistence
+namespace Persistence
 {
     public class DataBaseContext(DbContextOptions<DataBaseContext> options) : IdentityDbContext<User, UserRole, Guid>(options)
     {
@@ -13,11 +13,9 @@ namespace Makeen.Planner.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
-            modelBuilder.UseEnumToStringConverter();
+            //modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
+            //modelBuilder.UseEnumToStringConverter();
         }
-        public DbSet<Domains.Task>? Tasks { get; set; }
-
-        //public DbSet<Messege>? Messeges { get; set; }
+        //public required DbSet<User> Users { get; set; }
     }
 }

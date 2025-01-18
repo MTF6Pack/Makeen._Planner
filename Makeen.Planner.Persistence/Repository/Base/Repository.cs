@@ -1,7 +1,7 @@
-﻿using Makeen.Planner.Persistence;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Persistence;
 
-namespace Repository.Base
+namespace Persistence.Repository.Base
 {
     public class Repository<T>(DataBaseContext context) : IRepository<T> where T : class
     {
@@ -18,17 +18,17 @@ namespace Repository.Base
 
         public async void Delete(Guid id)
         {
-            T? t = await GetObjectByIdAsync(id);
+            T? t = await GetByIdAsync(id);
             if (t != null) _DbSet.Remove(t);
         }
 
-        public async Task<T?> GetObjectByIdAsync(Guid id)
+        public async Task<T?> GetByIdAsync(Guid id)
         {
             var user = _DbSet.FindAsync(id);
             return await user;
         }
 
-        public async Task<List<T>?> GetAll()
+        public async Task<List<T>> GetAllAsync()
         {
             return await _DbSet.ToListAsync();
         }
@@ -36,11 +36,6 @@ namespace Repository.Base
         public async Task<T?> GetObjectByName(string name)
         {
             return await _DbSet.FindAsync(name);
-        }
-
-        public T? GetObjectById(Guid id)
-        {
-            return _DbSet.Find(id);
         }
 
         public DbSet<T> StraitAccess()
