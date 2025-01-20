@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.Task;
+using Microsoft.EntityFrameworkCore;
 using Persistence.Repository.Base;
 using Persistence.Repository.Interface;
 using System;

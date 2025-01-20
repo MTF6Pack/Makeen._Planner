@@ -8,7 +8,5 @@ using System.Threading.Tasks;
 
 namespace Persistence.Repository.Interface
 {
-    public interface IGroupRepository : IRepository<Group>
-    {
-    }
+    public interface IGroupRepository : IRepository<Group> { }
 }

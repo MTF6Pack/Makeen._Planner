@@ -17,6 +17,13 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
+        [HttpPost("Add-User")]
+        public async Task<IActionResult> AddUser(Guid groupid, Guid userid)
+        {
+            await _groupService.AddUser(groupid, userid);
+            return Ok();
+        }
+
         [HttpGet("All-Groups")]
         public async Task<IActionResult> GetAllGroups()
         {

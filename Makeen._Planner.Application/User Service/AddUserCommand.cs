@@ -1,5 +1,6 @@
 ﻿using Domain.Report;
 using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -13,6 +14,6 @@ namespace Makeen._Planner.Service
         public required string Phonenumber { get; set; }
         public required string Email { get; set; }
         public required string Password { get; set; }
-        public string? AvatarUrl { get; set; }
+        public IFormFile? AvatarUrl { get; set; }
     }
 }

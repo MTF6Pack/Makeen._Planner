@@ -16,6 +16,11 @@ namespace Persistence
             //modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             //modelBuilder.UseEnumToStringConverter();
         }
+
+        public static implicit operator DbSet<object>(DataBaseContext v)
+        {
+            throw new NotImplementedException();
+        }
         //public required DbSet<User> Users { get; set; }
     }
 }

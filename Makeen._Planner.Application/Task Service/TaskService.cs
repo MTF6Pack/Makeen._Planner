@@ -1,5 +1,6 @@
 ﻿using Azure.Core;
 using Domain.Task;
+using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
 
@@ -23,7 +24,7 @@ namespace Makeen._Planner.Task_Service
 
         public Domain.Task.Task? GetObjectByName(string name)
         {
-            Domain.Task.Task? task = _repository.StraitAccess().FirstOrDefault(x => x.Name == name);
+            Domain.Task.Task? task = _repository.StraitAccess().Set<Domain.Task.Task>().FirstOrDefault(x => x.Name == name);
             return task;
         }
 

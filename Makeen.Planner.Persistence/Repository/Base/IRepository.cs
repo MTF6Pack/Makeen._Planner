@@ -7,7 +7,7 @@ namespace Persistence.Repository.Base
         void Add(T entity);
         Task AddAsync(T entity);
         Task<T?> GetByIdAsync(Guid id);
-        DbSet<T> StraitAccess();
+        DbContext StraitAccess();
         Task<List<T>> GetAllAsync();
         void Delete(Guid id);
     }

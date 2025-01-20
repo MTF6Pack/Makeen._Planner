@@ -1,15 +1,17 @@
 ﻿using Application.DataSeeder;
 using Domain;
 using Microsoft.AspNetCore.Identity;
+using Persistence.Repository.Interface;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
 namespace Makeen._Planner.Service
 {
-    public class UserService(UserManager<User> userManager, SignInManager<User> signInManager) : IUserService
+    public class UserService(UserManager<User> userManager, SignInManager<User> signInManager, IUserRepository repository) : IUserService
     {
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
+        private readonly IUserRepository _repository = repository;
 
         public async Task<User?> GetUserById(Guid id)
         {
@@ -33,17 +35,14 @@ namespace Makeen._Planner.Service
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (command.UserName != null) user?.UpdateUser(command.UserName, command.Email, command.Age, command.PhoneNumber);
         }
-        public async Task<string> GenerateToken([EmailAddress] string username, string password)
+        public async Task<string> GenerateToken([EmailAddress] string email, string password)
         {
-            var signinResult = await _signInManager.PasswordSignInAsync(username, password, false, false);
-
+            SignInResult signinResult = new();
+            var theuser = _repository.StraitAccess().Set<User>().FirstOrDefault(x => x.Email == email);
+            if (theuser != null) { signinResult = await _signInManager.PasswordSignInAsync(theuser.UserName!, password, false, false); }
             if (!signinResult.Succeeded) { throw new Exception(JsonSerializer.Serialize(signinResult)); }
-            else if (signinResult.Succeeded)
-            {
-                var theuser = await _userManager.FindByNameAsync(username);
-                if (theuser != null && theuser.Email != null) { return JwtToken.Generate(theuser.Id.ToString(), theuser.Email); }
-            }
-            return "Invalid input";
+            else if (theuser != null && theuser.Email != null) { return JwtToken.Generate(theuser.Id.ToString(), email); }
+            throw new Exception("Invalid input");
         }
         public void SignUP(AddUserCommand command)
         {

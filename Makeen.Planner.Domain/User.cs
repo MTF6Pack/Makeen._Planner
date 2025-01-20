@@ -1,6 +1,8 @@
 ﻿using Domain.Report;
 using Domain.Task;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Domain
@@ -9,12 +11,13 @@ namespace Domain
     {
         public int Age { get; private set; }
         public DateTime CreationTime { get; private set; }
-        public string? AvatarUrl { get; private set; }
+        [NotMapped]
+        public IFormFile? AvatarUrl { get; private set; }
         public List<Task.Task>? Tasks { get; private set; }
         public List<Group>? Groups { get; private set; }
         public List<Chart>? Charts { get; private set; }
 
-        public User(string username, string email, int age, string phonenumber, string avatarurl)
+        public User(string username, string email, int age, string phonenumber, IFormFile avatarurl)
         {
             UserName = username;
             AgeValidation(age);

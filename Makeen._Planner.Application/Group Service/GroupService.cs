@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Domain.Task;
+using Domain;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Group_Service
 {
@@ -20,7 +22,17 @@ namespace Application.Group_Service
             await _repository.AddAsync(newgroup);
             await _unitOfWork.SaveChangesAsync();
         }
+        public async System.Threading.Tasks.Task AddUser(Guid groupId, Guid userId)
+        {
+            User? founduser = await _repository.StraitAccess().Set<User>().FindAsync(userId);
+            Group? thegroup = await _repository.StraitAccess().Set<Group>().Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == groupId);
 
+            if (founduser != null && thegroup != null)
+            {
+                thegroup.Users!.Add(founduser);
+                await _unitOfWork.SaveChangesAsync();
+            }
+        }
         public async Task<Group> GetByIdAsync(Guid groupid)
         {
             var foundgroup = await _repository.GetByIdAsync(groupid);
@@ -51,5 +63,6 @@ namespace Application.Group_Service
             _repository.Delete(id);
             await _unitOfWork.SaveChangesAsync();
         }
+
     }
 }

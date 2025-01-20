@@ -38,9 +38,9 @@ namespace Persistence.Repository.Base
             return await _DbSet.FindAsync(name);
         }
 
-        public DbSet<T> StraitAccess()
+        public DbContext StraitAccess()
         {
-            return _DbSet;
+            return context;
         }
     }
 }
