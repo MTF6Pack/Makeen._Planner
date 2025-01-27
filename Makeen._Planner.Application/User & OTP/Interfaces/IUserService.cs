@@ -1,6 +1,8 @@
-﻿using Domain;
+﻿using Application.DataSeeder.OTP;
+using Domain;
 using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 
 namespace Makeen._Planner.Service
@@ -11,8 +13,7 @@ namespace Makeen._Planner.Service
         Task<User?> GetUserById(Guid id);
         Task<string> GenerateToken(string username, string password);
         List<object>? GetAllUsers();
-        void UpdateUser(Guid id, UpdateUserCommand command);
+        Task UpdateUser(Guid id, UpdateUserCommand command);
         Task<IdentityResult> DeleteUser(Guid id);
-        //Task ForgetPassword(string email);
     }
 }

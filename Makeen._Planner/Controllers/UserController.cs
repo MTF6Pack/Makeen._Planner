@@ -20,10 +20,16 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [HttpPut("UpdateUser")]
-        public void Update(Guid id, [FromForm] UpdateUserCommand command)
+        [HttpGet("MyProfile")]
+        public IActionResult MyProfile(Guid Id)
         {
-            _userService.UpdateUser(id, command);
+            return File(System.IO.File.ReadAllBytes(Id + ".png"), "image/png");
+        }
+        [HttpPut("UpdateUser")]
+        public async Task<IActionResult> Update(Guid id, [FromForm] UpdateUserCommand command)
+        {
+            await _userService.UpdateUser(id, command);
+            return Ok();
         }
 
         [HttpGet("{id}")]

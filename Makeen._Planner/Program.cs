@@ -1,5 +1,4 @@
-﻿using Application;
-using Makeen._Planner.Task_Service;
+﻿using Makeen._Planner.Task_Service;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -16,6 +15,11 @@ using Persistence.Repository;
 using Persistence.Repository.Interface;
 using Domain.Task;
 using Application.Group_Service;
+using Application.DataSeeder.OTP;
+using Application.User.Services;
+using Scrutor;
+using System;
+using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace Makeen._Planner
 {
@@ -51,25 +55,42 @@ namespace Makeen._Planner
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            builder.Services.AddIdentity<User, UserRole>()
+            builder.Services.AddIdentity<Domain.User, UserRole>()
             .AddEntityFrameworkStores<DataBaseContext>()
             .AddDefaultTokenProviders();
 
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.Scan(scan => scan
+                .FromAssemblyOf<IUserRepository>() // Scans the assembly containing IUserRepository
+                .AddClasses(classes => classes.AssignableTo<IUserRepository>()) // Finds all classes that implement IUserRepository
+                .AsImplementedInterfaces() // Registers them as their implemented interfaces
+                .WithScopedLifetime()); // You can also use WithScopedLifetime() or WithSingletonLifetime()
 
-            builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<ITaskService, TaskService>();
-            builder.Services.AddScoped<IGroupService, GroupService>();
 
-            builder.Services.AddScoped<IUserRepository, UserRepository>();
-            builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-            builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+            builder.Services.Scan(scan => scan
+                .FromAssemblyOf<IUserService>() // Scans the assembly containing IUserRepository
+                .AddClasses(classes => classes.AssignableTo<IUserService>()) // Finds all classes that implement IUserRepository
+                .AsImplementedInterfaces() // Registers them as their implemented interfaces
+                .WithScopedLifetime()); // You can also use WithScopedLifetime() or WithSingletonLifetime()
 
-            builder.Services.AddScoped<IRepository<User>, Repository<User>>();
-            builder.Services.AddScoped<IRepository<Domain.Task.Task>, Repository<Domain.Task.Task>>();
-            builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();
+
+            //builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+            //builder.Services.AddScoped<IEmailOTPService, BaseEmailOTP>();
+            //builder.Services.AddScoped<IOTPService, OTPService,>();
+            //builder.Services.AddScoped<IUserService, UserService>();
+            //builder.Services.AddScoped<ITaskService, TaskService>();
+            //builder.Services.AddScoped<IGroupService, GroupService>();
+
+            //builder.Services.AddScoped<IUserRepository, UserRepository>();
+            //builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+            //builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+
+            //builder.Services.AddScoped<IRepository<Domain.User>, Repository<Domain.User>>();
+            //builder.Services.AddScoped<IRepository<Domain.Task.Task>, Repository<Domain.Task.Task>>();
+            //builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -121,6 +142,19 @@ namespace Makeen._Planner
                 doc.Info.Title = "ّFor those who seek Success ...";
                 doc.Info.Version = "Phase 1";
             }
+        }
+
+        public static void ConfigureServices(IServiceCollection services, IConvention x)
+        {
+            // Register services using Scrutor
+            services.Scan(scan => scan
+                .FromAssemblyOf<IUserRepository>() // Scans the assembly containing IUserRepository
+                .AddClasses(classes => classes.AssignableTo<IConvention>()) // Finds all classes that implement IUserRepository
+                .AsImplementedInterfaces() // Registers them as their implemented interfaces
+                .WithScopedLifetime()); // You can also use WithScopedLifetime() or WithSingletonLifetime()
+
+            // Other service registrations
+            services.AddControllers();
         }
     }
 }

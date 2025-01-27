@@ -24,7 +24,7 @@ namespace Application.Group_Service
         }
         public async System.Threading.Tasks.Task AddUser(Guid groupId, Guid userId)
         {
-            User? founduser = await _repository.StraitAccess().Set<User>().FindAsync(userId);
+            Domain.User? founduser = await _repository.StraitAccess().Set<Domain.User>().FindAsync(userId);
             Group? thegroup = await _repository.StraitAccess().Set<Group>().Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == groupId);
 
             if (founduser != null && thegroup != null)
@@ -39,25 +39,21 @@ namespace Application.Group_Service
             if (foundgroup != null) return foundgroup;
             else throw new Exception("Invalid Input");
         }
-
         public async Task<List<Group>> GetAllAsync()
         {
             return await _repository.GetAllAsync();
         }
-
         public async System.Threading.Tasks.Task Update(Guid id, UpdateGroupCommand command)
         {
             var foundgroup = await GetByIdAsync(id);
             foundgroup.UpdateGroup(command.Title, command.AvatarUrl!, command.Color);
             await _unitOfWork.SaveChangesAsync();
         }
-
         public async void AddGroup(Guid groupid)
         {
             _repository.Delete(groupid);
             await _unitOfWork.SaveChangesAsync();
         }
-
         public async System.Threading.Tasks.Task Delete(Guid id)
         {
             _repository.Delete(id);

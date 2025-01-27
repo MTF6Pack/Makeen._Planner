@@ -1,4 +1,5 @@
-﻿using Domain.Report;
+﻿using Domain;
+using Domain.Report;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -14,6 +15,14 @@ namespace Makeen._Planner.Service
         public required string Phonenumber { get; set; }
         public required string Email { get; set; }
         public required string Password { get; set; }
-        public IFormFile? AvatarUrl { get; set; }
+        public IFormFile? Avatar { get; set; }
+    }
+    public static class UserMapper
+    {
+        public static User ToModel(this AddUserCommand command)
+        {
+            User user = new(command.UserName, command.Email, command.Age, command.Phonenumber);
+            return user;
+        }
     }
 }

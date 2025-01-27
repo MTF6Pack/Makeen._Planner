@@ -1,4 +1,5 @@
 ﻿using Application;
+using Application.DataSeeder;
 using Makeen._Planner.Service;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -25,6 +26,5 @@ namespace Makeen._Planner.Controllers
         {
             return Ok(await _userService.GenerateToken(email, password));
         }
-
     }
 }
