@@ -17,7 +17,7 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [HttpPost("Add-User")]
+        [HttpPost("Add-UserAndOtp")]
         public async Task<IActionResult> AddUser(Guid groupid, Guid userid)
         {
             await _groupService.AddUser(groupid, userid);

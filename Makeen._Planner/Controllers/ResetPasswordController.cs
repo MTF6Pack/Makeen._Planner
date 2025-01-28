@@ -1,5 +1,5 @@
 ﻿using Application.DataSeeder.OTP;
-using Application.User.Services;
+using Application.UserAndOtp.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +18,7 @@ namespace Makeen._Planner.Controllers
         [HttpPost("Check-OTP")]
         public IActionResult CheckOTP(string email, string userinput)
         { return Ok(_oTPService.CheckOTP(email, userinput)); }
-        [HttpGet("Find-User")]
+        [HttpGet("Find-UserAndOtp")]
         public async Task<IActionResult> FindUser(string email, bool isverified)
         { return Ok(await _oTPService.FindUser(email, isverified)); }
         [HttpPost("Generate-Token")]

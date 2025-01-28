@@ -16,7 +16,7 @@ using Persistence.Repository.Interface;
 using Domain.Task;
 using Application.Group_Service;
 using Application.DataSeeder.OTP;
-using Application.User.Services;
+using Application.UserAndOtp.Services;
 using Scrutor;
 using System;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
@@ -61,33 +61,17 @@ namespace Makeen._Planner
 
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserRepository>() // Scans the assembly containing IUserRepository
-                .AddClasses(classes => classes.AssignableTo<IUserRepository>()) // Finds all classes that implement IUserRepository
+                .AddClasses() // Finds all classes that implement IUserRepository
                 .AsImplementedInterfaces() // Registers them as their implemented interfaces
                 .WithScopedLifetime()); // You can also use WithScopedLifetime() or WithSingletonLifetime()
 
 
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserService>() // Scans the assembly containing IUserRepository
-                .AddClasses(classes => classes.AssignableTo<IUserService>()) // Finds all classes that implement IUserRepository
+                .AddClasses() // Finds all classes that implement IUserRepository
                 .AsImplementedInterfaces() // Registers them as their implemented interfaces
                 .WithScopedLifetime()); // You can also use WithScopedLifetime() or WithSingletonLifetime()
 
-
-            //builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-            //builder.Services.AddScoped<IEmailOTPService, BaseEmailOTP>();
-            //builder.Services.AddScoped<IOTPService, OTPService,>();
-            //builder.Services.AddScoped<IUserService, UserService>();
-            //builder.Services.AddScoped<ITaskService, TaskService>();
-            //builder.Services.AddScoped<IGroupService, GroupService>();
-
-            //builder.Services.AddScoped<IUserRepository, UserRepository>();
-            //builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-            //builder.Services.AddScoped<IGroupRepository, GroupRepository>();
-
-            //builder.Services.AddScoped<IRepository<Domain.User>, Repository<Domain.User>>();
-            //builder.Services.AddScoped<IRepository<Domain.Task.Task>, Repository<Domain.Task.Task>>();
-            //builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();
 
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
@@ -144,7 +128,7 @@ namespace Makeen._Planner
             }
         }
 
-        public static void ConfigureServices(IServiceCollection services, IConvention x)
+        public static void ConfigureServices(IServiceCollection services)
         {
             // Register services using Scrutor
             services.Scan(scan => scan
@@ -158,3 +142,21 @@ namespace Makeen._Planner
         }
     }
 }
+
+
+
+//builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+//builder.Services.AddScoped<IEmailOTPService, BaseEmailOTP>();
+//builder.Services.AddScoped<IOTPService, OTPService,>();
+//builder.Services.AddScoped<IUserService, UserService>();
+//builder.Services.AddScoped<ITaskService, TaskService>();
+//builder.Services.AddScoped<IGroupService, GroupService>();
+
+//builder.Services.AddScoped<IUserRepository, UserRepository>();
+//builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+//builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+
+//builder.Services.AddScoped<IRepository<Domain.UserAndOtp>, Repository<Domain.UserAndOtp>>();
+//builder.Services.AddScoped<IRepository<Domain.Task.Task>, Repository<Domain.Task.Task>>();
+//builder.Services.AddScoped<IRepository<Group>, Repository<Group>>();

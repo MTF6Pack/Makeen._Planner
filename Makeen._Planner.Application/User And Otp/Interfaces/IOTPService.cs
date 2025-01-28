@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using static System.Net.WebRequestMethods;
 
-namespace Application.User.Services
+namespace Application.UserAndOtp.Services
 {
     public interface IOTPService
     {

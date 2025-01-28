@@ -1,19 +1,17 @@
 ﻿using Application.DataSeeder;
-using Application.DataSeeder.OTP;
 using Domain;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Persistence.Repository.Interface;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 
-namespace Application.User.Services
+namespace Application.UserAndOtp.Services
 {
     public class UserService(UserManager<Domain.User> userManager, SignInManager<Domain.User> signInManager, IUserRepository repository) : IUserService
     {
-        private readonly UserManager<Domain.User> _userManager = userManager;
-        private readonly SignInManager<Domain.User> _signInManager = signInManager;
+        private readonly UserManager<User> _userManager = userManager;
+        private readonly SignInManager<User> _signInManager = signInManager;
         private readonly IUserRepository _repository = repository;
 
         public async Task<Domain.User?> GetUserById(Guid id) => await _userManager.FindByIdAsync(id.ToString());

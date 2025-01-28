@@ -1,11 +1,11 @@
 ﻿using Application.DataSeeder.OTP;
-using Application.User.Services;
+using Application.UserAndOtp.Services;
 using Domain;
 using Microsoft.AspNetCore.Identity;
 using Org.BouncyCastle.Crypto;
 using System.Diagnostics.Eventing.Reader;
 
-namespace Application.User.Services
+namespace Application.UserAndOtp.Services
 {
     public class OTPService(UserManager<Domain.User> userManager, IBaseEmailOTP emailOTPService) : IOTPService
     {
@@ -34,9 +34,9 @@ namespace Application.User.Services
         }
     }
 }
-//public class OTPService(UserManager<Domain.User> userManager, IEmailOTPService emailOTPService) : IOTPService
+//public class OTPService(UserManager<Domain.UserAndOtp> userManager, IEmailOTPService emailOTPService) : IOTPService
 //{
-//    private readonly UserManager<Domain.User> _userManager = userManager;
+//    private readonly UserManager<Domain.UserAndOtp> _userManager = userManager;
 //    private readonly IEmailOTPService _emailOTPService = emailOTPService;
 
 //    private EmailOTPHelper otp = new();
@@ -50,7 +50,7 @@ namespace Application.User.Services
 //        var user = await _userManager.FindByEmailAsync(otp.Email);
 //        if (_emailOTPService.CheckInput(otp.Email, userinput) && user != null)
 //        {
-//            otp.User = user;
+//            otp.UserAndOtp = user;
 //            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 //            otp.Token = token;
 //            return true;
@@ -59,10 +59,10 @@ namespace Application.User.Services
 //    }
 //    public async Task<IdentityResult> ResetPassword(string newpassword)
 //    {
-//        if (otp.User != null && otp.Token != string.Empty)
+//        if (otp.UserAndOtp != null && otp.Token != string.Empty)
 //        {
-//            await _userManager.ResetPasswordAsync(otp.User, otp.Token, newpassword);
-//            await _userManager.UpdateAsync(otp.User);
+//            await _userManager.ResetPasswordAsync(otp.UserAndOtp, otp.Token, newpassword);
+//            await _userManager.UpdateAsync(otp.UserAndOtp);
 //            return IdentityResult.Success;
 //        }
 //        else throw new Exception("Invalid Input");

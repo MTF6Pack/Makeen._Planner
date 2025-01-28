@@ -6,15 +6,14 @@ namespace Makeen._Planner.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TaskController(ITaskService taskService, IMediator mediator) : ControllerBase
+    public class TaskController(ITaskService taskService) : ControllerBase
     {
         private readonly ITaskService _taskservice = taskService;
-        private readonly IMediator _mediator = mediator;
 
         [HttpPost("Add-Tasks")]
         public void AddTask([FromBody] AddTaskCommand command)
         {
-            _mediator.Send(command);
+            _taskservice.AddTask(command);
         }
 
         [HttpDelete("Delete-Tasks")]
@@ -24,9 +23,9 @@ namespace Makeen._Planner.Controllers
         }
 
         [HttpPut("UpdateTask")]
-        public void UpdateTask([FromForm] UpdateTaskCommand command)
+        public void UpdateTask(Guid taskId, [FromForm] UpdateTaskCommand command)
         {
-            _mediator.Send(command);
+            _taskservice.UpdateTask(taskId, command);
         }
 
         [HttpGet("GetAllTasks")]
