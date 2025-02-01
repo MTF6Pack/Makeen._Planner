@@ -1,11 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel;
-using MediatR;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace Makeen._Planner.Service
 {
-    public class UpdateUserCommand : IRequest
+    public class UpdateUserCommand
     {
         public string? UserName { get; set; }
         public int Age { get; set; }

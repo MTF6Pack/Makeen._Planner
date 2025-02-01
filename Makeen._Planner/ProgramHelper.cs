@@ -22,7 +22,7 @@ namespace Makeen._Planner
             Tools(builder);
             ConfigureJWT(builder);
             ConvertEnumToString(builder);
-
+            //ConfigureGoogle(builder.Build(), builder.Host);
         }
         public static void Tools(this WebApplicationBuilder builder)
         {
@@ -50,7 +50,7 @@ namespace Makeen._Planner
             builder.Services.AddIdentity<User, UserRole>()
             .AddEntityFrameworkStores<DataBaseContext>()
             .AddDefaultTokenProviders();
-        
+
             builder.Services.AddScoped<JwtToken>();
 
 
@@ -83,13 +83,38 @@ namespace Makeen._Planner
                     JsonIgnoreCondition.WhenWritingNull;
             });
         }
-    }
-    public class TitleFilter() : IDocumentFilter
-    {
-        public void Apply(OpenApiDocument doc, DocumentFilterContext context)
+        public static void ConfigureGoogle(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            doc.Info.Title = "ّFor those who seek Success ...";
-            doc.Info.Version = "Phase 1";
+            if (env.IsDevelopment())
+            {
+                app.UseDeveloperExceptionPage();
+            }
+            else
+            {
+                app.UseExceptionHandler("/Home/Error");
+                app.UseHsts();
+            }
+
+            app.UseHttpsRedirection();
+            app.UseRouting();
+
+            app.UseAuthentication(); // Add this line
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
+
         }
+        public class TitleFilter() : IDocumentFilter
+        {
+            public void Apply(OpenApiDocument doc, DocumentFilterContext context)
+            {
+                doc.Info.Title = "ّFor those who seek Success ...";
+                doc.Info.Version = "Phase 1";
+            }
+        }
+
     }
 }
