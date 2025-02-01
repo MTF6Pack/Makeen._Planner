@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Makeen._Planner.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/users")]
     [ApiController]
     public class UserController(IUserService userService) : ControllerBase
     {
@@ -20,16 +20,16 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [HttpGet("MyProfile")]
-        public IActionResult MyProfile(Guid Id)
-        {
-            return File(System.IO.File.ReadAllBytes(Id + ".png"), "image/png");
-        }
-        [HttpPut("UpdateUser")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromForm] UpdateUserCommand command)
         {
             await _userService.UpdateUser(id, command);
             return Ok();
+        }
+        [HttpGet("profile /{id}")]
+        public IActionResult MyProfile(Guid id)
+        {
+            return File(System.IO.File.ReadAllBytes(id + ".png"), "image/png");
         }
 
         [HttpGet("{id}")]
@@ -38,8 +38,13 @@ namespace Makeen._Planner.Controllers
             return Ok(await _userService.GetUserById(id));
         }
 
+        [HttpGet("email")]
+        public async Task<IActionResult> GetByEmail([EmailAddress] string email)
+        {
+            return Ok(await _userService.GetUserByEmail(email));
+        }
         //[Authorize]
-        [HttpGet("Get-All-Users")]
+        [HttpGet]
         public IActionResult GetAllUsers()
         {
             return Ok(_userService.GetAllUsers());

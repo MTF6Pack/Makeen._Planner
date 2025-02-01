@@ -7,9 +7,9 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace Application.UserAndOtp.Services
 {
-    public class OTPService(UserManager<Domain.User> userManager, IBaseEmailOTP emailOTPService) : IOTPService
+    public class OTPService(UserManager<User> userManager, IBaseEmailOTP emailOTPService) : IOTPService
     {
-        private readonly UserManager<Domain.User> _userManager = userManager;
+        private readonly UserManager<User> _userManager = userManager;
         private readonly IBaseEmailOTP _emailOTPService = emailOTPService;
 
         public void SendOTP(string email) => _emailOTPService.Send(email);
@@ -18,15 +18,9 @@ namespace Application.UserAndOtp.Services
             if (_emailOTPService.CheckInput(email, userinput)) { return true; }
             else throw new Exception("Invalid input");
         }
-        public async Task<Domain.User> FindUser(string email, bool isverified)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (isverified && user != null) return user;
-            else throw new Exception("invalid input");
-        }
-        public async Task<string> GenerateToken(Domain.User user)
+        public async Task<string> GenerateResetPasswordToken(User user)
         { return await _userManager.GeneratePasswordResetTokenAsync(user); }
-        public async Task<IdentityResult> ResetPassword(Domain.User user, string token, string newpassword)
+        public async Task<IdentityResult> ResetPassword(User user, string token, string newpassword)
         {
             await _userManager.ResetPasswordAsync(user, token, newpassword);
             await _userManager.UpdateAsync(user);

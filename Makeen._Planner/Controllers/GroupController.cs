@@ -5,45 +5,45 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Makeen._Planner.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/groups")]
     [ApiController]
     public class GroupController(IGroupService groupService) : ControllerBase
     {
         private readonly IGroupService _groupService = groupService;
-        [HttpPost("Add-Groups")]
+        [HttpPost]
         public async Task<IActionResult> AddGroup(AddGroupCommand command)
         {
             await _groupService.AddGroup(command);
             return Ok();
         }
 
-        [HttpPost("Add-UserAndOtp")]
-        public async Task<IActionResult> AddUser(Guid groupid, Guid userid)
+        [HttpPost("users/{id}")]
+        public async Task<IActionResult> AddUser(Guid groupid, Guid id)
         {
-            await _groupService.AddUser(groupid, userid);
+            await _groupService.AddUser(groupid, id);
             return Ok();
         }
 
-        [HttpGet("All-Groups")]
+        [HttpGet]
         public async Task<IActionResult> GetAllGroups()
         {
             return Ok(await _groupService.GetAllAsync());
         }
 
-        [HttpGet("Group-By-Id")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetGroupById(Guid id)
         {
             return Ok(await _groupService.GetByIdAsync(id));
         }
 
-        [HttpPut("Update-Groups")]
+        [HttpPut("{id}")]
         public async Task<IActionResult> UpdateGroups(Guid id, UpdateGroupCommand command)
         {
             await _groupService.Update(id, command);
             return Ok();
         }
 
-        [HttpDelete("Delete-Groups")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGroups(Guid id)
         {
             await _groupService.Delete(id);

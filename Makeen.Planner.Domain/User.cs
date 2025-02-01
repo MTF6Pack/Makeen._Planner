@@ -3,6 +3,7 @@ using Domain.Task;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Domain
@@ -31,15 +32,21 @@ namespace Domain
 
         public static void AgeValidation(int age)
         {
-            if (age <= 6) throw new Exception("Age must be more than 5");
+            if (age <= 8) throw new Exception("Age must be more than 8");
         }
-        public void UpdateUser(string username, string email, int age, string phonenumber)
+        public void UpdateUser(string username, string email, int age, string phonenumber, IFormFile avatar, Guid Id)
         {
             UserName = username;
             AgeValidation(age);
             Age = age;
             Email = email;
             PhoneNumber = phonenumber;
+            var AvatarData = new MemoryStream();
+            if (avatar != null)
+            {
+                File.WriteAllBytes("C:\\Users\\MTF\\source\\repos\\Main project Makeen_Planner\\Makeen._Planner\\" + Id + ".png", AvatarData.ToArray());
+                avatar.CopyTo(AvatarData);
+            }
         }
         public User()
         {

@@ -11,7 +11,8 @@ namespace Makeen._Planner.Service
     {
         void SignUP(AddUserCommand command);
         Task<User?> GetUserById(Guid id);
-        Task<string> GenerateToken(string username, string password);
+        Task<User?> GetUserByEmail(string email);
+        Task<string> Signin(string username, string password);
         List<object>? GetAllUsers();
         Task UpdateUser(Guid id, UpdateUserCommand command);
         Task<IdentityResult> DeleteUser(Guid id);

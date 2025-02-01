@@ -1,40 +1,39 @@
 ﻿using Makeen._Planner.Task_Service;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Makeen._Planner.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v1/tasks")]
     [ApiController]
     public class TaskController(ITaskService taskService) : ControllerBase
     {
         private readonly ITaskService _taskservice = taskService;
 
-        [HttpPost("Add-Tasks")]
+        [HttpPost]
         public void AddTask([FromBody] AddTaskCommand command)
         {
             _taskservice.AddTask(command);
         }
 
-        [HttpDelete("Delete-Tasks")]
+        [HttpDelete("{id}")]
         public void DeleteTask(Guid id)
         {
             _taskservice.RemoveTask(id);
         }
 
-        [HttpPut("UpdateTask")]
-        public void UpdateTask(Guid taskId, [FromForm] UpdateTaskCommand command)
+        [HttpPut("{id}")]
+        public void UpdateTask(Guid id, [FromForm] UpdateTaskCommand command)
         {
-            _taskservice.UpdateTask(taskId, command);
+            _taskservice.UpdateTask(id, command);
         }
 
-        [HttpGet("GetAllTasks")]
+        [HttpGet]
         public async Task<IActionResult> GetAllTasks()
         {
             return Ok(await _taskservice.GetAllTasks());
         }
-        [HttpGet("GetTask")]
-        public IActionResult GetTask(string name)
+        [HttpGet("name")]
+        public IActionResult GetTaskByName(string name)
         {
             return Ok(_taskservice.GetObjectByName(name));
         }

@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Persistence.Repository.Base;
+using System.ComponentModel.DataAnnotations;
 
 namespace Persistence.Repository.Interface
 {

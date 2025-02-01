@@ -1,18 +1,22 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
 
 namespace Application.DataSeeder
 {
-    public class JwtToken
+    public class JwtToken(IConfiguration configuration)
     {
-        public static string Generate(string userId, string username)
+        private string? Secretkey { get; set; } = configuration["JWT:Key"];
+
+        public string Generate(string userId, string username)
         {
             if (userId != null && username != null)
             {
                 var tokenHandler = new JwtSecurityTokenHandler();
-                var key = Encoding.ASCII.GetBytes("1234567890qwerty1234567890qwerty");
+                var key = Encoding.ASCII.GetBytes(Secretkey!);
                 var tokenDescriptor = new SecurityTokenDescriptor
                 {
                     Subject = new ClaimsIdentity(
