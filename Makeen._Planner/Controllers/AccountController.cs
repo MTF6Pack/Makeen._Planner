@@ -17,12 +17,12 @@ namespace Makeen._Planner.Controllers
         private readonly IUserService _userService = userService;
 
         [HttpPost("SignUp")]
-        public IActionResult SignUp(AddUserCommand command)
+        public IActionResult SignUp([FromBody] AddUserCommand command)
         {
             _userService.SignUP(command);
             return Ok();
         }
-        [HttpGet("Signin/email")]
+        [HttpPost("Signin/email")]
         public async Task<IActionResult> Signin([EmailAddress] string email, string password)
         {
             return Ok(await _userService.Signin(email, password));
