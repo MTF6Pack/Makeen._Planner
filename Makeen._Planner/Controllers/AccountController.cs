@@ -17,27 +17,32 @@ namespace Makeen._Planner.Controllers
         private readonly IUserService _userService = userService;
 
         [HttpPost("SignUp")]
-        public IActionResult SignUp([FromBody] AddUserCommand command)
+        public void SignUp([FromBody] AddUserCommand command)
         {
             _userService.SignUP(command);
-            return Ok();
         }
         [HttpPost("Signin/email")]
-        public async Task<IActionResult> Signin([EmailAddress] string email, string password)
+        public void Signin([EmailAddress] string email, string password)
         {
-            return Ok(await _userService.Signin(email, password));
+            _userService.Signin(email, password);
         }
         [HttpPost("OTP")]
         public void SendOTP(string email)
-        { _oTPService.SendOTP(email); }
+        {
+            _oTPService.SendOTP(email);
+        }
         [HttpGet("OTP-result")]
-        public IActionResult CheckOTP(string email, string userinput)
-        { return Ok(_oTPService.CheckOTP(email, userinput)); }
+        public void CheckOTP(string email, string userinput)
+        {
+            _oTPService.CheckOTP(email, userinput);
+        }
         [HttpPost("Token")]
-        public async Task<string> GenerateResetPasswordToken(User user)
-        { return await _oTPService.GenerateResetPasswordToken(user); }
+        public async Task<IActionResult> GenerateResetPasswordToken(User user)
+        { return Ok(await _oTPService.GenerateResetPasswordToken(user)); }
         [HttpPost("Reset-Password")]
-        public async Task<IActionResult> ResetPassword(User user, string token, string newpassword)
-        { return Ok(await _oTPService.ResetPassword(user, token, newpassword)); }
+        public void ResetPassword(User user, string token, string newpassword)
+        {
+            _oTPService.ResetPassword(user, token, newpassword);
+        }
     }
 }

@@ -17,7 +17,6 @@ namespace Domain
         public List<Task.Task>? Tasks { get; private set; }
         public List<Group>? Groups { get; private set; }
         public List<Chart>? Charts { get; private set; }
-
         public User(string username, string email, int age, string phonenumber)
         {
             UserName = username;
@@ -29,7 +28,6 @@ namespace Domain
             CreationTime = DateTime.Now;
             HasAvatar = false;
         }
-
         public static void AgeValidation(int age)
         {
             if (age <= 8) throw new Exception("Age must be more than 8");

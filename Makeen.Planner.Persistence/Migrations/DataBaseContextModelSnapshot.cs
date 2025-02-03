@@ -17,7 +17,7 @@ namespace Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -57,7 +57,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Chart");
+                    b.ToTable("Chart", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Task.Group", b =>
@@ -79,7 +79,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Group");
+                    b.ToTable("Group", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Task.Task", b =>
@@ -122,7 +122,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Task");
+                    b.ToTable("Task", (string)null);
                 });
 
             modelBuilder.Entity("Domain.User", b =>
@@ -237,7 +237,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UsersId");
 
-                    b.ToTable("GroupUser");
+                    b.ToTable("GroupUser", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

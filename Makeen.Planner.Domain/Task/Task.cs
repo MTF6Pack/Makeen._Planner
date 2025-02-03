@@ -11,7 +11,7 @@ namespace Domain.Task
         public string Name { get; private set; } = string.Empty;
         public DateTime DeadLine { get; private set; }
         public DateTime CreationTime { get; private set; }
-        public bool IsInGroup { get; private set; }
+        public bool IsInGroup { get; private set; } = false;
         public TaskCategory TaskCategory { get; private set; }
         public PriorityCategory PriorityCategory { get; private set; }
         public TaskStatus Status { get; private set; }

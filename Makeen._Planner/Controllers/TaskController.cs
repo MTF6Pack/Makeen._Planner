@@ -10,9 +10,10 @@ namespace Makeen._Planner.Controllers
         private readonly ITaskService _taskservice = taskService;
 
         [HttpPost]
-        public void AddTask([FromBody] AddTaskCommand command)
+        public async Task<IActionResult> AddTask([FromForm] AddTaskCommand command)
         {
-            _taskservice.AddTask(command);
+            await _taskservice.AddTask(command);
+            return Ok();
         }
 
         [HttpDelete("{id}")]
@@ -27,10 +28,10 @@ namespace Makeen._Planner.Controllers
             _taskservice.UpdateTask(id, command);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAllTasks()
+        [HttpGet("{id}")]
+        public IActionResult GetAllUserTasks(Guid id)
         {
-            return Ok(await _taskservice.GetAllTasks());
+            return Ok(_taskservice.GetAllUserTasks(id));
         }
         [HttpGet("name")]
         public IActionResult GetTaskByName(string name)

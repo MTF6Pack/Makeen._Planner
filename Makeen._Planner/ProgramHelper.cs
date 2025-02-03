@@ -22,7 +22,6 @@ namespace Makeen._Planner
             Tools(builder);
             ConfigureJWT(builder);
             ConvertEnumToString(builder);
-            //ConfigureGoogle(builder.Build(), builder.Host);
         }
         public static void Tools(this WebApplicationBuilder builder)
         {
@@ -82,30 +81,6 @@ namespace Makeen._Planner
                 options.JsonSerializerOptions.DefaultIgnoreCondition =
                     JsonIgnoreCondition.WhenWritingNull;
             });
-        }
-        public static void ConfigureGoogle(IApplicationBuilder app, IWebHostEnvironment env)
-        {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
-                app.UseHsts();
-            }
-
-            app.UseHttpsRedirection();
-            app.UseRouting();
-
-            app.UseAuthentication(); // Add this line
-            app.UseAuthorization();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
-
         }
         public class TitleFilter() : IDocumentFilter
         {

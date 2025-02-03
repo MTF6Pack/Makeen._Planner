@@ -9,11 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Makeen.Plann
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Makeen.Planner.Domain\Domain.csproj", "{41476F69-C861-4990-AF13-B3C46B4A4E5F}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C624820F-5DA0-494C-AA25-4A81859C6BDE}"
-	ProjectSection(SolutionItems) = preProject
-		.editorconfig = .editorconfig
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Makeen._Planner.Application\Application.csproj", "{350EB820-3D87-4320-91ED-BF60962E6384}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrustucture", "Infrustucture\Infrustucture.csproj", "{D2B39D5B-E8EA-40C9-B7E6-5FA4F679A28A}"

@@ -25,6 +25,7 @@ namespace Domain.Report
         public string PendingOutofWhole { get; private set; } = string.Empty;
         public int DoneCount { get; private set; }
         public int PendingCount { get; private set; }
+        public int AllTasksCount { get; private set; }
 
         public Chart()
         {

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Domain.Task;
 using Domain;
 using Microsoft.EntityFrameworkCore;
+using Domain.Report;
 
 namespace Application.Group_Service
 {
@@ -24,8 +25,8 @@ namespace Application.Group_Service
         }
         public async System.Threading.Tasks.Task AddUser(Guid groupId, Guid userId)
         {
-            Domain.User? founduser = await _repository.StraitAccess().Set<Domain.User>().FindAsync(userId);
-            Group? thegroup = await _repository.StraitAccess().Set<Group>().Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == groupId);
+            User? founduser = await _repository.StraitAccess.Set<User>().FindAsync(userId);
+            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.Users).FirstOrDefaultAsync(x => x.Id == groupId);
 
             if (founduser != null && thegroup != null)
             {
@@ -35,7 +36,7 @@ namespace Application.Group_Service
         }
         public async Task<Group> GetByIdAsync(Guid groupid)
         {
-            var foundgroup = await _repository.GetByIdAsync(groupid);
+            var foundgroup = await _repository.StraitAccess.Set<Group>().Include(x => x.Users!.Count()).FirstOrDefaultAsync(x => x.Id == groupid);
             if (foundgroup != null) return foundgroup;
             else throw new Exception("Invalid Input");
         }

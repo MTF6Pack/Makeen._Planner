@@ -42,7 +42,7 @@ namespace Application.UserAndOtp.Services
         public async Task<string> Signin([EmailAddress] string email, string password)
         {
             SignInResult signinResult = new();
-            var theuser = _repository.StraitAccess().Set<User>().FirstOrDefault(x => x.Email == email);
+            var theuser = _repository.StraitAccess.Set<User>().FirstOrDefault(x => x.Email == email);
             if (theuser != null) { signinResult = await _signInManager.PasswordSignInAsync(theuser.UserName!, password, false, false); }
             if (!signinResult.Succeeded) { throw new Exception(JsonSerializer.Serialize(signinResult)); }
             else if (theuser != null && theuser.Email != null) { return _jwt.Generate(theuser.Id.ToString(), email); }

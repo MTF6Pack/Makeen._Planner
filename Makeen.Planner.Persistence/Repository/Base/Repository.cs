@@ -6,6 +6,9 @@ namespace Persistence.Repository.Base
     public class Repository<T>(DataBaseContext context) : IRepository<T> where T : class
     {
         private readonly DbSet<T> _DbSet = context.Set<T>();
+
+        DbContext IRepository<T>.StraitAccess { get => context; }
+
         public void Add(T entity)
         {
             _DbSet.Add(entity);
@@ -38,9 +41,9 @@ namespace Persistence.Repository.Base
             return await _DbSet.FindAsync(name);
         }
 
-        public DbContext StraitAccess()
-        {
-            return context;
-        }
+        //public DbContext StraitAccess()
+        //{
+        //    return context;
+        //}
     }
 }
