@@ -24,6 +24,12 @@ namespace Application.UserAndOtp.Services
             if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Age, user.Email, user.Id });
             return Userslist;
         }
+        public void SignUP(AddUserCommand command)
+        {
+            var user = command.ToModel();
+            var result = _userManager.CreateAsync(user, command.Password).Result;
+            if (!result.Succeeded) throw new Exception(result.Errors.First().Description);
+        }
         public async Task<IdentityResult> DeleteUser(Guid id)
         {
             var user = await _userManager.FindByIdAsync(id.ToString());
@@ -35,7 +41,7 @@ namespace Application.UserAndOtp.Services
             var user = await _userManager.FindByIdAsync(id.ToString());
             if (user != null && command.UserName != null)
             {
-                user.UpdateUser(command.UserName, command.Email, command.Age, command.PhoneNumber, command.Avatar!, user.Id);
+                user.UpdateUser(command.UserName, command.Email, command.Age, command.PhoneNumber, command.AvatarId);
                 await _userManager.UpdateAsync(user);
             }
         }
@@ -47,18 +53,6 @@ namespace Application.UserAndOtp.Services
             if (!signinResult.Succeeded) { throw new Exception(JsonSerializer.Serialize(signinResult)); }
             else if (theuser != null && theuser.Email != null) { return _jwt.Generate(theuser.Id.ToString(), email); }
             throw new Exception("Invalid input");
-        }
-        public void SignUP(AddUserCommand command)
-        {
-            var user = command.ToModel();
-            var result = _userManager.CreateAsync(user, command.Password).Result;
-            var AvatarData = new MemoryStream();
-            if (command.Avatar != null)
-            {
-                File.WriteAllBytes("C:\\Users\\MTF\\source\\repos\\Main project Makeen_Planner\\Makeen._Planner\\" + user.Id + ".png", AvatarData.ToArray());
-                command.Avatar.CopyTo(AvatarData);
-            }
-            if (!result.Succeeded) throw new Exception(result.Errors.First().Description);
         }
         public async void ChangePassword(Guid userId, string currentpassword, string newpassword)
         {

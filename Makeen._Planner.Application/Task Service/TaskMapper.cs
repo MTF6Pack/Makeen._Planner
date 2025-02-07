@@ -6,11 +6,9 @@
         {
             Domain.Task.Task newtask = new(
 
-                command.UserId,
                 command.GroupId,
                 command.Name,
                 command.DeadLine,
-                command.IsInGroup,
                 command.TaskCategory,
                 command.PriorityCategory,
                 command.Status

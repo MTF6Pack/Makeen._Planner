@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text.Json.Serialization;
 
 namespace Domain.Task
@@ -6,31 +7,28 @@ namespace Domain.Task
     public class Task
     {
         public Guid Id { get; private set; }
-        public Guid UserId { get; private set; }
-        public Guid? GroupId { get; private set; }
+        public User? User { get; private set; }
         public string Name { get; private set; } = string.Empty;
+        public Guid? GroupId { get; private set; }
+        public bool IsInGroup { get; private set; }
+        public TaskStatus Status { get; private set; }
         public DateTime DeadLine { get; private set; }
         public DateTime CreationTime { get; private set; }
-        public bool IsInGroup { get; private set; } = false;
         public TaskCategory TaskCategory { get; private set; }
         public PriorityCategory PriorityCategory { get; private set; }
-        public TaskStatus Status { get; private set; }
 
-
-
-        public Task(Guid userId, Guid? groupId, string name, DateTime deadLine, bool isInGroup,
+        public Task(Guid? groupId, string name, DateTime deadLine,
             TaskCategory taskCategory, PriorityCategory priorityCategory, TaskStatus status)
         {
-            Id = Guid.NewGuid();
-            CreationTime = DateTime.Now;
-            UserId = userId;
-            GroupId = groupId;
             Name = name;
-            DeadLine = deadLine;
-            IsInGroup = isInGroup;
-            TaskCategory = taskCategory;
-            PriorityCategory = priorityCategory;
             Status = status;
+            GroupId = groupId;
+            Id = Guid.NewGuid();
+            DeadLine = deadLine;
+            TaskCategory = taskCategory;
+            CreationTime = DateTime.Now;
+            PriorityCategory = priorityCategory;
+            IsInGroup = groupId != null;
         }
         public void UpdateTask(string name, DateTime deadline, TaskCategory taskCategory, PriorityCategory priorityCategory)
         {

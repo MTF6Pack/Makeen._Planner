@@ -8,6 +8,6 @@ namespace Makeen._Planner.Service
         public int Age { get; set; }
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public IFormFile? Avatar { get; set; }
+        public Guid? AvatarId { get; set; }
     }
 }

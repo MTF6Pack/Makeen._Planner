@@ -1,9 +1,5 @@
-﻿using Azure.Core;
-using Domain;
-using Domain.Task;
-using Microsoft.AspNetCore.Identity;
+﻿using Domain;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Migrations;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
 using Task = System.Threading.Tasks.Task;

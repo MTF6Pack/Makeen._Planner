@@ -23,11 +23,12 @@ namespace Makeen._Planner
 
             var app = builder.Build();
 
-            app.UseStaticFiles();
-            //app.Urls.Add("https://*:" + builder.Configuration["Port"]);
-
             var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<DataBaseContext>();
             if (context.Database.GetPendingMigrations().Any()) context.Database.Migrate();
+
+            app.UseStaticFiles();
+            app.Urls.Add("https://*:" + builder.Configuration["Port"]);
+
 
             //Configure the HTTP request pipeline.
 
@@ -41,8 +42,8 @@ namespace Makeen._Planner
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
-            //Console.WriteLine("Swagger Url : " + $"https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList
-            //    .FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)}:{builder.Configuration["Port"]}/swagger");
+            Console.WriteLine("Swagger Url : " + $"https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList
+                .FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)}:{builder.Configuration["Port"]}/swagger");
             app.Run();
         }
     }

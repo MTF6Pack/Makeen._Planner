@@ -1,9 +1,6 @@
-﻿using MySqlX.XDevAPI;
-using User = Domain.User;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Net;
 using System.Net.Mail;
-using Google.Protobuf.WellKnownTypes;
 
 namespace Application.DataSeeder.OTP
 {

@@ -1,6 +1,9 @@
 ﻿using Domain;
+using Domain.Task;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
+using Group = Domain.Task.Group;
 
 namespace Persistence
 {
@@ -13,14 +16,10 @@ namespace Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            //modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
-            //modelBuilder.UseEnumToStringConverter();
+            modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
+            modelBuilder.UseEnumToStringConverter();
         }
 
-        public static implicit operator DbSet<object>(DataBaseContext v)
-        {
-            throw new NotImplementedException();
-        }
-        //public required DbSet<User> Users { get; set; }
+        public required DbSet<Group> Groups { get; set; }
     }
 }

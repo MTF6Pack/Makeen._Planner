@@ -10,7 +10,7 @@ namespace Application.Group_Service
     public class UpdateGroupCommand
     {
         public required string Title { get; set; }
-        public IFormFile? AvatarUrl { get; set; }
+        public Guid? AvatarId { get; set; }
         public required string Color { get; set; }
         public Guid OwnerId { get; set; }
     }

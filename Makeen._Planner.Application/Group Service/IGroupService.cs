@@ -1,15 +1,15 @@
 ﻿using Domain.Task;
+using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service
 {
     public interface IGroupService
     {
-        System.Threading.Tasks.Task AddGroup(AddGroupCommand command);
-        void AddGroup(Guid groupid);
-        System.Threading.Tasks.Task AddUser(Guid groupId, Guid userId);
+        Task Delete(Guid id);
         Task<List<Group>> GetAllAsync();
         Task<Group> GetByIdAsync(Guid groupid);
-        System.Threading.Tasks.Task Update(Guid id, UpdateGroupCommand command);
-        System.Threading.Tasks.Task Delete(Guid id);
+        Task AddMember(Guid groupId, Guid userId);
+        Task AddGroup(AddGroupCommand command);
+        Task Update(Guid id, UpdateGroupCommand command);
     }
 }

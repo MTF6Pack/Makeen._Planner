@@ -1,15 +1,7 @@
 ﻿using Domain;
-using Domain.Report;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Migrations;
-using Persistence.Repository;
 using Persistence.Repository.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Chart
 {

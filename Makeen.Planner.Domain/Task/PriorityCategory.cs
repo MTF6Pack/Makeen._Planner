@@ -4,6 +4,6 @@
     {
         High = 1,
         Moderate = 2,
-        low = 3
+        Low = 3
     }
 }

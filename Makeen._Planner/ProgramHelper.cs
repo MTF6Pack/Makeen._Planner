@@ -1,6 +1,5 @@
 ﻿using Application.DataSeeder;
 using Domain;
-using Google.Protobuf.WellKnownTypes;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -51,10 +50,8 @@ namespace Makeen._Planner
             .AddDefaultTokenProviders();
 
             builder.Services.AddScoped<JwtToken>();
-
-
-
         }
+
         public static void ConfigureJWT(this WebApplicationBuilder builder)
         {
             builder.Services.AddAuthentication(option =>

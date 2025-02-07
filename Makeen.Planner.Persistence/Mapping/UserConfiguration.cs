@@ -9,7 +9,8 @@ namespace Persistence.Mapping
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.HasMany(x => x.Tasks);
-            builder.HasMany(x => x.Groups);
+            builder.Property(x => x.Id).ValueGeneratedNever();
+            builder.HasMany(x => x.Groups);/*.WithMany(x => x.Members);*/
             builder.HasMany(x => x.Charts);
         }
     }
