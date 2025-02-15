@@ -8,8 +8,8 @@ namespace Domain.Task
 {
     public enum TaskStatus
     {
-        Done,
-        Pending,
-        Failed
+        Done = 1,
+        Pending = 2,
+        Failed = 3
     }
 }

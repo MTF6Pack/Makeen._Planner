@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.DataProtection.Repositories;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
+using System.Security.Claims;
 
 namespace Makeen._Planner.Service
 {
@@ -16,5 +17,6 @@ namespace Makeen._Planner.Service
         List<object>? GetAllUsers();
         Task UpdateUser(Guid id, UpdateUserCommand command);
         Task<IdentityResult> DeleteUser(Guid id);
+        Task SigninByClaims(User user, Claim claims);
     }
 }

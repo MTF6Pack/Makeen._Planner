@@ -4,11 +4,11 @@ namespace Persistence.Repository.Base
 {
     public interface IRepository<T> where T : class
     {
-        void Add(T entity);
+        Task Add(T entity);
         Task AddAsync(T entity);
         Task<T?> GetByIdAsync(Guid id);
         DbContext StraitAccess { get; }
-        Task<List<T>> GetAllAsync();
-        void Delete(Guid id);
+        Task<List<T>?> GetAllAsync();
+        void Delete(T entity);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Infrustucture;
+using Microsoft.EntityFrameworkCore;
 using Persistence;
 
 namespace Persistence.Repository.Base
@@ -9,9 +10,9 @@ namespace Persistence.Repository.Base
 
         DbContext IRepository<T>.StraitAccess { get => context; }
 
-        public void Add(T entity)
+        public async Task Add(T entity)
         {
-            _DbSet.Add(entity);
+            await _DbSet.AddAsync(entity);
         }
 
         public async Task AddAsync(T entity)
@@ -19,31 +20,25 @@ namespace Persistence.Repository.Base
             await _DbSet.AddAsync(entity);
         }
 
-        public async void Delete(Guid id)
+        public void Delete(T entity)
         {
-            T? t = await GetByIdAsync(id);
-            if (t != null) _DbSet.Remove(t);
+            _DbSet.Remove(entity);
         }
 
         public async Task<T?> GetByIdAsync(Guid id)
         {
-            var user = _DbSet.FindAsync(id);
-            return await user;
+            var t = _DbSet.FindAsync(id);
+            return await t ?? throw new NotFoundException(nameof(t));
         }
 
-        public async Task<List<T>> GetAllAsync()
+        public async Task<List<T>?> GetAllAsync()
         {
             return await _DbSet.ToListAsync();
         }
 
         public async Task<T?> GetObjectByName(string name)
         {
-            return await _DbSet.FindAsync(name);
+            return await _DbSet.FindAsync(name) ?? throw new NotFoundException(nameof(name));
         }
-
-        //public DbContext StraitAccess()
-        //{
-        //    return context;
-        //}
     }
 }

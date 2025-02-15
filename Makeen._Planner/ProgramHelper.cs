@@ -1,6 +1,8 @@
 ﻿using Application.DataSeeder;
 using Domain;
 using Makeen._Planner.Service;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -18,16 +20,39 @@ namespace Makeen._Planner
     {
         public static void StartUp(this WebApplicationBuilder builder)
         {
-            Tools(builder);
             ConfigureJWT(builder);
+            Tools(builder);
             ConvertEnumToString(builder);
         }
         public static void Tools(this WebApplicationBuilder builder)
         {
-            builder.Services.AddDbContext<DataBaseContext>(options =>
+            builder.Services.AddCors(options =>
+
+                options.AddPolicy("AllowAllOrigins",
+                    builder => {
+                        builder.WithOrigins("https://192.168.1.156:6969")
+                              .AllowAnyMethod()
+                              .AllowAnyHeader()
+                              .AllowCredentials();
+                    }) 
+                );
+
+            builder.Services.AddAuthentication(options =>
             {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            })
+            .AddCookie()
+           .AddGoogle(options =>
+           {
+               options.ClientId = builder.Configuration["Google:ClientId"]!;
+               options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
+           });
+
+            builder.Services.AddDbContext<DataBaseContext>(options =>
+                {
+                    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+                });
 
             builder.Services.AddSwaggerGen(o => o.DocumentFilter<TitleFilter>());
 
@@ -48,6 +73,7 @@ namespace Makeen._Planner
             builder.Services.AddIdentity<User, UserRole>()
             .AddEntityFrameworkStores<DataBaseContext>()
             .AddDefaultTokenProviders();
+
 
             builder.Services.AddScoped<JwtToken>();
         }
@@ -87,6 +113,5 @@ namespace Makeen._Planner
                 doc.Info.Version = "Phase 1";
             }
         }
-
     }
 }

@@ -12,7 +12,6 @@ namespace Domain.Task
         public Guid? AvatarId { get; private set; }
         public List<User>? Members { get; private set; }
         public List<Task>? Tasks { get; private set; }
-        public List<Chart>? Charts { get; private set; }
 
         public Group(string title, Guid? avatarid, string color, Guid ownerId)
         {

@@ -1,18 +1,17 @@
-﻿using Application;
-using Microsoft.AspNetCore.Http;
+﻿using Infrustucture;
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace Makeen._Planner.Controllers
 {
     [Route("api/v1/charts")]
     [ApiController]
-    public class ChartController(IChartService chartService) : ControllerBase
+    public class ChartController : ControllerBase
     {
-        private readonly IChartService _chartService = chartService;
-        [HttpGet]
-        public Task<int> GetUserTasksCount(Guid userId)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetWeeklyReport(Guid id)
         {
-            return _chartService.GetUserStatus(userId);
+            return Ok(await Persistence.Dapper.TasksReport(id) ?? throw new NotFoundException(nameof(id)));
         }
     }
 }

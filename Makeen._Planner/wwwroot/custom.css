@@ -8,7 +8,174 @@
     border-radius: 11px;
     /*    border: 2.4px solid black;*/
 }
+.swagger-ui .topbar {
+    background-color: rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0.3px 4px 0 rgb(0 255 0);
+}
 
+    .swagger-ui .topbar .download-url-wrapper .select-label select {
+        background-color: rgb(255 255 255 / 5%);
+        color: white;
+    }
+
+.swagger-ui .responses-inner h4, .swagger-ui .responses-inner h5 {
+    color: #b6c0ff;
+}
+
+.swagger-ui .opblock .opblock-summary-description {
+    color: #b6c0ff;
+    font-family: sans-serif;
+    font-size: 14px;
+    background: inherit;
+    word-break: break-word;
+    padding: 7px;
+    border-radius: 11px;
+    /*    border: 2.4px solid black;*/
+}
+
+.swagger-ui .opblock .opblock-summary-path-description-wrapper {
+    justify-content: space-between;
+}
+
+body {
+    background-image: url("download.png");
+}
+
+* {
+    color: #8091ff;
+}
+
+.arrow {
+    background-color: rgba(100, 100, 255, 0.2);
+    border-radius: 5px;
+    width: 25px
+}
+
+.swagger-ui .scheme-container {
+    background-color: rgba(0, 0, 0, 0.2);
+    box-shadow: 0 0.2px 6px 0 rgb(4 255 214);
+}
+
+.swagger-ui .dialog-ux .modal-ux-header .close-modal {
+    background-color: rgba(70, 90, 255,0.33);
+    margin-right: 7px;
+    border-radius: 7px
+}
+
+.swagger-ui .dialog-ux .modal-ux-header h3 {
+    color: rgb(93 115 255);
+}
+
+.swagger-ui .dialog-ux .modal-ux {
+    background-color: rgb(0 0 0 / 50%);
+    border-color: rgb(4 255 214);
+    box-shadow: 0 0.2px 6px 0 rgb(4 255 214);
+}
+
+.swagger-ui .opblock {
+    box-shadow: none;
+}
+
+.swagger-ui .dialog-ux .modal-ux-header {
+    border-bottom-color: rgb(4 255 214);
+}
+
+#auth-bearer-value {
+    background-color: rgba(0, 0, 255, 0.04);
+}
+
+.swagger-ui .model-toggle:after {
+    background-color: rgba(100, 100, 255, 0.2);
+    border-radius: 5px;
+    width: 20px
+}
+
+.swagger-ui .authorization__btn .locked {
+    background-color: rgba(100, 100, 255, 0.2);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.swagger-ui .info .title {
+    color: #5f75ff;
+}
+
+.swagger-ui .markdown p, .swagger-ui .markdown pre, .swagger-ui .renderedMarkdown p, .swagger-ui .renderedMarkdown pre {
+    color: #5f75ff;
+}
+
+.swagger-ui table thead tr td, .swagger-ui table thead tr th {
+    color: #8091ff;
+}
+
+.swagger-ui .parameter__name {
+    color: #8091ff;
+}
+
+.swagger-ui .parameter__type {
+    color: #c7ceff;
+}
+
+.swagger-ui .parameter__extension, .swagger-ui .parameter__in {
+    color: #ffffff;
+}
+
+.swagger-ui .opblock .opblock-section-header {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.swagger-ui .btn {
+    color: #8091ff;
+}
+
+.swagger-ui .parameters-col_description input {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.swagger-ui .no-margin {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+}
+
+.swagger-ui .response-col_status {
+    color: #8091ff;
+}
+
+.swagger-ui .btn.cancel {
+    display: none;
+}
+
+.swagger-ui textarea {
+    background-color: rgb(0 0 0 / 44%);
+    border-radius: 20px;
+    color: #8091ffdb;
+}
+
+.swagger-ui .parameters-col_description input {
+    border-color: #94a1efdb;
+}
+
+.swagger-ui .parameters-col_description select {
+    background-color: rgb(0 0 0 / 70%);
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+.content {
+    position: relative;
+    z-index: 1; /* Bring content in front of the iframe */
+    color: white; /* Change text color for visibility */
+    text-align: center;
+    padding: 20px;
+}
+
+.swagger-ui img {
+    width: 35%;
+}
 .swagger-ui .opblock .opblock-summary-path-description-wrapper {
     justify-content: space-between;
 }

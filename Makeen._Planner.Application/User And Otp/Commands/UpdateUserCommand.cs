@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace Makeen._Planner.Service
 {
@@ -6,6 +7,7 @@ namespace Makeen._Planner.Service
     {
         public string? UserName { get; set; }
         public int Age { get; set; }
+        [EmailAddress]
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
         public Guid? AvatarId { get; set; }

@@ -6,7 +6,7 @@ namespace Application.Group_Service
     public interface IGroupService
     {
         Task Delete(Guid id);
-        Task<List<Group>> GetAllAsync();
+        Task<List<Group>?> GetAllAsync();
         Task<Group> GetByIdAsync(Guid groupid);
         Task AddMember(Guid groupId, Guid userId);
         Task AddGroup(AddGroupCommand command);

@@ -10,8 +10,7 @@
                 command.Name,
                 command.DeadLine,
                 command.TaskCategory,
-                command.PriorityCategory,
-                command.Status
+                command.PriorityCategory
                 );
 
             return newtask;

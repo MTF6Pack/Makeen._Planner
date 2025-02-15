@@ -2,9 +2,10 @@
 using Persistence;
 using System.Net.Sockets;
 using System.Net;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using static Makeen._Planner.ProgramHelper;
+using Azure;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 
 namespace Makeen._Planner
 {
@@ -14,10 +15,10 @@ namespace Makeen._Planner
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddControllers(options => { options.Filters.Add<DefaultExceptionFilter>(); });
             builder.StartUp();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddControllers();
 
             TitleFilter filter = new();
 
@@ -29,17 +30,18 @@ namespace Makeen._Planner
             app.UseStaticFiles();
             app.Urls.Add("https://*:" + builder.Configuration["Port"]);
 
-
             //Configure the HTTP request pipeline.
 
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            //if (app.Environment.IsDevelopment())
+
+            app.UseSwagger();
+            app.UseSwaggerUI(options => options.EnableTryItOutByDefault());
+
             app.MapControllers();
 
             app.UseHttpsRedirection();
+
+            app.UseCors("AllowAllOrigins");
             app.UseAuthentication();
             app.UseAuthorization();
             Console.WriteLine("Swagger Url : " + $"https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList

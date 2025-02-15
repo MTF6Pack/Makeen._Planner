@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
 using Domain;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication;
 
 namespace Makeen._Planner.Controllers
 {
@@ -20,16 +22,10 @@ namespace Makeen._Planner.Controllers
         {
             return Ok(_userService.GetAllUsers());
         }
-        [HttpGet("profile /{id}")]
-        public IActionResult MyProfile(Guid id)
-        {
-            return File(System.IO.File.ReadAllBytes(id + ".png"), "image/png");
-        }
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _userService.DeleteUser(id);
-            return Ok();
+            return Ok(await _userService.DeleteUser(id));
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById([FromRoute] Guid id)
@@ -49,9 +45,8 @@ namespace Makeen._Planner.Controllers
         }
 
 
-
         [HttpPost("tasks")]
-        public async Task<IActionResult> AddTask([FromForm] AddTaskCommand command)
+        public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command)
         {
             await _taskService.AddTask(command);
             return Ok();
@@ -63,19 +58,20 @@ namespace Makeen._Planner.Controllers
             _taskService.UpdateTask(id, command);
         }
         [HttpGet("tasks/name")]
-        public IActionResult GetTaskByName(string name)
+        public async Task<IActionResult> GetTaskByName(string name)
         {
-            return Ok(_taskService.GetObjectByName(name));
+            return Ok(await _taskService.GetObjectByName(name));
         }
         [HttpGet("tasks/{id}")]
-        public IActionResult GetAllUserTasks(Guid id)
+        public async Task<IActionResult> GetAllUserTasks(Guid id)
         {
-            return Ok(_taskService.GetAllUserTasks(id));
+            return Ok(await _taskService.GetAllUserTasks(id));
         }
         [HttpDelete("tasks/{id}")]
-        public void DeleteTask(Guid id)
+        public async Task<IActionResult> DeleteTask(Guid id)
         {
-            _taskService.RemoveTask(id);
+            await _taskService.RemoveTask(id);
+            return Ok();
         }
     }
 }

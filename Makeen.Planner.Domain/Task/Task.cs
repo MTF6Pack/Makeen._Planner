@@ -18,17 +18,18 @@ namespace Domain.Task
         public PriorityCategory PriorityCategory { get; private set; }
 
         public Task(Guid? groupId, string name, DateTime deadLine,
-            TaskCategory taskCategory, PriorityCategory priorityCategory, TaskStatus status)
+            TaskCategory taskCategory, PriorityCategory priorityCategory)
         {
             Name = name;
-            Status = status;
             GroupId = groupId;
             Id = Guid.NewGuid();
             DeadLine = deadLine;
+            Status = (TaskStatus)2;
             TaskCategory = taskCategory;
             CreationTime = DateTime.Now;
-            PriorityCategory = priorityCategory;
             IsInGroup = groupId != null;
+            PriorityCategory = priorityCategory;
+            if (DateTime.Now == DeadLine) Status = (TaskStatus)3;
         }
         public void UpdateTask(string name, DateTime deadline, TaskCategory taskCategory, PriorityCategory priorityCategory)
         {
@@ -36,6 +37,11 @@ namespace Domain.Task
             DeadLine = deadline;
             TaskCategory = taskCategory;
             PriorityCategory = priorityCategory;
+        }
+
+        public void Done()
+        {
+            Status = (TaskStatus)1;
         }
 
         public void UpdateTaskStatus(TaskStatus status)

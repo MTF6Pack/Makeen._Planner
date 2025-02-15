@@ -1,4 +1,5 @@
 ﻿using Domain;
+using Infrustucture;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
@@ -13,39 +14,45 @@ namespace Makeen._Planner.Task_Service
 
         public async Task AddTask(AddTaskCommand command)
         {
-            User? user = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == command.UserId);
-            if (user != null && command != null)
+            User? theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == command.UserId);
+            if (theuser != null && command != null)
             {
                 var task = command.ToModel();
-                user.Tasks!.Add(task);
+                theuser.Tasks!.Add(task);
                 _repository.StraitAccess.Set<Domain.Task.Task>().Add(task);
                 await _unitOfWork.SaveChangesAsync();
             }
+            else throw new NotFoundException(nameof(theuser) + " or " + nameof(command));
         }
-        public List<Domain.Task.Task> GetAllUserTasks(Guid userid)
+        public async Task<List<Domain.Task.Task>> GetAllUserTasks(Guid userid)
         {
-            var founduser = _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid).Result;
-            return [.. founduser!.Tasks];
+            var theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid);
+            return [.. theuser!.Tasks];
         }
-        public Domain.Task.Task? GetObjectByName(string name)
+        public async Task<Domain.Task.Task?> GetObjectByName(string name)
         {
-            Domain.Task.Task? task = _repository.StraitAccess.Set<Domain.Task.Task>().FirstOrDefault(x => x.Name == name);
-            return task;
+            Domain.Task.Task? task = await _repository.StraitAccess.Set<Domain.Task.Task>().FirstOrDefaultAsync(x => x.Name == name);
+            return task ?? throw new NotFoundException(nameof(task));
         }
-        public async void RemoveTask(Guid id)
+        public async Task RemoveTask(Guid id)
         {
-            _repository.Delete(id);
+            Domain.Task.Task? thetask = await _repository.GetByIdAsync(id);
+            if (thetask == null) throw new NotFoundException(nameof(thetask));
+            _repository.Delete(thetask);
             await _unitOfWork.SaveChangesAsync();
         }
-        public void UpdateTask(Guid id, UpdateTaskCommand command)
+        public async Task UpdateTask(Guid id, UpdateTaskCommand command)
         {
-            Domain.Task.Task? thetask = _repository.GetByIdAsync(id).Result;
+            Domain.Task.Task? thetask = await _repository.GetByIdAsync(id);
             if (command != null) thetask?.UpdateTask(command.Name, command.DeadLine, command.TaskCategory, command.PriorityCategory);
+            else throw new NotFoundException(nameof(thetask));
         }
-        public void UpdateTaskStatus(Guid id, Domain.Task.TaskStatus status)
+        public async Task UpdateTaskStatus(Guid id, Domain.Task.TaskStatus status)
         {
             Domain.Task.Task? thetask = _repository.GetByIdAsync(id).Result;
+            if (thetask != null) throw new NotFoundException(nameof(thetask));
             thetask?.UpdateTaskStatus(status);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 }
