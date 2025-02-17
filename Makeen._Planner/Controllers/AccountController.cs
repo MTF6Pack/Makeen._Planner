@@ -53,6 +53,7 @@ namespace Makeen._Planner.Controllers
 
         // هدایت به صفحه گوگل برای لاگین
         [HttpGet("google-login")]
+        [EndpointSummary("Not working yet!")]
         public IActionResult GoogleLogin(string returnUrl = "/")
         {
             var redirectUrl = Url.Action("GoogleResponse", "Account", new { returnUrl });
@@ -62,12 +63,13 @@ namespace Makeen._Planner.Controllers
 
         // دریافت اطلاعات پس از ورود موفق
         [HttpGet("google-response")]
+        [EndpointSummary("Not working yet!")]
         public async Task<IActionResult> GoogleResponse(string returnUrl = "/")
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             // اطلاعات کاربر
-            var claims = result.Principal.Identities.FirstOrDefault()?.Claims;
+            var claims = result.Principal!.Identities.FirstOrDefault()?.Claims;
             var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
 
             // ذخیره اطلاعات کاربر در سیستم شما (در صورت نیاز)
@@ -77,29 +79,35 @@ namespace Makeen._Planner.Controllers
 
 
         [HttpPost("SignUp")]
+        [EndpointSummary("Registers a user")]
         public void SignUp([FromBody] AddUserCommand command)
         {
             _userService.SignUP(command);
         }
         [HttpPost("SigninByClaims/email")]
+        [EndpointSummary("Login by email and password")]
         public void Signin([EmailAddress] string email, string password)
         {
             _userService.Signin(email, password);
         }
         [HttpPost("OTP")]
+        [EndpointSummary("Sends an one-time-password to the email")]
         public void SendOTP(string email)
         {
             _oTPService.SendOTP(email);
         }
         [HttpGet("OTP-result")]
+        [EndpointSummary("Verifies if the user input matches to the sent one-time-password")]
         public void CheckOTP(string email, string userinput)
         {
             _oTPService.CheckOTP(email, userinput);
         }
         [HttpPost("Token")]
+        [EndpointSummary("Generates the requaierd token of Reset-Password api for the otp-verified user")]
         public async Task<IActionResult> GenerateResetPasswordToken(User user)
         { return Ok(await _oTPService.GenerateResetPasswordToken(user)); }
         [HttpPost("Reset-Password")]
+        [EndpointSummary("Resets password for the otp-verified user (Token requaierd)")]
         public void ResetPassword(User user, string token, string newpassword)
         {
             _oTPService.ResetPassword(user, token, newpassword);

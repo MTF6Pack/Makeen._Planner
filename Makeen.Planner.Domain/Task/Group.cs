@@ -1,4 +1,5 @@
 ﻿using Domain.Report;
+using System.Text.Json.Serialization;
 
 namespace Domain.Task
 {
@@ -10,6 +11,7 @@ namespace Domain.Task
         public string Color { get; private set; } = string.Empty;
         public Guid OwnerId { get; private set; }
         public Guid? AvatarId { get; private set; }
+        [JsonIgnore]
         public List<User>? Members { get; private set; }
         public List<Task>? Tasks { get; private set; }
 
@@ -22,7 +24,7 @@ namespace Domain.Task
             Id = Guid.NewGuid();
         }
 
-        public void UpdateGroup(string title, Guid avatarurl, string color)
+        public void UpdateGroup(string title, Guid? avatarurl, string color)
         {
             Title = title;
             AvatarId = avatarurl;

@@ -2,6 +2,7 @@
 using Infrustucture;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using System.IO;
 
 namespace Makeen._Planner
 {
@@ -10,7 +11,7 @@ namespace Makeen._Planner
         public void OnException(ExceptionContext context)
         {
             var StatusCode = 400;
-            var Error = "Make sure the input data is valid then try again";
+            var Error = "Something went wrong, Make sure the input data is valid then try again";
 
             var exceptionType = context.Exception.GetType();
             var customExceptionAttribute = (CustomExceptionAttribute?)Attribute.GetCustomAttribute(
@@ -25,7 +26,7 @@ namespace Makeen._Planner
             {
                 File.AppendAllText
                 (
-                    "./Logs/Errors.txt",
+                    "Logs/Errors.txt",
                     DateTime.Now +
                     " | " +
                     context.Exception.Message +

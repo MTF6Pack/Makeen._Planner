@@ -7,6 +7,7 @@ namespace Domain.Task
     public class Task
     {
         public Guid Id { get; private set; }
+        [JsonIgnore]
         public User? User { get; private set; }
         public string Name { get; private set; } = string.Empty;
         public Guid? GroupId { get; private set; }

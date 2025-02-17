@@ -1,8 +1,10 @@
 ﻿using Domain;
 using Infrustucture;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
+using System;
 using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Task_Service
@@ -27,8 +29,19 @@ namespace Makeen._Planner.Task_Service
         public async Task<List<Domain.Task.Task>> GetAllUserTasks(Guid userid)
         {
             var theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid);
-            return [.. theuser!.Tasks];
+            return theuser == null ? throw new NotFoundException(nameof(theuser)) : ([.. theuser!.Tasks]);
         }
+        public async Task<List<Domain.Task.Task>?> GetAllTasks()
+        {
+            return await _repository.GetAllAsync();
+        }
+        public async Task<List<Domain.Task.Task>?> GetTheUserTasksByCalander(Guid userid, DateOnly date)
+        {
+
+            var theuserTasks = await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).Select(u => u.Tasks!.Where(t => (DateOnly.FromDateTime(t.CreationTime)) == date).ToList()).FirstOrDefaultAsync();
+            return theuserTasks ?? throw new NotFoundException(nameof(theuserTasks));
+        }
+
         public async Task<Domain.Task.Task?> GetObjectByName(string name)
         {
             Domain.Task.Task? task = await _repository.StraitAccess.Set<Domain.Task.Task>().FirstOrDefaultAsync(x => x.Name == name);

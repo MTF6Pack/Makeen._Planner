@@ -6,6 +6,7 @@ using static Makeen._Planner.ProgramHelper;
 using Azure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.VisualBasic;
 
 namespace Makeen._Planner
 {
@@ -15,7 +16,19 @@ namespace Makeen._Planner
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers(options => { options.Filters.Add<DefaultExceptionFilter>(); });
+            builder.Services.AddCors(options => options.AddPolicy("AllowAllOrigins", builder =>
+            {
+                builder.SetIsOriginAllowed(_ => true)
+                     .AllowAnyMethod()
+                     .AllowAnyHeader()
+                     .AllowCredentials();
+
+            }));
+
+            builder.Services.AddControllers(options =>
+            {
+                options.Filters.Add<DefaultExceptionFilter>();
+            });
             builder.StartUp();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -39,6 +52,7 @@ namespace Makeen._Planner
 
             app.MapControllers();
 
+            app.UseStaticFiles();
             app.UseHttpsRedirection();
 
             app.UseCors("AllowAllOrigins");

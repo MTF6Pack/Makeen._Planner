@@ -26,16 +26,17 @@ namespace Makeen._Planner
         }
         public static void Tools(this WebApplicationBuilder builder)
         {
-            builder.Services.AddCors(options =>
+            //builder.Services.AddCors(options =>
 
-                options.AddPolicy("AllowAllOrigins",
-                    builder => {
-                        builder.WithOrigins("https://192.168.1.156:6969")
-                              .AllowAnyMethod()
-                              .AllowAnyHeader()
-                              .AllowCredentials();
-                    }) 
-                );
+            //    options.AddPolicy("AllowAllOrigins",
+            //        builder =>
+            //        {
+            //            builder
+            //            .AllowAnyMethod()
+            //                  .AllowAnyHeader()
+            //                  .AllowCredentials();
+            //        })
+            //    );
 
             builder.Services.AddAuthentication(options =>
             {

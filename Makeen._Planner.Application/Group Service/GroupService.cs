@@ -26,9 +26,15 @@ namespace Application.Group_Service
         {
             return await _repository.GetAllAsync();
         }
-        public async Task<Group> GetByIdAsync(Guid groupid)
+        public async Task<object> GetByIdAsync(Guid groupid)
         {
-            var thegroup = await _repository.GetByIdAsync(groupid);
+            var thegroup = await _repository.StraitAccess.Set<Group>().Where(g => g.Id == groupid).Select(g => new
+            {
+                g.Id,
+                g.Title,
+                Members = g.Members!.Select(m => m.UserName).ToList()
+            })
+    .FirstOrDefaultAsync();
             if (thegroup != null) return thegroup;
             else throw new NotFoundException(nameof(thegroup));
         }
@@ -55,9 +61,9 @@ namespace Application.Group_Service
         }
         public async Task Update(Guid id, UpdateGroupCommand command)
         {
-            var thegroup = await GetByIdAsync(id);
+            var thegroup = await _repository.GetByIdAsync(id);
             if (thegroup == null) throw new NotFoundException(nameof(thegroup));
-            thegroup.UpdateGroup(command.Title, (Guid)command.AvatarId!, command.Color);
+            thegroup.UpdateGroup(command.Title, command.AvatarId!, command.Color);
             await _unitOfWork.SaveChangesAsync();
         }
     }

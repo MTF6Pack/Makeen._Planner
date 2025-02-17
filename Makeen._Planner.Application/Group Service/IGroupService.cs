@@ -7,7 +7,7 @@ namespace Application.Group_Service
     {
         Task Delete(Guid id);
         Task<List<Group>?> GetAllAsync();
-        Task<Group> GetByIdAsync(Guid groupid);
+        Task<object> GetByIdAsync(Guid groupid);
         Task AddMember(Guid groupId, Guid userId);
         Task AddGroup(AddGroupCommand command);
         Task Update(Guid id, UpdateGroupCommand command);
