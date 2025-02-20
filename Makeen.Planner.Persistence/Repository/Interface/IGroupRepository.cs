@@ -1,4 +1,4 @@
-﻿using Domain.Task;
+﻿using Domain;
 using Persistence.Repository.Base;
 using System;
 using System.Collections.Generic;

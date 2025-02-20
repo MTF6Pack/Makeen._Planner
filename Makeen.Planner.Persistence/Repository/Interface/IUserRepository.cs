@@ -6,5 +6,6 @@ namespace Persistence.Repository.Interface
 {
     public interface IUserRepository : IRepository<User>
     {
+        bool IsValidBase64(string base64String);
     }
 }

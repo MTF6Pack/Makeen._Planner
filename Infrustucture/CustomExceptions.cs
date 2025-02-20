@@ -11,7 +11,7 @@ namespace Infrustucture
     [CustomException(400)]
     public class BadRequestExeption : Exception
     {
-        readonly static string defaultmessage = " Invalid Info";
+        readonly static string defaultmessage = " Error Invalid input";
         public BadRequestExeption() : base(JsonSerializer.Serialize(new { Message = defaultmessage })) { }
         public BadRequestExeption(string message) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage })) { }
         public BadRequestExeption(string message, object content) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage, Content = content })) { }

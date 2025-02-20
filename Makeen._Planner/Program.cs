@@ -22,7 +22,6 @@ namespace Makeen._Planner
                      .AllowAnyMethod()
                      .AllowAnyHeader()
                      .AllowCredentials();
-
             }));
 
             builder.Services.AddControllers(options =>
@@ -42,10 +41,6 @@ namespace Makeen._Planner
 
             app.UseStaticFiles();
             app.Urls.Add("https://*:" + builder.Configuration["Port"]);
-
-            //Configure the HTTP request pipeline.
-
-            //if (app.Environment.IsDevelopment())
 
             app.UseSwagger();
             app.UseSwaggerUI(options => options.EnableTryItOutByDefault());

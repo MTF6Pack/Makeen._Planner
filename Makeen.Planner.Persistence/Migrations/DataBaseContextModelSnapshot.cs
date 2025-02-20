@@ -22,56 +22,14 @@ namespace Persistence.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Domain.Report.Chart", b =>
+            modelBuilder.Entity("Domain.Group", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("AllTasksCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("DoneCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("DoneOutofWhole")
-                        .IsRequired()
+                    b.Property<string>("AvatarUrl")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("GroupId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("PendingCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("PendingOutofWhole")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("WeekDay")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Chart");
-                });
-
-            modelBuilder.Entity("Domain.Task.Group", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("AvatarId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Color")
                         .IsRequired()
@@ -86,7 +44,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Groups");
+                    b.ToTable("Groups", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Task.Task", b =>
@@ -132,7 +90,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Task");
+                    b.ToTable("Task", (string)null);
                 });
 
             modelBuilder.Entity("Domain.User", b =>
@@ -143,11 +101,11 @@ namespace Persistence.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<int>("Age")
+                    b.Property<int?>("Age")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("Avatarid")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("AvatarUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -249,7 +207,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("MembersId");
 
-                    b.ToTable("GroupUser");
+                    b.ToTable("GroupUser", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -355,20 +313,9 @@ namespace Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Report.Chart", b =>
-                {
-                    b.HasOne("Domain.Task.Group", null)
-                        .WithMany("Charts")
-                        .HasForeignKey("GroupId");
-
-                    b.HasOne("Domain.User", null)
-                        .WithMany("Charts")
-                        .HasForeignKey("UserId");
-                });
-
             modelBuilder.Entity("Domain.Task.Task", b =>
                 {
-                    b.HasOne("Domain.Task.Group", null)
+                    b.HasOne("Domain.Group", null)
                         .WithMany("Tasks")
                         .HasForeignKey("GroupId");
 
@@ -381,7 +328,7 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("GroupUser", b =>
                 {
-                    b.HasOne("Domain.Task.Group", null)
+                    b.HasOne("Domain.Group", null)
                         .WithMany()
                         .HasForeignKey("GroupsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -445,17 +392,13 @@ namespace Persistence.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Domain.Task.Group", b =>
+            modelBuilder.Entity("Domain.Group", b =>
                 {
-                    b.Navigation("Charts");
-
                     b.Navigation("Tasks");
                 });
 
             modelBuilder.Entity("Domain.User", b =>
                 {
-                    b.Navigation("Charts");
-
                     b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618

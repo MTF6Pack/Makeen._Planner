@@ -10,6 +10,6 @@ namespace Makeen._Planner.Service
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
         public string PhoneNumber { get; set; } = string.Empty;
-        public Guid? AvatarId { get; set; }
+        public string? AvatarUrl { get; set; }
     }
 }

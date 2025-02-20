@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Persistence.Repository.Interface;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
@@ -22,9 +24,10 @@ namespace Application.UserAndOtp.Services
         private readonly IUserRepository _repository = repository;
         private readonly JwtToken _jwt = jwt;
 
-        public async Task<User?> GetUserById(Guid id)
+        public async Task<object?> GetUserById(Guid id)
         {
-            var theuser = await _userManager.FindByIdAsync(id.ToString());
+            var theuser = await _userManager.Users.Where(u => u.Id == id)
+        .Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl }).FirstOrDefaultAsync();
             return theuser ?? throw new NotFoundException(nameof(theuser));
         }
         public async Task<User?> GetUserByEmail(string email)
@@ -39,30 +42,27 @@ namespace Application.UserAndOtp.Services
             if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Age, user.Email, user.Id });
             return Userslist;
         }
-        public void SignUP(AddUserCommand command)
+        public async Task<string> SignUP(AddUserCommand command)
         {
-            var user = command.ToModel();
-            var result = _userManager.CreateAsync(user, command.Password).Result;
-            if (!result.Succeeded) throw new BadRequestExeption();
+            var theuser = command.ToModel();
+            var result = await _userManager.CreateAsync(theuser, command.Password);
+            if (!result.Succeeded) throw new BadRequestExeption("Password or/and Email");
+            else return _jwt.Generate(theuser.Id.ToString(), command.Email);
         }
         public async Task<IdentityResult> DeleteUser(Guid id)
         {
             var theuser = await _userManager.FindByIdAsync(id.ToString());
             if (theuser == null) throw new NotFoundException(nameof(theuser));
             await _userManager.DeleteAsync(theuser);
-            return IdentityResult.Success ?? throw new Exception("the user was not deleted");
+            return IdentityResult.Success ?? throw new Exception("the theuser was not deleted");
         }
         public async Task UpdateUser(Guid id, UpdateUserCommand command)
         {
             if (command.Age < 8) throw new BadRequestExeption("Age must be more than 8");
-            var theuser = await _userManager.FindByIdAsync(id.ToString());
-            if (theuser == null) throw new NotFoundException(nameof(theuser));
-            if (command.UserName != null)
-            {
-                theuser.UpdateUser(command.UserName, command.Email, command.Age, command.PhoneNumber, command.AvatarId);
-                await _userManager.UpdateAsync(theuser);
-            }
-            else throw new BadRequestExeption(nameof(command.UserName));
+            var theuser = await _userManager.FindByIdAsync(id.ToString()) ?? throw new NotFoundException("User");
+            theuser.UpdateUser(command.UserName ?? theuser.UserName!, command.Email ?? theuser.Email!, command.Age,
+                command.PhoneNumber ?? theuser.PhoneNumber!, command.AvatarUrl ?? theuser.AvatarUrl);
+            await _userManager.UpdateAsync(theuser);
         }
         public async Task<string> Signin([EmailAddress] string email, string password)
         {

@@ -1,9 +1,8 @@
 ﻿using Domain;
-using Domain.Task;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
-using Group = Domain.Task.Group;
+using Group = Domain.Group;
 
 namespace Persistence
 {

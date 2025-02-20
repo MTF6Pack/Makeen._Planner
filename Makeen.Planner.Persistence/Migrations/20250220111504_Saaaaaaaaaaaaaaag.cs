@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class ReInit : Migration
+    public partial class YosiPussy : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,8 +30,8 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Age = table.Column<int>(type: "int", nullable: false),
-                    Avatarid = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Age = table.Column<int>(type: "int", nullable: true),
+                    AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -61,7 +61,7 @@ namespace Persistence.Migrations
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Color = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OwnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    AvatarId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -175,35 +175,6 @@ namespace Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Chart",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    WeekDay = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DoneOutofWhole = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PendingOutofWhole = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    DoneCount = table.Column<int>(type: "int", nullable: false),
-                    PendingCount = table.Column<int>(type: "int", nullable: false),
-                    AllTasksCount = table.Column<int>(type: "int", nullable: false),
-                    GroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Chart", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Chart_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Chart_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "GroupUser",
                 columns: table => new
                 {
@@ -297,16 +268,6 @@ namespace Persistence.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Chart_GroupId",
-                table: "Chart",
-                column: "GroupId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Chart_UserId",
-                table: "Chart",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_GroupUser_MembersId",
                 table: "GroupUser",
                 column: "MembersId");
@@ -339,9 +300,6 @@ namespace Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
-
-            migrationBuilder.DropTable(
-                name: "Chart");
 
             migrationBuilder.DropTable(
                 name: "GroupUser");

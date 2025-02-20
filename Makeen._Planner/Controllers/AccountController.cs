@@ -17,11 +17,11 @@ namespace Makeen._Planner.Controllers
 {
     [Route("api/v1/accounts")]
     [ApiController]
-    public class AccountController(IOTPService oTPService, IUserService userService, JwtToken jwt) : ControllerBase
+    public class AccountController(IOTPService oTPService, IUserService userService) : ControllerBase
     {
         private readonly IOTPService _oTPService = oTPService;
         private readonly IUserService _userService = userService;
-        private readonly JwtToken _jwt = jwt;
+        //private readonly JwtToken _jwt = jwt;
 
         //[HttpGet("google-login")]
         //public IActionResult GoogleLogin(string returnUrl = "/")
@@ -79,16 +79,16 @@ namespace Makeen._Planner.Controllers
 
 
         [HttpPost("SignUp")]
-        [EndpointSummary("Registers a user")]
-        public void SignUp([FromBody] AddUserCommand command)
+        [EndpointSummary("Registers a user and sends token")]
+        public async Task<IActionResult> SignUp([FromBody] AddUserCommand command)
         {
-            _userService.SignUP(command);
+            return Ok(await _userService.SignUP(command));
         }
         [HttpPost("SigninByClaims/email")]
-        [EndpointSummary("Login by email and password")]
-        public void Signin([EmailAddress] string email, string password)
+        [EndpointSummary("Login by email and password and sends token")]
+        public async Task<IActionResult> Signin([EmailAddress] string email, string password)
         {
-            _userService.Signin(email, password);
+            return Ok(await _userService.Signin(email, password));
         }
         [HttpPost("OTP")]
         [EndpointSummary("Sends an one-time-password to the email")]

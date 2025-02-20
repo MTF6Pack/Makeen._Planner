@@ -10,8 +10,8 @@ namespace Makeen._Planner.Service
 {
     public interface IUserService
     {
-        void SignUP(AddUserCommand command);
-        Task<User?> GetUserById(Guid id);
+        Task<string> SignUP(AddUserCommand command);
+        Task<object?> GetUserById(Guid id);
         Task<User?> GetUserByEmail(string email);
         Task<string> Signin(string username, string password);
         List<object>? GetAllUsers();

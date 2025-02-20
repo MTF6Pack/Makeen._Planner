@@ -1,7 +1,6 @@
-﻿using Domain.Report;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace Domain.Task
+namespace Domain
 {
     public class Group
     {
@@ -10,24 +9,24 @@ namespace Domain.Task
         public string Title { get; private set; } = string.Empty;
         public string Color { get; private set; } = string.Empty;
         public Guid OwnerId { get; private set; }
-        public Guid? AvatarId { get; private set; }
+        public string? AvatarUrl { get; private set; }
         [JsonIgnore]
         public List<User>? Members { get; private set; }
-        public List<Task>? Tasks { get; private set; }
+        public List<Task.Task>? Tasks { get; private set; }
 
-        public Group(string title, Guid? avatarid, string color, Guid ownerId)
+        public Group(string title, string? avatar, string color, Guid ownerId)
         {
             Title = title;
             Color = color;
             OwnerId = ownerId;
-            AvatarId = avatarid;
+            AvatarUrl = avatar;
             Id = Guid.NewGuid();
         }
 
-        public void UpdateGroup(string title, Guid? avatarurl, string color)
+        public void UpdateGroup(string title, string? avatar, string color)
         {
             Title = title;
-            AvatarId = avatarurl;
+            AvatarUrl = avatar;
             Color = color;
         }
 

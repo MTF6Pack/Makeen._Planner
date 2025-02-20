@@ -1,4 +1,4 @@
-﻿using Domain.Task;
+﻿using Domain;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service

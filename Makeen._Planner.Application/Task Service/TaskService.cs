@@ -38,7 +38,7 @@ namespace Makeen._Planner.Task_Service
         public async Task<List<Domain.Task.Task>?> GetTheUserTasksByCalander(Guid userid, DateOnly date)
         {
 
-            var theuserTasks = await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).Select(u => u.Tasks!.Where(t => (DateOnly.FromDateTime(t.CreationTime)) == date).ToList()).FirstOrDefaultAsync();
+            var theuserTasks = await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).Select(u => u.Tasks!.Where(t => (DateOnly.FromDateTime(t.DeadLine)) == date).ToList()).FirstOrDefaultAsync();
             return theuserTasks ?? throw new NotFoundException(nameof(theuserTasks));
         }
 

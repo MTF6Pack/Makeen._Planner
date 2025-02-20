@@ -1,5 +1,8 @@
-﻿using Dapper;
+﻿using Application.Task_Service;
+using Dapper;
+using Domain;
 using Microsoft.Data.SqlClient;
+using System.Numerics;
 using System.Text.Json;
 using Task = Domain.Task.Task;
 
@@ -23,62 +26,59 @@ public static class Dapper
         var fivedaysago = DateTime.Now.AddDays(-5).Date;
         var sixdaysago = DateTime.Now.AddDays(-6).Date;
 
-        var userweekreport = (await connection.QueryAsync<Task>($"SELECT status,fourMAT(CreationTime, 'yyyy-MM-dd') AS CreationTime FROM[Planner].[dbo].[Task]" +
-            $" Where (userid = '{id}' or Groupid = '{id}') and (" +
-            $" CreationTime like '{today:yyyy-MM-dd}%' or" +
-            $" CreationTime like '{yesterday:yyyy-MM-dd}%' or" +
-            $" CreationTime like '{twodaysago:yyyy-MM-dd}%' or" +
-            $" CreationTime like '{threedaysago:yyyy-MM-dd)}%' or" +
-            $" CreationTime like '{fourdaysago:yyyy-MM-dd}%' or" +
-            $" CreationTime like '{fivedaysago:yyyy-MM-dd)}%' or" +
-            $" CreationTime like '{sixdaysago:yyyy-MM-dd}%')")
-            ).ToList();
+        var userweekreport = (await connection.QueryAsync<TaskDapperDto>($"SELECT status, Convert(date, DeadLine) AS DeadLine," +
+            $"(SELECT COUNT(*) FROM[Planner].[dbo].[Task] WHERE DeadLine > '{today:yyyy-MM-dd}'" +
+            $"AND(userid = '{id}' OR groupid = '{id}')" +
+            $"AND Status = 'Pending') AS FutureTasksCount FROM[Planner].[dbo].[Task]" +
+            $"WHERE DeadLine BETWEEN '{sixdaysago:yyyy-MM-dd}' AND '{today.AddDays(1):yyyy-MM-dd}'")).ToList();
 
         int weekAllTasksCount = userweekreport.Count;
-        int weekAllCompeletedTaskscount = userweekreport.Count(x => x.Status == (Domain.Task.TaskStatus)1);
+        int weekAllCompeletedTaskscount = userweekreport.Count(x => x.Status == "Done");
         int weekPendingCount = weekAllTasksCount - weekAllCompeletedTaskscount;
+        int allremainingFutureTasksCount = userweekreport.FirstOrDefault()!.FutureTasksCount;
         string weeklabel = $"{weekAllCompeletedTaskscount}/{weekAllTasksCount}";
 
         var todayDayOfWeek = today.DayOfWeek;
-        int todayAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == today);
-        int todayAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == today && x.Status == (Domain.Task.TaskStatus)1);
+        int todayAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == today);
+        int todayAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == today && x.Status == "Done");
         string todayLabel = $"{todayAllCompeletedTaskscount}/{todayAllTaskscount}";
 
         var yesterdayDayOfWeek = yesterday.DayOfWeek;
-        int yesterdayAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == yesterday);
-        int yesterdayAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == yesterday && x.Status == (Domain.Task.TaskStatus)1);
+        int yesterdayAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == yesterday);
+        int yesterdayAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == yesterday && x.Status == "Done");
         string yesterdayLabel = $"{yesterdayAllCompeletedTaskscount}/{yesterdayAllTaskscount}";
 
         var twodaysagoDayOfWeek = twodaysago.DayOfWeek;
-        int twodaysagoAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == twodaysago);
-        int twodaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == twodaysago && x.Status == (Domain.Task.TaskStatus)1);
+        int twodaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == twodaysago);
+        int twodaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == twodaysago && x.Status == "Done");
         string twodaysagoLabel = $"{twodaysagoAllCompeletedTaskscount}/{twodaysagoAllTaskscount}";
 
 
         var threedaysagoDayOfWeek = threedaysago.DayOfWeek;
-        int threedaysagoAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == threedaysago);
-        int threedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == threedaysago && x.Status == (Domain.Task.TaskStatus)1);
+        int threedaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == threedaysago);
+        int threedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == threedaysago && x.Status == "Done");
         string threedaysagoLabel = $"{threedaysagoAllCompeletedTaskscount}/{threedaysagoAllTaskscount}";
 
         var fourdaysagoDayOfWeek = fourdaysago.DayOfWeek;
-        int fourdaysagoAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == fourdaysago);
-        int fourdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == fourdaysago && x.Status == (Domain.Task.TaskStatus)1);
+        int fourdaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == fourdaysago);
+        int fourdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == fourdaysago && x.Status == "Done");
         string fourdaysagoLabel = $"{fourdaysagoAllCompeletedTaskscount}/{fourdaysagoAllTaskscount}";
 
         var fivedaysagoDayOfWeek = fivedaysago.DayOfWeek;
-        int fivedaysagoAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == fivedaysago);
-        int fivedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == fivedaysago && x.Status == (Domain.Task.TaskStatus)1);
+        int fivedaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == fivedaysago);
+        int fivedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == fivedaysago && x.Status == "Done");
         string fivedaysagoLabel = $"{fivedaysagoAllCompeletedTaskscount}/{fivedaysagoAllTaskscount}";
 
         var sixdaysagoDayOfWeek = sixdaysago.DayOfWeek;
-        int sixdaysagoAllTaskscount = userweekreport.Count(x => x.CreationTime.Date == sixdaysago);
-        int sixdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.CreationTime.Date == sixdaysago && x.Status == (Domain.Task.TaskStatus)1);
+        int sixdaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == sixdaysago);
+        int sixdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == sixdaysago && x.Status == "Done");
         string sixdaysagoLabel = $"{sixdaysagoAllCompeletedTaskscount}/{sixdaysagoAllTaskscount}";
 
         Dictionary<object, object> myDictionary = [];
         myDictionary.Add(nameof(weekAllTasksCount), weekAllTasksCount);
         myDictionary.Add(nameof(weekAllCompeletedTaskscount), weekAllCompeletedTaskscount);
         myDictionary.Add(nameof(weekPendingCount), weekPendingCount);
+        myDictionary.Add(nameof(allremainingFutureTasksCount), allremainingFutureTasksCount);
         myDictionary.Add(nameof(weeklabel), weeklabel);
         myDictionary.Add(nameof(todayAllTaskscount), todayAllTaskscount);
         myDictionary.Add(nameof(todayAllCompeletedTaskscount), todayAllCompeletedTaskscount);
@@ -113,3 +113,14 @@ public static class Dapper
     }
 }
 
+
+//var userweekreport = (await connection.QueryAsync<Task>($"SELECT status,FORMAT(DeadLine, 'yyyy-MM-dd') AS DeadLine FROM[Planner].[dbo].[Task]" +
+//    $" Where (userid = '{id}' or Groupid = '{id}') and (" +
+//    $" DeadLine like '{today:yyyy-MM-dd}%' or" +
+//    $" DeadLine like '{yesterday:yyyy-MM-dd}%' or" +
+//    $" DeadLine like '{twodaysago:yyyy-MM-dd}%' or" +
+//    $" DeadLine like '{threedaysago:yyyy-MM-dd)}%' or" +
+//    $" DeadLine like '{fourdaysago:yyyy-MM-dd}%' or" +
+//    $" DeadLine like '{fivedaysago:yyyy-MM-dd)}%' or" +
+//    $" DeadLine like '{sixdaysago:yyyy-MM-dd}%')"))
+//    .ToList();

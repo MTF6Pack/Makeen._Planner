@@ -1,11 +1,10 @@
 ﻿using Domain;
-using Domain.Task;
 using Infrustucture;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
 using System.Text.RegularExpressions;
-using Group = Domain.Task.Group;
+using Group = Domain.Group;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service
@@ -32,6 +31,7 @@ namespace Application.Group_Service
             {
                 g.Id,
                 g.Title,
+                g.AvatarUrl,
                 Members = g.Members!.Select(m => m.UserName).ToList()
             })
     .FirstOrDefaultAsync();
@@ -63,7 +63,7 @@ namespace Application.Group_Service
         {
             var thegroup = await _repository.GetByIdAsync(id);
             if (thegroup == null) throw new NotFoundException(nameof(thegroup));
-            thegroup.UpdateGroup(command.Title, command.AvatarId!, command.Color);
+            thegroup.UpdateGroup(command.Title, command.AvatarUrl, command.Color);
             await _unitOfWork.SaveChangesAsync();
         }
     }
