@@ -39,14 +39,14 @@ namespace Makeen._Planner.Controllers
         }
         [HttpPost("userid")]
         [EndpointSummary("Creates a group by a userid as its owner")]
-        public async Task<IActionResult> AddGroup(AddGroupCommand command)
+        public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command)
         {
             await _groupService.AddGroup(command);
             return Ok();
         }
         [HttpPut("{id}")]
         [EndpointSummary("Edites a group by the groupid")]
-        public async Task<IActionResult> UpdateGroups(Guid id, UpdateGroupCommand command)
+        public async Task<IActionResult> UpdateGroups(Guid id, [FromBody] UpdateGroupCommand command)
         {
             await _groupService.Update(id, command);
             return Ok();

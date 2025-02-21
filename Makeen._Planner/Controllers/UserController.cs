@@ -43,7 +43,7 @@ namespace Makeen._Planner.Controllers
         }
         [HttpPut("{id}")]
         [EndpointSummary("Edits a user by userid")]
-        public async Task<IActionResult> Update(Guid id, [FromForm] UpdateUserCommand command)
+        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserCommand command)
         {
             await _userService.UpdateUser(id, command);
             return Ok();
@@ -59,7 +59,7 @@ namespace Makeen._Planner.Controllers
         }
         [HttpPut("tasks/{id}")]
         [EndpointSummary("Edits a task for a user by userid")]
-        public void UpdateTask(Guid id, [FromForm] UpdateTaskCommand command)
+        public void UpdateTask(Guid id, [FromBody] UpdateTaskCommand command)
         {
             _taskService.UpdateTask(id, command);
         }

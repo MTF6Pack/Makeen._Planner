@@ -1,11 +1,14 @@
 ﻿using Application.DataSeeder;
 using Domain;
+using Infrustucture;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Persistence;
@@ -75,8 +78,14 @@ namespace Makeen._Planner
             .AddEntityFrameworkStores<DataBaseContext>()
             .AddDefaultTokenProviders();
 
+            builder.Services.AddMemoryCache();
 
             builder.Services.AddScoped<JwtToken>();
+
+            builder.Services.Configure<JsonOptions>(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeConverter());
+            });
         }
 
         public static void ConfigureJWT(this WebApplicationBuilder builder)

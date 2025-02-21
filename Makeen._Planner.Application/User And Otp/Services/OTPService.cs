@@ -14,14 +14,15 @@ namespace Application.UserAndOtp.Services
         public bool CheckOTP(string email, string userinput)
         {
             if (_emailOTPService.CheckInput(email, userinput)) { return true; }
-            else throw new BadRequestExeption();
+            else throw new BadRequestException("Invalid OTP provided.");
         }
         public async Task<string> GenerateResetPasswordToken(User user)
         { return await _userManager.GeneratePasswordResetTokenAsync(user); }
         public async Task<IdentityResult> ResetPassword(User user, string token, string newpassword)
         {
-            await _userManager.ResetPasswordAsync(user, token, newpassword);
+            var result = await _userManager.ResetPasswordAsync(user, token, newpassword);
             await _userManager.UpdateAsync(user);
+            if (!result.Succeeded) throw new BadRequestException("Error");
             return IdentityResult.Success;
         }
     }

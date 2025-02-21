@@ -9,12 +9,12 @@ namespace Infrustucture
 {
 
     [CustomException(400)]
-    public class BadRequestExeption : Exception
+    public class BadRequestException : Exception
     {
         readonly static string defaultmessage = " Error Invalid input";
-        public BadRequestExeption() : base(JsonSerializer.Serialize(new { Message = defaultmessage })) { }
-        public BadRequestExeption(string message) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage })) { }
-        public BadRequestExeption(string message, object content) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage, Content = content })) { }
+        public BadRequestException() : base(JsonSerializer.Serialize(new { Message = defaultmessage })) { }
+        public BadRequestException(string message) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage })) { }
+        public BadRequestException(string message, object content) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage, Content = content })) { }
     }
 
     [CustomException(404)]

@@ -1,16 +1,11 @@
-﻿using Application.DataSeeder.OTP;
-using Application.UserAndOtp.Services;
+﻿using Application.UserAndOtp.Services;
 using Domain;
 using Makeen._Planner.Service;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using Application.DataSeeder;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
@@ -21,6 +16,7 @@ namespace Makeen._Planner.Controllers
     {
         private readonly IOTPService _oTPService = oTPService;
         private readonly IUserService _userService = userService;
+
         //private readonly JwtToken _jwt = jwt;
 
         //[HttpGet("google-login")]
@@ -96,11 +92,11 @@ namespace Makeen._Planner.Controllers
         {
             _oTPService.SendOTP(email);
         }
-        [HttpGet("OTP-result")]
+        [HttpPost("OTP-result")]
         [EndpointSummary("Verifies if the user input matches to the sent one-time-password")]
-        public void CheckOTP(string email, string userinput)
+        public IActionResult CheckOTP(string email, string userinput)
         {
-            _oTPService.CheckOTP(email, userinput);
+            return Ok(_oTPService.CheckOTP(email, userinput));
         }
         [HttpPost("Token")]
         [EndpointSummary("Generates the requaierd token of Reset-Password api for the otp-verified user")]
@@ -108,9 +104,9 @@ namespace Makeen._Planner.Controllers
         { return Ok(await _oTPService.GenerateResetPasswordToken(user)); }
         [HttpPost("Reset-Password")]
         [EndpointSummary("Resets password for the otp-verified user (Token requaierd)")]
-        public void ResetPassword(User user, string token, string newpassword)
+        public async Task<IActionResult> ResetPassword(User user, string token, string newpassword)
         {
-            _oTPService.ResetPassword(user, token, newpassword);
+            return Ok(await _oTPService.ResetPassword(user, token, newpassword));
         }
     }
 }

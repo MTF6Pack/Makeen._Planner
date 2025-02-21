@@ -4,7 +4,6 @@ namespace Domain
 {
     public class User : IdentityUser<Guid>
     {
-        public int? Age { get; private set; }
         public string? AvatarUrl { get; private set; }
         public List<Group>? Groups { get; private set; }
         public DateTime CreationTime { get; private set; }
@@ -17,9 +16,8 @@ namespace Domain
             Id = Guid.NewGuid();
             CreationTime = DateTime.Now;
         }
-        public void UpdateUser(string username, string email, int? age, string phonenumber, string? avatarid)
+        public void UpdateUser(string username, string email, string phonenumber, string? avatarid)
         {
-            Age = age;
             Email = email;
             UserName = username;
             AvatarUrl = avatarid;

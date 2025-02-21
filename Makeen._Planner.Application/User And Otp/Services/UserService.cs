@@ -30,23 +30,24 @@ namespace Application.UserAndOtp.Services
         .Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl }).FirstOrDefaultAsync();
             return theuser ?? throw new NotFoundException(nameof(theuser));
         }
-        public async Task<User?> GetUserByEmail(string email)
+        public async Task<object?> GetUserByEmail(string email)
         {
-            var theuser = await _userManager.FindByEmailAsync(email);
+            var theuser = await _userManager.Users.Where(u => u.Email == email).
+            Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl }).FirstOrDefaultAsync();
             return theuser ?? throw new NotFoundException(nameof(theuser));
         }
         public List<object>? GetAllUsers()
         {
             var Userslist = new List<object>();
             var users = _userManager.Users;
-            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Age, user.Email, user.Id });
+            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Email, user.Id });
             return Userslist;
         }
         public async Task<string> SignUP(AddUserCommand command)
         {
             var theuser = command.ToModel();
             var result = await _userManager.CreateAsync(theuser, command.Password);
-            if (!result.Succeeded) throw new BadRequestExeption("Password or/and Email");
+            if (!result.Succeeded) throw new BadRequestException("Password or/and Email");
             else return _jwt.Generate(theuser.Id.ToString(), command.Email);
         }
         public async Task<IdentityResult> DeleteUser(Guid id)
@@ -54,13 +55,12 @@ namespace Application.UserAndOtp.Services
             var theuser = await _userManager.FindByIdAsync(id.ToString());
             if (theuser == null) throw new NotFoundException(nameof(theuser));
             await _userManager.DeleteAsync(theuser);
-            return IdentityResult.Success ?? throw new Exception("the theuser was not deleted");
+            return IdentityResult.Success ?? throw new BadRequestException("the theuser was not deleted");
         }
         public async Task UpdateUser(Guid id, UpdateUserCommand command)
         {
-            if (command.Age < 8) throw new BadRequestExeption("Age must be more than 8");
             var theuser = await _userManager.FindByIdAsync(id.ToString()) ?? throw new NotFoundException("User");
-            theuser.UpdateUser(command.UserName ?? theuser.UserName!, command.Email ?? theuser.Email!, command.Age,
+            theuser.UpdateUser(command.UserName ?? theuser.UserName!, command.Email ?? theuser.Email!,
                 command.PhoneNumber ?? theuser.PhoneNumber!, command.AvatarUrl ?? theuser.AvatarUrl);
             await _userManager.UpdateAsync(theuser);
         }
@@ -69,9 +69,9 @@ namespace Application.UserAndOtp.Services
             SignInResult signinResult = new();
             var theuser = _repository.StraitAccess.Set<User>().FirstOrDefault(x => x.Email == email);
             if (theuser != null) { signinResult = await _signInManager.PasswordSignInAsync(theuser.UserName!, password, false, false); }
-            if (!signinResult.Succeeded) { throw new Exception(JsonSerializer.Serialize(signinResult)); }
+            if (!signinResult.Succeeded) { throw new BadRequestException(JsonSerializer.Serialize(signinResult)); }
             else if (theuser != null && theuser.Email != null) { return _jwt.Generate(theuser.Id.ToString(), email); }
-            throw new BadRequestExeption();
+            throw new BadRequestException();
         }
         public async Task SigninByClaims(User user, Claim claims)
         {

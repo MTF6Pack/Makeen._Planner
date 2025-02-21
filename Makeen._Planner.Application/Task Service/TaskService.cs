@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
 using System;
+using System.Collections.Generic;
 using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Task_Service
@@ -16,6 +17,7 @@ namespace Makeen._Planner.Task_Service
 
         public async Task AddTask(AddTaskCommand command)
         {
+            if (command.DeadLine < DateTime.Now) throw new BadRequestException("Deadline cannot be in the past");
             User? theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == command.UserId);
             if (theuser != null && command != null)
             {
@@ -42,10 +44,10 @@ namespace Makeen._Planner.Task_Service
             return theuserTasks ?? throw new NotFoundException(nameof(theuserTasks));
         }
 
-        public async Task<Domain.Task.Task?> GetObjectByName(string name)
+        public async Task<List<Domain.Task.Task>> GetObjectByName(string name)
         {
-            Domain.Task.Task? task = await _repository.StraitAccess.Set<Domain.Task.Task>().FirstOrDefaultAsync(x => x.Name == name);
-            return task ?? throw new NotFoundException(nameof(task));
+            List<Domain.Task.Task> tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(x => x.Name == name).ToListAsync();
+            return tasks;
         }
         public async Task RemoveTask(Guid id)
         {

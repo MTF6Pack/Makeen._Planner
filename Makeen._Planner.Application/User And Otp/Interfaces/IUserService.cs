@@ -12,7 +12,7 @@ namespace Makeen._Planner.Service
     {
         Task<string> SignUP(AddUserCommand command);
         Task<object?> GetUserById(Guid id);
-        Task<User?> GetUserByEmail(string email);
+        Task<object?> GetUserByEmail(string email);
         Task<string> Signin(string username, string password);
         List<object>? GetAllUsers();
         Task UpdateUser(Guid id, UpdateUserCommand command);
