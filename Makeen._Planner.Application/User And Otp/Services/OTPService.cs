@@ -10,7 +10,7 @@ namespace Application.UserAndOtp.Services
         private readonly UserManager<User> _userManager = userManager;
         private readonly IBaseEmailOTP _emailOTPService = emailOTPService;
 
-        public void SendOTP(string email) => _emailOTPService.Send(email);
+        public void SendOTP(string email) => _emailOTPService.SendAsync(email);
         public bool CheckOTP(string email, string userinput)
         {
             if (_emailOTPService.CheckInput(email, userinput)) { return true; }

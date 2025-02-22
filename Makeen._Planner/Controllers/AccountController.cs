@@ -1,4 +1,5 @@
 ﻿using Application.UserAndOtp.Services;
+using Azure.Core;
 using Domain;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication;
@@ -82,19 +83,20 @@ namespace Makeen._Planner.Controllers
         }
         [HttpPost("SigninByClaims/email")]
         [EndpointSummary("Login by email and password and sends token")]
-        public async Task<IActionResult> Signin([EmailAddress] string email, string password)
+        public async Task<IActionResult> Signin([FromBody][EmailAddress] string email, string password)
         {
             return Ok(await _userService.Signin(email, password));
         }
         [HttpPost("OTP")]
         [EndpointSummary("Sends an one-time-password to the email")]
-        public void SendOTP(string email)
+        public IActionResult SendOTP([FromBody] string email)
         {
             _oTPService.SendOTP(email);
+            return Ok(new { message = "OTP sent successfully" });
         }
         [HttpPost("OTP-result")]
         [EndpointSummary("Verifies if the user input matches to the sent one-time-password")]
-        public IActionResult CheckOTP(string email, string userinput)
+        public IActionResult CheckOTP([FromBody] string email, string userinput)
         {
             return Ok(_oTPService.CheckOTP(email, userinput));
         }
