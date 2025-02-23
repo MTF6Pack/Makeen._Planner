@@ -13,15 +13,15 @@ namespace Application.UserAndOtp.Services
         public void SendOTP(string email) => _emailOTPService.SendAsync(email);
         public bool CheckOTP(string email, string userinput)
         {
-            if (_emailOTPService.CheckInput(email, userinput)) { return true; }
-            else throw new BadRequestException("Invalid OTP provided.");
+            return _emailOTPService.CheckInput(email, userinput);
         }
-        public async Task<string> GenerateResetPasswordToken(User user)
-        { return await _userManager.GeneratePasswordResetTokenAsync(user); }
-        public async Task<IdentityResult> ResetPassword(User user, string token, string newpassword)
+
+        public async Task<IdentityResult> ResetPassword(string email, string newpassword)
         {
-            var result = await _userManager.ResetPasswordAsync(user, token, newpassword);
-            await _userManager.UpdateAsync(user);
+            var theuser = await _userManager.FindByEmailAsync(email) ?? throw new NotFoundException("User");
+            var token = await _userManager.GeneratePasswordResetTokenAsync(theuser);
+            var result = await _userManager.ResetPasswordAsync(theuser, token, newpassword);
+            await _userManager.UpdateAsync(theuser);
             if (!result.Succeeded) throw new BadRequestException("Error");
             return IdentityResult.Success;
         }

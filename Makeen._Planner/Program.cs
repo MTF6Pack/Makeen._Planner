@@ -24,10 +24,6 @@ namespace Makeen._Planner
                      .AllowCredentials();
             }));
 
-            builder.Services.AddControllers(options =>
-            {
-                options.Filters.Add<DefaultExceptionFilter>();
-            });
             builder.StartUp();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -39,9 +35,9 @@ namespace Makeen._Planner
             var context = app.Services.CreateScope().ServiceProvider.GetRequiredService<DataBaseContext>();
             if (context.Database.GetPendingMigrations().Any()) context.Database.Migrate();
 
-            app.UseStaticFiles();
             app.Urls.Add("https://*:" + builder.Configuration["Port"]);
 
+            app.UseMiddleware<GlobalExceptionMiddleware>();
             app.UseSwagger();
             app.UseSwaggerUI(options => options.EnableTryItOutByDefault());
 

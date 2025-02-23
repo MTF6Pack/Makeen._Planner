@@ -12,16 +12,13 @@ namespace Infrustucture
     public class BadRequestException : Exception
     {
         readonly static string defaultmessage = " Error Invalid input";
-        public BadRequestException() : base(JsonSerializer.Serialize(new { Message = defaultmessage })) { }
-        public BadRequestException(string message) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage })) { }
-        public BadRequestException(string message, object content) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage, Content = content })) { }
+        public BadRequestException() : base(defaultmessage) { }
+        public BadRequestException(string message) : base(message + defaultmessage) { }
     }
 
     [CustomException(404)]
-    public class NotFoundException : Exception
+    public class NotFoundException(string message) : Exception(message + defaultmessage)
     {
         readonly static string defaultmessage = " Not found";
-        public NotFoundException(string message) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage })) { }
-        public NotFoundException(string message, object content) : base(JsonSerializer.Serialize(new { Message = message + defaultmessage, Content = content })) { }
     }
 }

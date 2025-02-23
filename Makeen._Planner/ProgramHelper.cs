@@ -29,17 +29,6 @@ namespace Makeen._Planner
         }
         public static void Tools(this WebApplicationBuilder builder)
         {
-            //builder.Services.AddCors(options =>
-
-            //    options.AddPolicy("AllowAllOrigins",
-            //        builder =>
-            //        {
-            //            builder
-            //            .AllowAnyMethod()
-            //                  .AllowAnyHeader()
-            //                  .AllowCredentials();
-            //        })
-            //    );
 
             builder.Services.AddAuthentication(options =>
             {

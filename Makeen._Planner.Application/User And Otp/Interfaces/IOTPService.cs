@@ -8,7 +8,6 @@ namespace Application.UserAndOtp.Services
     {
         void SendOTP(string email);
         bool CheckOTP(string email, string userinput);
-        Task<string> GenerateResetPasswordToken(User user);
-        Task<IdentityResult> ResetPassword(User user, string token, string newpassword);
+        Task<IdentityResult> ResetPassword(string email, string newpassword);
     }
 }

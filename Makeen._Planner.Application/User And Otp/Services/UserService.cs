@@ -69,7 +69,7 @@ namespace Application.UserAndOtp.Services
             SignInResult signinResult = new();
             var theuser = _repository.StraitAccess.Set<User>().FirstOrDefault(x => x.Email == email);
             if (theuser != null) { signinResult = await _signInManager.PasswordSignInAsync(theuser.UserName!, password, false, false); }
-            if (!signinResult.Succeeded) { throw new BadRequestException(JsonSerializer.Serialize(signinResult)); }
+            if (!signinResult.Succeeded) { throw new BadRequestException(signinResult.ToString()); }
             else if (theuser != null && theuser.Email != null) { return _jwt.Generate(theuser.Id.ToString(), email); }
             throw new BadRequestException();
         }

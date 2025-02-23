@@ -6,76 +6,54 @@ using System.IO;
 
 namespace Makeen._Planner
 {
-    public class DefaultExceptionFilter : IExceptionFilter
+    public class GlobalExceptionMiddleware(RequestDelegate next)
     {
-        public void OnException(ExceptionContext context)
+        private readonly RequestDelegate _next = next;
+
+        public async Task InvokeAsync(HttpContext context)
         {
-            var StatusCode = 400;
-            var Error = "Something went wrong, Make sure the input data is valid then try again";
-
-            var exceptionType = context.Exception.GetType();
-            var customExceptionAttribute = (CustomExceptionAttribute?)Attribute.GetCustomAttribute(
-            exceptionType, typeof(CustomExceptionAttribute));
-
-            if (customExceptionAttribute != null)
-            {
-                StatusCode = customExceptionAttribute.StatusCode;
-                Error = context.Exception.Message;
-            }
-            else
-            {
-                File.AppendAllText
-                (
-                    "Logs/Errors.txt",
-                    DateTime.Now +
-                    " | " +
-                    context.Exception.Message +
-                    "\n" +
-                    context.Exception.InnerException +
-                    "\n\nTrace : \n\n" +
-                    context.Exception.StackTrace
-                    + new string('-', 100) +
-                    "\n\n"
-                );
-
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine
-                (
-                    DateTime.Now +
-                    " | " +
-                    context.Exception.Message +
-                    "\n" +
-                    context.Exception.InnerException +
-                    "\n\nTrace : \n\n" +
-                    context.Exception.StackTrace
-                    + new string('-', 100)
-                );
-                Console.ResetColor();
-            }
-
             try
             {
-                context.Result = new ObjectResult(new
-                {
-                    Error = JsonSerializer.Deserialize<object>(Error),
-
-                })
-                {
-                    StatusCode = StatusCode
-                };
+                await _next(context);
             }
-            catch
+            catch (Exception ex)
             {
-                context.Result = new ObjectResult(new
-                {
-                    Error,
-
-                })
-                {
-                    StatusCode = StatusCode
-                };
+                await HandleExceptionAsync(context, ex);
             }
-            context.ExceptionHandled = true;
+        }
+
+        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        {
+            var (statusCode, errorMessage) = GetExceptionDetails(exception);
+
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = statusCode;
+
+            var result = JsonSerializer.Serialize(new { error = new { Message = errorMessage } });
+
+            return context.Response.WriteAsync(result);
+        }
+
+        private static (int, string) GetExceptionDetails(Exception exception)
+        {
+            var customExceptionAttribute = (CustomExceptionAttribute?)Attribute.GetCustomAttribute(
+                exception.GetType(), typeof(CustomExceptionAttribute));
+
+            if (customExceptionAttribute != null)
+                return (customExceptionAttribute.StatusCode, exception.Message);
+
+            LogError(exception);  // Log only when needed
+            return (400, "Something went wrong, Make sure the input data is valid then try again");
+        }
+
+        private static void LogError(Exception exception)
+        {
+            var logMessage = $"{DateTime.Now} | {exception.Message}\n{exception.InnerException}\n\nTrace:\n\n{exception.StackTrace}\n{new string('-', 100)}\n\n";
+            File.AppendAllText("Logs/Errors.txt", logMessage);
+
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(logMessage);
+            Console.ResetColor();
         }
     }
 }
