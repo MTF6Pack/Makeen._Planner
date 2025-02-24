@@ -15,7 +15,6 @@ namespace Application.UserAndOtp.Services
         {
             return _emailOTPService.CheckInput(email, userinput);
         }
-
         public async Task<IdentityResult> ResetPassword(string email, string newpassword)
         {
             var theuser = await _userManager.FindByEmailAsync(email) ?? throw new NotFoundException("User");

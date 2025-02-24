@@ -1,4 +1,5 @@
 ﻿using Application.DataSeeder;
+using Application.DataSeeder.OTP;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
@@ -17,10 +18,11 @@ using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace Application.UserAndOtp.Services
 {
-    public class UserService(UserManager<User> userManager, SignInManager<User> signInManager, IUserRepository repository, JwtToken jwt) : IUserService
+    public class UserService(UserManager<User> userManager, SignInManager<User> signInManager, IUserRepository repository, JwtToken jwt, IOTPService emailOTPService) : IUserService
     {
         private readonly UserManager<User> _userManager = userManager;
         private readonly SignInManager<User> _signInManager = signInManager;
+        private readonly IOTPService _emailOTPService = emailOTPService;
         private readonly IUserRepository _repository = repository;
         private readonly JwtToken _jwt = jwt;
 
@@ -45,9 +47,12 @@ namespace Application.UserAndOtp.Services
         }
         public async Task<string> SignUP(AddUserCommand command)
         {
+            var findresult = _userManager.FindByEmailAsync(command.Email);
+            if (findresult != null) throw new BadRequestException("Email already exists");
+            _emailOTPService.SendOTP(command.Email);
             var theuser = command.ToModel();
             var result = await _userManager.CreateAsync(theuser, command.Password);
-            if (!result.Succeeded) throw new BadRequestException("Password or/and Email");
+            if (!result.Succeeded) throw new BadRequestException("Password");
             else return _jwt.Generate(theuser.Id.ToString(), command.Email);
         }
         public async Task<IdentityResult> DeleteUser(Guid id)
@@ -72,10 +77,6 @@ namespace Application.UserAndOtp.Services
             if (!signinResult.Succeeded) { throw new BadRequestException(signinResult.ToString()); }
             else if (theuser != null && theuser.Email != null) { return _jwt.Generate(theuser.Id.ToString(), email); }
             throw new BadRequestException();
-        }
-        public async Task SigninByClaims(User user, Claim claims)
-        {
-            await _signInManager.SignInWithClaimsAsync(user, false, (IEnumerable<Claim>)claims);
         }
         public async void ChangePassword(Guid userId, string currentpassword, string newpassword)
         {
