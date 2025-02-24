@@ -49,7 +49,6 @@ namespace Application.UserAndOtp.Services
         {
             var findresult = _userManager.FindByEmailAsync(command.Email);
             if (findresult != null) throw new BadRequestException("Email already exists");
-            _emailOTPService.SendOTP(command.Email);
             var theuser = command.ToModel();
             var result = await _userManager.CreateAsync(theuser, command.Password);
             if (!result.Succeeded) throw new BadRequestException("Password");
