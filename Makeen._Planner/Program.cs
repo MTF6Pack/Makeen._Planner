@@ -1,12 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Persistence;
-using System.Net.Sockets;
 using System.Net;
+using System.Net.Sockets;
 using static Makeen._Planner.ProgramHelper;
-using Azure;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Cors.Infrastructure;
-using Microsoft.VisualBasic;
 
 namespace Makeen._Planner
 {

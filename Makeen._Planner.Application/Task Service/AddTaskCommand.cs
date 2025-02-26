@@ -6,7 +6,6 @@ namespace Makeen._Planner.Task_Service
 {
     public class AddTaskCommand
     {
-        public Guid UserId { get; set; }
         public Guid? GroupId { get; set; }
         [JsonConverter(typeof(FlexibleDateTimeConverter))]
         public DateTime DeadLine { get; set; }

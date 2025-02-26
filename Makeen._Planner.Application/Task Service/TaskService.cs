@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Application.DataSeeder;
+using Domain;
 using Infrustucture;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -10,15 +11,18 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Task_Service
 {
-    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork) : ITaskService
+    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork, JwtTokenService jwt) : ITaskService
     {
         private readonly ITaskRepository _repository = repository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly JwtTokenService _jwt = jwt;
 
-        public async Task AddTask(AddTaskCommand command)
+        public async Task AddTask(AddTaskCommand command, string token)
         {
+            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
+            var userid = JwtTokenService.GetUserIdFromPrincipal(claims);
             if (command.DeadLine < DateTime.Now) throw new BadRequestException("Deadline cannot be in the past");
-            User? theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == command.UserId);
+            User? theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid);
             if (theuser != null && command != null)
             {
                 var task = command.ToModel();
@@ -28,8 +32,10 @@ namespace Makeen._Planner.Task_Service
             }
             else throw new NotFoundException(nameof(theuser) + " or " + nameof(command));
         }
-        public async Task<List<Domain.Task.Task>> GetAllUserTasks(Guid userid)
+        public async Task<List<Domain.Task.Task>> GetAllUserTasks(string token)
         {
+            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
+            var userid = JwtTokenService.GetUserIdFromPrincipal(claims);
             var theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid);
             return theuser == null ? throw new NotFoundException(nameof(theuser)) : ([.. theuser!.Tasks]);
         }
@@ -37,9 +43,10 @@ namespace Makeen._Planner.Task_Service
         {
             return await _repository.GetAllAsync();
         }
-        public async Task<List<Domain.Task.Task>?> GetTheUserTasksByCalander(Guid userid, DateOnly date)
+        public async Task<List<Domain.Task.Task>?> GetTheUserTasksByCalander(DateOnly date, string token)
         {
-
+            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
+            var userid = JwtTokenService.GetUserIdFromPrincipal(claims);
             var theuserTasks = await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).Select(u => u.Tasks!.Where(t => (DateOnly.FromDateTime(t.DeadLine)) == date).ToList()).FirstOrDefaultAsync();
             return theuserTasks ?? throw new NotFoundException(nameof(theuserTasks));
         }
@@ -49,16 +56,18 @@ namespace Makeen._Planner.Task_Service
             List<Domain.Task.Task> tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(x => x.Name == name).ToListAsync();
             return tasks;
         }
-        public async Task RemoveTask(Guid id)
+        public async Task RemoveTask(Guid taskid)
         {
-            Domain.Task.Task? thetask = await _repository.GetByIdAsync(id);
+            Domain.Task.Task? thetask = await _repository.GetByIdAsync(taskid);
             if (thetask == null) throw new NotFoundException(nameof(thetask));
             _repository.Delete(thetask);
             await _unitOfWork.SaveChangesAsync();
         }
-        public async Task UpdateTask(Guid id, UpdateTaskCommand command)
+        public async Task UpdateTask(UpdateTaskCommand command, string token)
         {
-            Domain.Task.Task? thetask = await _repository.GetByIdAsync(id);
+            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
+            var userid = JwtTokenService.GetUserIdFromPrincipal(claims);
+            Domain.Task.Task? thetask = await _repository.GetByIdAsync(userid);
             if (command != null) thetask?.UpdateTask(command.Name, command.DeadLine, command.TaskCategory, command.PriorityCategory);
             else throw new NotFoundException(nameof(thetask));
         }

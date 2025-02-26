@@ -1,5 +1,6 @@
 ﻿using Application.Group_Service;
 using Makeen._Planner.Service;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,17 +32,18 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
         [HttpPost("{groupid}/users/{id}")]
-        [EndpointSummary("Creates a user by userid, to a group by the groupid")]
+        [EndpointSummary("Adds a user by userid, to a group by the groupid")]
         public async Task<IActionResult> AddUser(Guid groupid, Guid id)
         {
             await _groupService.AddMember(groupid, id);
             return Ok();
         }
-        [HttpPost("userid")]
-        [EndpointSummary("Creates a group by a userid as its owner")]
-        public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command)
+        [Authorize]
+        [HttpPost]
+        [EndpointSummary("Creates a group")]
+        public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command, [FromHeader] string token)
         {
-            await _groupService.AddGroup(command);
+            await _groupService.AddGroup(command, token);
             return Ok();
         }
         [HttpPut("{id}")]

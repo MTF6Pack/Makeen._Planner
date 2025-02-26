@@ -1,4 +1,5 @@
-﻿using Domain;
+﻿using Application.User_And_Otp.Commands;
+using Domain;
 using Microsoft.AspNetCore.Identity;
 using static System.Net.WebRequestMethods;
 
@@ -8,6 +9,6 @@ namespace Application.UserAndOtp.Services
     {
         void SendOTP(string email);
         bool CheckOTP(string email, string userinput);
-        Task<IdentityResult> ResetPassword(string email, string newpassword);
+        Task<IdentityResult> ResetPassword(ForgetPasswordDto request);
     }
 }

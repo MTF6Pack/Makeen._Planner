@@ -22,10 +22,13 @@ namespace Application.User_And_Otp.Commands
         public required string UserInput { get; set; }
     }
 
-    public record ResetPasswordDto
+    public record ForgetPasswordDto
     {
         [EmailAddress]
         public required string Email { get; set; }
-        public required string Newpassword { get; set; }
+        public required string Password { get; set; }
+        [Compare("Password", ErrorMessage = "Passwords do not match.")]
+        public required string ConfirmPassword { get; set; }
+
     }
 }

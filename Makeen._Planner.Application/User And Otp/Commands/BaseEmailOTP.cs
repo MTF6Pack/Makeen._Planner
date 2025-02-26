@@ -1,6 +1,4 @@
-﻿using Application.DataSeeder.OTP;
-using Microsoft.Extensions.Caching.Memory;
-using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.Extensions.Caching.Memory;
 using System.Net;
 using System.Net.Mail;
 
@@ -69,6 +67,3 @@ namespace Application.DataSeeder.OTP
         }
     }
 }
-
-
-

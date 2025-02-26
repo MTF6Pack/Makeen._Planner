@@ -1,10 +1,5 @@
-﻿using Application.DataSeeder.OTP;
-using Domain;
-using Microsoft.AspNetCore.DataProtection.Repositories;
+﻿using Application.User_And_Otp.Commands;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
-using System.Security.Claims;
 
 namespace Makeen._Planner.Service
 {
@@ -13,9 +8,9 @@ namespace Makeen._Planner.Service
         Task<string> SignUP(AddUserCommand command);
         Task<object?> GetUserById(Guid id);
         Task<object?> GetUserByEmail(string email);
-        Task<string> Signin(string username, string password);
+        Task<string> Signin(SigninDto request);
         List<object>? GetAllUsers();
-        Task UpdateUser(Guid id, UpdateUserCommand command);
+        Task UpdateUser(UpdateUserCommand command, string token);
         Task<IdentityResult> DeleteUser(Guid id);
     }
 }

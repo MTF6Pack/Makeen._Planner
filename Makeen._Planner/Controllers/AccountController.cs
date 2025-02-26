@@ -6,18 +6,22 @@ using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {
     [Route("api/v1/accounts")]
     [ApiController]
-    public class AccountController(IOTPService oTPService, IUserService userService) : ControllerBase
+    public class AccountController(IOTPService oTPService, IUserService userService, UserManager<User> userManager) : ControllerBase
     {
         private readonly IOTPService _oTPService = oTPService;
         private readonly IUserService _userService = userService;
+        private readonly UserManager<User> _userManager = userManager;
+
 
         //private readonly JwtToken _jwt = jwt;
 
@@ -83,9 +87,9 @@ namespace Makeen._Planner.Controllers
         }
         [HttpPost("Signin/email")]
         [EndpointSummary("Login by email and password and sends token")]
-        public async Task<IActionResult> Signin(SigninDto dto)
+        public async Task<IActionResult> Signin(SigninDto request)
         {
-            return Ok(await _userService.Signin(dto.Email, dto.Password));
+            return Ok(await _userService.Signin(request));
         }
         [HttpPost("OTP")]
         [EndpointSummary("Sends an one-time-password to the email")]
@@ -101,11 +105,29 @@ namespace Makeen._Planner.Controllers
             return Ok(_oTPService.CheckOTP(dto.Email, dto.UserInput));
         }
 
-        [HttpPost("Reset-Password")]
+        [HttpPost("Forget-Password")]
         [EndpointSummary("Resets password; Use it only for the otp-verified user")]
-        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+        public async Task<IActionResult> ResetPassword(ForgetPasswordDto request)
         {
-            return Ok(await _oTPService.ResetPassword(dto.Email, dto.Newpassword));
+            return Ok(await _oTPService.ResetPassword(request));
         }
+
+        [HttpGet("confirm-emails")]
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+                return BadRequest("User ID and token are required.");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return BadRequest("Invalid user ID.");
+
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+                return Ok("Email confirmed successfully!");
+
+            return BadRequest("Email confirmation failed.");
+        }
+
     }
 }

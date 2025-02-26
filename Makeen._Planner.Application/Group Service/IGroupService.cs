@@ -9,7 +9,7 @@ namespace Application.Group_Service
         Task<List<Group>?> GetAllAsync();
         Task<object> GetByIdAsync(Guid groupid);
         Task AddMember(Guid groupId, Guid userId);
-        Task AddGroup(AddGroupCommand command);
+        Task AddGroup(AddGroupCommand command, string token);
         Task Update(Guid id, UpdateGroupCommand command);
     }
 }

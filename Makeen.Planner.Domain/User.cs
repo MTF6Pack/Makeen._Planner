@@ -5,14 +5,14 @@ namespace Domain
     public class User : IdentityUser<Guid>
     {
         public string? AvatarUrl { get; private set; }
-        public List<Group>? Groups { get; private set; }
+        public List<Group> Groups { get; private set; } = [];
         public DateTime CreationTime { get; private set; }
-        public List<Task.Task>? Tasks { get; private set; }
+        public List<Task.Task> Tasks { get; private set; } = [];
 
         public User(string email)
         {
             Email = email;
-            UserName = email;
+            UserName = email[..email.IndexOf('@')];
             Id = Guid.NewGuid();
             CreationTime = DateTime.Now;
         }

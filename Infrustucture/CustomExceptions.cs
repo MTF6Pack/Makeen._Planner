@@ -16,6 +16,12 @@ namespace Infrustucture
         public BadRequestException(string message) : base(message + defaultmessage) { }
     }
 
+    [CustomException(401)]
+    public class UnauthorizedException : Exception
+    {
+        public UnauthorizedException() : base("Missing or Expired Token") { }
+    }
+
     [CustomException(404)]
     public class NotFoundException(string message) : Exception(message + defaultmessage)
     {

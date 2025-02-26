@@ -1,4 +1,5 @@
 ﻿using Application.DataSeeder;
+using Application.EmailConfirmation;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
@@ -6,9 +7,9 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Persistence;
@@ -49,7 +50,6 @@ namespace Makeen._Planner
 
             builder.Services.AddSwaggerGen(o => o.DocumentFilter<TitleFilter>());
 
-
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserRepository>() // Scans the assembly containing IUserRepository
                 .AddClasses() // Finds all classes that implement IUserRepository
@@ -67,9 +67,10 @@ namespace Makeen._Planner
             .AddEntityFrameworkStores<DataBaseContext>()
             .AddDefaultTokenProviders();
 
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
             builder.Services.AddMemoryCache();
 
-            builder.Services.AddScoped<JwtToken>();
+            builder.Services.AddScoped<JwtTokenService>();
 
             builder.Services.Configure<JsonOptions>(options =>
             {

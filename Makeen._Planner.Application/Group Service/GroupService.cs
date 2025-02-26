@@ -1,18 +1,19 @@
-﻿using Domain;
+﻿using Application.DataSeeder;
+using Domain;
 using Infrustucture;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
-using System.Text.RegularExpressions;
 using Group = Domain.Group;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service
 {
-    public class GroupService(IGroupRepository repository, IUnitOfWork unitOfWork) : IGroupService
+    public class GroupService(IGroupRepository repository, IUnitOfWork unitOfWork, JwtTokenService jwt) : IGroupService
     {
         private readonly IGroupRepository _repository = repository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly JwtTokenService _jwt = jwt;
 
         public async Task Delete(Guid id)
         {
@@ -38,12 +39,14 @@ namespace Application.Group_Service
             if (thegroup != null) return thegroup;
             else throw new NotFoundException(nameof(thegroup));
         }
-        public async Task AddGroup(AddGroupCommand command)
+        public async Task AddGroup(AddGroupCommand command, string token)
         {
-            Group newgroup = command.ToModel();
+            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
+            var ownerid = JwtTokenService.GetUserIdFromPrincipal(claims);
+            Group newgroup = command.ToModel(ownerid);
             await _repository.AddAsync(newgroup);
             await _unitOfWork.SaveChangesAsync();
-            await AddMember(newgroup.Id, command.OwnerId);
+            await AddMember(newgroup.Id, ownerid);
             await _unitOfWork.SaveChangesAsync();
         }
         public async Task AddMember(Guid groupId, Guid userId)

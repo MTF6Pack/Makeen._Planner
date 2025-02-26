@@ -41,57 +41,62 @@ namespace Makeen._Planner.Controllers
         {
             return Ok(await _userService.GetUserByEmail(email));
         }
-        [HttpPut("{id}")]
-        [EndpointSummary("Edits a user by userid")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserCommand command)
+        [Authorize]
+        [HttpPut]
+        [EndpointSummary("Edits the user")]
+        public async Task<IActionResult> Update([FromBody] UpdateUserCommand command, [FromHeader] string token)
         {
-            await _userService.UpdateUser(id, command);
+            await _userService.UpdateUser(command, token);
             return Ok();
         }
 
-
+        [Authorize]
         [HttpPost("tasks")]
-        [EndpointSummary("Creates a task for a user by userid")]
-        public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command)
+        [EndpointSummary("Creates a task for the user")]
+        public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command, [FromHeader] string token)
         {
-            await _taskService.AddTask(command);
+            await _taskService.AddTask(command, token);
             return Ok();
         }
-        [HttpPut("tasks/{id}")]
-        [EndpointSummary("Edits a task for a user by userid")]
-        public void UpdateTask(Guid id, [FromBody] UpdateTaskCommand command)
+        [Authorize]
+        [HttpPut("tasks")]
+        [EndpointSummary("Edits a task for the user")]
+        public async Task UpdateTask([FromBody] UpdateTaskCommand command, [FromHeader] string token)
         {
-            _taskService.UpdateTask(id, command);
+            await _taskService.UpdateTask(command, token);
         }
+
         [HttpGet("tasks/name")]
         [EndpointSummary("Fetches a task by the task name")]
         public async Task<IActionResult> GetTaskByName(string name)
         {
             return Ok(await _taskService.GetObjectByName(name));
         }
-        [HttpGet("tasks/{id}")]
-        [EndpointSummary("Fetches all tasks of a user by userid")]
-        public async Task<IActionResult> GetTheUserTasks(Guid id)
-        {
-            return Ok(await _taskService.GetAllUserTasks(id));
-        }
-        [HttpGet("tasks/{id}/Calender")]
-        [EndpointSummary("Fetches all tasks of a user in a specific date by user id and the date")]
-        public async Task<IActionResult> GetTheUserTasksByCalander(Guid id, DateOnly date)
-        {
-            return Ok(await _taskService.GetTheUserTasksByCalander(id, date));
-        }
+        [Authorize]
         [HttpGet("tasks")]
+        [EndpointSummary("Fetches all tasks of the user")]
+        public async Task<IActionResult> GetTheUserTasks([FromHeader] string token)
+        {
+            return Ok(await _taskService.GetAllUserTasks(token));
+        }
+        [Authorize]
+        [HttpGet("tasks/Calender")]
+        [EndpointSummary("Fetches all tasks of the user in a specific date")]
+        public async Task<IActionResult> GetTheUserTasksByCalander(DateOnly date, [FromHeader] string token)
+        {
+            return Ok(await _taskService.GetTheUserTasksByCalander(date, token));
+        }
+        [HttpGet("tasks/All")]
         [EndpointSummary("Fetches all tasks")]
         public async Task<IActionResult> GetAllTasks()
         {
             return Ok(await _taskService.GetAllTasks());
         }
-        [HttpDelete("tasks/{id}")]
-        [EndpointSummary("Deletes a task of a user by userid")]
-        public async Task<IActionResult> DeleteTask(Guid id)
+        [HttpDelete("tasks/{taskid}")]
+        [EndpointSummary("Deletes a task of the user by taskid")]
+        public async Task<IActionResult> DeleteTask(Guid taskid)
         {
-            await _taskService.RemoveTask(id);
+            await _taskService.RemoveTask(taskid);
             return Ok();
         }
     }
