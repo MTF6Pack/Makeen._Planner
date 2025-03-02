@@ -15,9 +15,8 @@ namespace Application.EmailConfirmation
         public async Task SendEmailAsync(string email, string subject, string messageBody)
         {
             _cache.Remove(email);
-            // Generate a unique confirmation token
             string confirmationToken = GenerateConfirmationToken();
-            _cache.Set(email, confirmationToken, TimeSpan.FromMinutes(15)); // Cache token for 15 minutes
+            _cache.Set(email, confirmationToken, TimeSpan.FromMinutes(5)); // Cache token for 5 minutes
 
             // SMTP Client setup
             using var client = new SmtpClient

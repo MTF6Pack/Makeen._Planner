@@ -1,4 +1,7 @@
-﻿using Infrustucture;
+﻿using Domain;
+using Infrustucture;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -7,72 +10,36 @@ using System.Text;
 
 namespace Application.DataSeeder
 {
+
     public class JwtSettings
     {
         public string Key { get; set; } = string.Empty;
-        public int ExpirationDays { get; set; } = 7; // Default to 7 days
+        public string Issuer { get; set; } = string.Empty;
+        public string Audience { get; set; } = string.Empty;
     }
-
-    public class JwtTokenService(IOptions<JwtSettings> jwtSettings)
+    public class JwtTokenService(IConfiguration configuration, UserManager<User> userManager)
     {
-        private readonly string _secretKey = jwtSettings.Value.Key ?? throw new ArgumentNullException(nameof(jwtSettings), "JWT Key is missing.");
-        private readonly int _expirationDays = jwtSettings.Value.ExpirationDays;
+        public string? Secretkey { get; set; } = configuration["JWT:Key"];
+        public UserManager<User> UserManager { get; set; } = userManager;
 
-        public string GenerateToken(string userId, string username)
+        public string GenerateToken(User user)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(username))
-                throw new ArgumentException("UserId and Username cannot be null or empty.");
-
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
+            var key = Encoding.ASCII.GetBytes(Secretkey!);
+            var userclaims = new ClaimsIdentity(
+                [
+                    new Claim("id", user.Id.ToString()),
+                    new Claim("email",user.Email!)
+                ]);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(
-                [
-                    new Claim(JwtRegisteredClaimNames.Sub, userId),
-                    new Claim("id", userId),
-                    new Claim("userName", username)
-                ]),
-                Expires = DateTime.UtcNow.AddDays(_expirationDays),
+                Subject = userclaims,
+
+                Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
-
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
-        }
-
-        public ClaimsPrincipal? ValidateToken(string token)
-        {
-            if (string.IsNullOrEmpty(token))
-                return null;
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_secretKey);
-
-            try
-            {
-                var validationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ClockSkew = TimeSpan.Zero
-                };
-
-                var principal = tokenHandler.ValidateToken(token, validationParameters, out _);
-                return principal;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        public static Guid GetUserIdFromPrincipal(ClaimsPrincipal user)
-        {
-            var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            return Guid.Parse(userIdString!);
         }
     }
 }

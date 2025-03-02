@@ -18,11 +18,11 @@ namespace Makeen._Planner.Controllers
         {
             return Ok(await _groupService.GetAllAsync());
         }
-        [HttpGet("{id}")]
+        [HttpGet("{groupid}")]
         [EndpointSummary("Fetches a group by the groupid")]
-        public async Task<IActionResult> GetGroupById(Guid id)
+        public async Task<IActionResult> GetGroupById([FromRoute] Guid groupid)
         {
-            return Ok(await _groupService.GetByIdAsync(id));
+            return Ok(await _groupService.GetByIdAsync(groupid));
         }
         [HttpDelete("{id}")]
         [EndpointSummary("Deletes a group by the groupid")]
@@ -41,9 +41,10 @@ namespace Makeen._Planner.Controllers
         [Authorize]
         [HttpPost]
         [EndpointSummary("Creates a group")]
-        public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command, [FromHeader] string token)
+        public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command)
         {
-            await _groupService.AddGroup(command, token);
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            await _groupService.AddGroup(command, userid);
             return Ok();
         }
         [HttpPut("{id}")]

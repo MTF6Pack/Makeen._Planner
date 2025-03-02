@@ -1,5 +1,6 @@
 ﻿using Application.DataSeeder;
 using Application.User_And_Otp.Commands;
+using Azure.Core;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
@@ -28,31 +29,32 @@ namespace Application.UserAndOtp.Services
             Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl }).FirstOrDefaultAsync();
             return theuser ?? throw new NotFoundException(nameof(theuser));
         }
-        public List<object>? GetAllUsers()
+        public async Task<List<object>> GetAllUsers()
         {
             var Userslist = new List<object>();
-            var users = _userManager.Users;
+            var users = await _userManager.Users.ToListAsync();
             if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Email, user.Id });
             return Userslist;
         }
         public async Task<string> SignUP(AddUserCommand command)
         {
-            var findResult = await _userManager.FindByEmailAsync(command.Email);
-            if (findResult != null)
+            var existingUser = await _userManager.FindByEmailAsync(command.Email);
+            if (existingUser != null)
             {
-                if (findResult.EmailConfirmed == false)
+                if (!existingUser.EmailConfirmed)
                 {
-                    await _userManager.ResetPasswordAsync(findResult, await _userManager.GeneratePasswordResetTokenAsync(findResult), command.ConfirmPassword);
-                    return await SendEmailConfirmation(findResult);
+                    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(existingUser);
+                    await _userManager.ResetPasswordAsync(existingUser, resetToken, command.ConfirmPassword);
+                    return await SendEmailConfirmationAsync(existingUser);
                 }
                 else throw new BadRequestException("Email already exists");
             }
-            var theUser = command.ToModel();
-            var result = await _userManager.CreateAsync(theUser, command.Password);
+            var newuser = command.ToModel();
+            var result = await _userManager.CreateAsync(newuser, command.Password);
             if (!result.Succeeded) throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
-            return await SendEmailConfirmation(theUser);
+            return await SendEmailConfirmationAsync(newuser);
         }
-        private async Task<string> SendEmailConfirmation(User user)
+        private async Task<string> SendEmailConfirmationAsync(User user)
         {
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"https://109.230.200.230:6969/api/v1/accounts/confirm-emails?userId={user.Id}&token={Uri.EscapeDataString(token)}";
@@ -67,11 +69,9 @@ namespace Application.UserAndOtp.Services
             await _userManager.DeleteAsync(theuser);
             return IdentityResult.Success ?? throw new BadRequestException("the theuser was not deleted");
         }
-        public async Task UpdateUser(UpdateUserCommand command, string token)
+        public async Task UpdateUser(UpdateUserCommand command, Guid userid)
         {
-            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
-            var id = JwtTokenService.GetUserIdFromPrincipal(claims);
-            var theuser = await _userManager.FindByIdAsync(id.ToString()) ?? throw new NotFoundException("User");
+            var theuser = await _userManager.FindByIdAsync(userid.ToString()) ?? throw new NotFoundException("User");
             if (command.Email != theuser.Email) { if (await _userManager.FindByEmailAsync(command.Email) != null) throw new BadRequestException("Email already in use"); }
             theuser.UpdateUser(command.UserName ?? theuser.UserName!, command.Email ?? theuser.Email!,
                 command.PhoneNumber ?? theuser.PhoneNumber!, command.AvatarUrl ?? theuser.AvatarUrl);
@@ -79,18 +79,11 @@ namespace Application.UserAndOtp.Services
         }
         public async Task<string> Signin(SigninDto request)
         {
-            User user = await _userManager.FindByEmailAsync(request.Email) ?? throw new BadRequestException("Invalid credentials");
-            if (!await _userManager.IsEmailConfirmedAsync(user)) throw new BadRequestException("Please confirm your email before logging in");
+            User user = await _userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundException("User");
+            if (!await _userManager.IsEmailConfirmedAsync(user)) throw new UnauthorizedException("Please confirm your email before logging in");
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid) throw new BadRequestException("Invalid credentials");
-            return _jwt.GenerateToken(user.Id.ToString(), request.Email);
+            return _jwt.GenerateToken(user);
         }
-        public async void ChangePassword(Guid userId, string currentpassword, string newpassword)
-        {
-            var theuser = await _userManager.FindByIdAsync(userId.ToString()) ?? throw new NotFoundException("theuser not found");
-            await _userManager.ChangePasswordAsync(theuser!, currentpassword, newpassword);
-            await _userManager.UpdateAsync(theuser!);
-        }
-
     }
 }

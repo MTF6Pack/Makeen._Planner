@@ -9,11 +9,10 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service
 {
-    public class GroupService(IGroupRepository repository, IUnitOfWork unitOfWork, JwtTokenService jwt) : IGroupService
+    public class GroupService(IGroupRepository repository, IUnitOfWork unitOfWork) : IGroupService
     {
         private readonly IGroupRepository _repository = repository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
-        private readonly JwtTokenService _jwt = jwt;
 
         public async Task Delete(Guid id)
         {
@@ -39,10 +38,8 @@ namespace Application.Group_Service
             if (thegroup != null) return thegroup;
             else throw new NotFoundException(nameof(thegroup));
         }
-        public async Task AddGroup(AddGroupCommand command, string token)
+        public async Task AddGroup(AddGroupCommand command, Guid ownerid)
         {
-            var claims = _jwt.ValidateToken(token) ?? throw new UnauthorizedException();
-            var ownerid = JwtTokenService.GetUserIdFromPrincipal(claims);
             Group newgroup = command.ToModel(ownerid);
             await _repository.AddAsync(newgroup);
             await _unitOfWork.SaveChangesAsync();

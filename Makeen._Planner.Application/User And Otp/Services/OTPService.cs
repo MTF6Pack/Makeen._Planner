@@ -11,11 +11,11 @@ namespace Application.UserAndOtp.Services
         private readonly UserManager<User> _userManager = userManager;
         private readonly IBaseEmailOTP _emailOTPService = emailOTPService;
 
-        public async void SendOTP(string email)
+        public async Task SendOTP(string email)
         {
             var theuser = await _userManager.FindByEmailAsync(email);
-            if (theuser == null) throw new NotFoundException(nameof(theuser));
-            _emailOTPService.SendAsync(email);
+            if (theuser == null) throw new NotFoundException($"{nameof(theuser)} with email {email}.");
+            await _emailOTPService.SendAsync(email);
         }
         public bool CheckOTP(string email, string userinput)
         {
@@ -23,7 +23,9 @@ namespace Application.UserAndOtp.Services
         }
         public async Task<IdentityResult> ResetPassword(ForgetPasswordDto request)
         {
-            var theuser = await _userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundException("User not found");
+            var theuser = await _userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundException("User");
+            var isSamePassword = await _userManager.CheckPasswordAsync(theuser, request.ConfirmPassword);
+            if (isSamePassword) throw new BadRequestException("New password cannot be the same as the previous password.");
             var token = await _userManager.GeneratePasswordResetTokenAsync(theuser);
             var result = await _userManager.ResetPasswordAsync(theuser, token, request.Password);
             if (!result.Succeeded) throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));

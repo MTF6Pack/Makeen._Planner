@@ -9,8 +9,8 @@ namespace Makeen._Planner.Service
         Task<object?> GetUserById(Guid id);
         Task<object?> GetUserByEmail(string email);
         Task<string> Signin(SigninDto request);
-        List<object>? GetAllUsers();
-        Task UpdateUser(UpdateUserCommand command, string token);
+        Task<List<object>> GetAllUsers();
+        Task UpdateUser(UpdateUserCommand command, Guid userid);
         Task<IdentityResult> DeleteUser(Guid id);
     }
 }

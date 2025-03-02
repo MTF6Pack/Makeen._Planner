@@ -20,6 +20,7 @@ namespace Infrustucture
     public class UnauthorizedException : Exception
     {
         public UnauthorizedException() : base("Missing or Expired Token") { }
+        public UnauthorizedException(string message) : base(message) { }
     }
 
     [CustomException(404)]

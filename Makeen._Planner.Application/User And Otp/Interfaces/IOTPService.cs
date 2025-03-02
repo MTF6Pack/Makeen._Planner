@@ -7,7 +7,7 @@ namespace Application.UserAndOtp.Services
 {
     public interface IOTPService
     {
-        void SendOTP(string email);
+        Task SendOTP(string email);
         bool CheckOTP(string email, string userinput);
         Task<IdentityResult> ResetPassword(ForgetPasswordDto request);
     }
