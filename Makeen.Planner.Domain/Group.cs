@@ -9,17 +9,19 @@ namespace Domain
         public string Title { get; private set; } = string.Empty;
         public string Color { get; private set; } = string.Empty;
         public Guid OwnerId { get; private set; }
+        public bool Grouptype { get; private set; }
         public string? AvatarUrl { get; private set; }
         [JsonIgnore]
         public List<User>? Members { get; private set; }
         public List<Task.Task>? Tasks { get; private set; }
 
-        public Group(string title, string? avatar, string color, Guid ownerId)
+        public Group(string title, string? avatar, string color, Guid ownerId, bool grouptype = false)
         {
             Title = title;
             Color = color;
             OwnerId = ownerId;
             AvatarUrl = avatar;
+            Grouptype = grouptype;
             Id = Guid.NewGuid();
         }
 

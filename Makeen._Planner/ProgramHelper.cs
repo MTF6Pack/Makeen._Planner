@@ -3,8 +3,6 @@ using Application.EmailConfirmation;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -15,12 +13,11 @@ using Microsoft.OpenApi.Models;
 using Persistence;
 using Persistence.Repository.Interface;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Net.Sockets;
 using System.Net;
+using System.Net.Sockets;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
-using Application.UserAndOtp;
-using Application.DataSeeder.OTP;
 
 namespace Makeen._Planner
 {
@@ -28,7 +25,7 @@ namespace Makeen._Planner
     {
         public static void StartUp(this WebApplicationBuilder builder)
         {
-            ConfigureJWT(builder);
+            builder.Services.ConfigureJWT(builder.Configuration);
             RegisterServices(builder);
             ConvertEnumToString(builder);
         }
@@ -40,18 +37,37 @@ namespace Makeen._Planner
             builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
             builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
 
-            // Authentication Setup
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-            })
-            .AddCookie()
-            .AddGoogle(options =>
-            {
-                options.ClientId = builder.Configuration["Google:ClientId"]!;
-                options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
-            });
+            //////////       // Authentication Setup
+            //////////       builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            //////////.AddJwtBearer(options =>
+            //////////{
+            //////////    options.RequireHttpsMetadata = false;
+            //////////    options.SaveToken = true;
+            //////////    options.TokenValidationParameters = new TokenValidationParameters
+            //////////    {
+            //////////        ValidateIssuer = false,
+            //////////        ValidateAudience = false,
+            //////////        ValidateIssuerSigningKey = true,
+            //////////        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSettings.Key))
+            //////////    };
+            //////////    // 🔥 Fix the redirect issue
+            //////////    options.Events = new JwtBearerEvents
+            //////////    {
+            //////////        OnChallenge = context =>
+            //////////        {
+            //////////            context.HandleResponse();
+            //////////            context.Response.StatusCode = 401;
+            //////////            context.Response.ContentType = "application/json";
+            //////////            return context.Response.WriteAsync("{\"error\": \"Unauthorized. Please provide a valid token.\"}");
+            //////////        }
+            //////////    };
+            //////////})
+            //////////       .AddCookie()
+            //////////       .AddGoogle(options =>
+            //////////       {
+            //////////           options.ClientId = builder.Configuration["Google:ClientId"]!;
+            //////////           options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
+            //////////       });
 
             // Database Context
             builder.Services.AddDbContext<DataBaseContext>(options =>
@@ -76,8 +92,21 @@ namespace Makeen._Planner
                 .WithScopedLifetime());
 
             builder.Services.AddIdentity<User, UserRole>()
+
                 .AddEntityFrameworkStores<DataBaseContext>()
                 .AddDefaultTokenProviders();
+
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+                // Ensure the user id claim type is set to the one we use (if needed)
+                options.ClaimsIdentity.UserIdClaimType = "id";
+            });
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            });
 
             builder.Services.AddTransient<IEmailSender, EmailSender>();
             //builder.Services.AddTransient<IBaseEmailOTP, OTPSender>();
@@ -97,33 +126,78 @@ namespace Makeen._Planner
             });
         }
 
-        public static void ConfigureJWT(this WebApplicationBuilder builder)
+        public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSettings = builder.Configuration.GetSection("JWT").Get<JwtSettings>();
-
-            if (string.IsNullOrEmpty(jwtSettings?.Key))
+            services.ConfigureApplicationCookie(options =>
             {
-                throw new ArgumentNullException("JWT Key is missing in the configuration.");
-            }
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
+            });
 
-            builder.Services.AddAuthentication(option =>
+            var jwtSettings = new JwtSettings();
+            configuration.GetSection("JWT").Bind(jwtSettings);
+            Console.WriteLine($"🔑 Loaded JWT Secret Key: {jwtSettings.Key}");
+
+            if (string.IsNullOrEmpty(jwtSettings?.Key)) throw new UnauthorizedException("JWT Key is missing in the configuration.");
+
+            services.AddSingleton(jwtSettings); // Register JwtSettings
+
+            // Explicitly set JWT as the default scheme
+            services.AddAuthentication(options =>
             {
-                option.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                option.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(option =>
+            .AddJwtBearer(options =>
             {
-                option.RequireHttpsMetadata = false;
-                option.SaveToken = true;
-                option.TokenValidationParameters = new TokenValidationParameters
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = false,
                     ValidateAudience = false,
+                    ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key))
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        Console.WriteLine($"🔍 Token Received: {context.Token}");
+                        return Task.CompletedTask;
+                    },
+                    OnAuthenticationFailed = context =>
+                    {
+                        Console.WriteLine($"❌ Authentication Failed: {context.Exception.Message}");
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        if (context.Principal?.Identity is ClaimsIdentity claimsIdentity)
+                        {
+                            Console.WriteLine("✅ Token successfully validated!");
+                            Console.WriteLine($"📌 User ID: {claimsIdentity.FindFirst("id")?.Value}");
+                            Console.WriteLine($"📌 Email: {claimsIdentity.FindFirst("email")?.Value}");
+                        }
+                        else
+                        {
+                            Console.WriteLine("⚠️ Token validated, but no claims found!");
+                        }
+                        return Task.CompletedTask;
+                    }
                 };
             });
+
+            Console.WriteLine("🚀 Authentication Middleware Configured!");
         }
+
 
         public static void ConvertEnumToString(this WebApplicationBuilder builder)
         {
@@ -146,14 +220,13 @@ namespace Makeen._Planner
             Console.WriteLine($"https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)}:{builder.Configuration["Port"]}/swagger");
             Console.ResetColor();
         }
-
-        public class TitleFilter : IDocumentFilter
+    }
+    public class TitleFilter : IDocumentFilter
+    {
+        public void Apply(OpenApiDocument doc, DocumentFilterContext context)
         {
-            public void Apply(OpenApiDocument doc, DocumentFilterContext context)
-            {
-                doc.Info.Title = "ّFor those who seek Success ...";
-                doc.Info.Version = "Phase 1";
-            }
+            doc.Info.Title = "ّFor those who seek Success ...";
+            doc.Info.Version = "Phase 1";
         }
     }
 }

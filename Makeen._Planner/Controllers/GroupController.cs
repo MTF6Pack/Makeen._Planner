@@ -1,8 +1,11 @@
-﻿using Application.Group_Service;
+﻿using Application.DataSeeder;
+using Application.Group_Service;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace Makeen._Planner.Controllers
 {
@@ -38,11 +41,12 @@ namespace Makeen._Planner.Controllers
             await _groupService.AddMember(groupid, id);
             return Ok();
         }
-        [Authorize]
+        //[Authorize]
         [HttpPost]
         [EndpointSummary("Creates a group")]
         public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command)
         {
+            Console.WriteLine("Received request to AddGroup"); // Debugging line
             var userid = new Guid(User.FindFirst("id")!.Value);
             await _groupService.AddGroup(command, userid);
             return Ok();

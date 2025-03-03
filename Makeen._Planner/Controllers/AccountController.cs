@@ -2,10 +2,12 @@
 using Application.UserAndOtp.Services;
 using Azure.Core;
 using Domain;
+using Infrustucture;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
@@ -93,9 +95,11 @@ namespace Makeen._Planner.Controllers
         }
         [HttpPost("OTP")]
         [EndpointSummary("Sends an one-time-password to the email")]
-        public IActionResult SendOTP([EmailAddress] string email)
+        public async Task<IActionResult> SendOTP([EmailAddress] string email)
         {
-            _oTPService.SendOTP(email);
+            var existinguser = await _userManager.FindByEmailAsync(email) ?? throw new NotFoundException("User");
+            if (!existinguser.EmailConfirmed) throw new UnauthorizedException("Email is not confirmed");
+            await _oTPService.SendOTP(email);
             return Ok(new { message = "OTP sent successfully" });
         }
         [HttpPost("OTP-result")]
@@ -129,5 +133,12 @@ namespace Makeen._Planner.Controllers
             return BadRequest("Email confirmation failed.");
         }
 
+        [HttpGet("test-token")]
+        [Authorize]
+        public IActionResult TestToken()
+        {
+            var userId = User.FindFirst("id")?.Value;
+            return Ok(new { UserId = userId });
+        }
     }
 }

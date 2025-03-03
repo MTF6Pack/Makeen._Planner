@@ -28,8 +28,9 @@ namespace Application.DataSeeder
             var key = Encoding.ASCII.GetBytes(Secretkey!);
             var userclaims = new ClaimsIdentity(
                 [
-                    new Claim("id", user.Id.ToString()),
-                    new Claim("email",user.Email!)
+                   new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), // 👈 Use a standard claim type
+                   new Claim("id", user.Id.ToString()),                     // 👈 Custom claim
+                   new Claim("email", user.Email!)                           // 👈 Custom claim
                 ]);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -39,7 +40,10 @@ namespace Application.DataSeeder
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
-            return tokenHandler.WriteToken(token);
+
+            var tokenString = tokenHandler.WriteToken(token);
+            Console.WriteLine($"🔑 Generated Token: {tokenString}");  // ✅ Log token content
+            return tokenString;
         }
     }
 }
