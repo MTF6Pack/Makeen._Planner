@@ -1,4 +1,5 @@
 ﻿using Application.User_And_Otp.Commands;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 
 namespace Makeen._Planner.Service
@@ -13,5 +14,6 @@ namespace Makeen._Planner.Service
         Task UpdateUser(UpdateUserCommand command, Guid userid);
         Task<IdentityResult> DeleteUser(Guid id);
         Task<IdentityResult> ResetPassword(ForgetPasswordDto request);
+        Task UpdateUserAvatar(string avatarurl, Guid userid);
     }
 }

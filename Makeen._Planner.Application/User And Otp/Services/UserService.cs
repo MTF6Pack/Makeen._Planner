@@ -5,6 +5,7 @@ using Azure.Core;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -35,7 +36,7 @@ namespace Application.UserAndOtp.Services
         {
             var Userslist = new List<object>();
             var users = await _userManager.Users.ToListAsync();
-            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.PhoneNumber, user.Email, user.Id });
+            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.AvatarUrl, user.PhoneNumber, user.Email, user.Id });
             return Userslist;
         }
         public async Task<string> SignUP(AddUserCommand command)
@@ -112,13 +113,20 @@ namespace Application.UserAndOtp.Services
             // Update other user details
             theuser.UpdateUser(command.UserName?.Trim() ?? theuser.UserName!,
                                safeEmail, // Use the ensured non-null email
-                               command.PhoneNumber ?? theuser.PhoneNumber!,
-                               command.AvatarUrl ?? theuser.AvatarUrl);
+                               command.PhoneNumber ?? theuser.PhoneNumber!);
 
             var updateResult = await _userManager.UpdateAsync(theuser);
             if (!updateResult.Succeeded)
                 throw new BadRequestException($"Failed to update user details: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
         }
+
+        public async Task UpdateUserAvatar(string avatarUrl, Guid userid)
+        {
+            var theuser = await _userManager.FindByIdAsync(userid.ToString()) ?? throw new NotFoundException("Theuser");
+            theuser.UpdateUserAvatar(avatarUrl);
+            await _userManager.UpdateAsync(theuser);
+        }
+
         public async Task<string> Signin(SigninDto request)
         {
             User user = await _userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundException("User");

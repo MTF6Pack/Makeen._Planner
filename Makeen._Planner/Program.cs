@@ -61,7 +61,7 @@ namespace Makeen._Planner
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             // Open Swagger automatically
-            Process.Start("cmd", $"/c start https://192.168.164.222:6969/swagger");
+            Process.Start("cmd", $"/c start https://192.168.26.222:6969/swagger");
 
             app.UseSwagger();
             app.UseSwaggerUI(options => options.EnableTryItOutByDefault());
@@ -71,19 +71,6 @@ namespace Makeen._Planner
             app.UseCors("AllowAllOrigins");
             app.UseRouting();
             app.UseAuthentication();
-            //app.Use(async (context, next) =>
-            //{
-            //    Console.WriteLine($"🛠 Middleware Check: {context.Request.Method} {context.Request.Path}");
-            //    if (context.Request.Headers.ContainsKey("Authorization"))
-            //    {
-            //        Console.WriteLine($"🔍 Token Found: {context.Request.Headers.Authorization}");
-            //    }
-            //    else
-            //    {
-            //        Console.WriteLine("🚨 No Authorization Header Found!");
-            //    }
-            //    await next();
-            //});
             app.UseAuthorization();
             app.MapControllers();
             builder.Consoleshits();

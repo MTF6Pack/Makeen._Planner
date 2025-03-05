@@ -12,7 +12,7 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    [Migration("20250305085434_Reinit")]
+    [Migration("20250305102511_Reinit")]
     partial class Reinit
     {
         /// <inheritdoc />

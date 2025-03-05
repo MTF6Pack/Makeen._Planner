@@ -1,11 +1,13 @@
 ﻿using Application.DataSeeder;
 using Application.Group_Service;
+using Infrustucture;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Makeen._Planner.Controllers
 {

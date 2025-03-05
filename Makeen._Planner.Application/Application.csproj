@@ -10,7 +10,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.12" />
-    <PackageReference Include="MimeKit" Version="4.10.0" />
   </ItemGroup>
 
   <ItemGroup>

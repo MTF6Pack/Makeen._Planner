@@ -1,12 +1,9 @@
-﻿using Makeen._Planner.Task_Service;
+﻿using Infrustucture;
 using Makeen._Planner.Service;
+using Makeen._Planner.Task_Service;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using Domain;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authentication;
 
 namespace Makeen._Planner.Controllers
 {
@@ -42,6 +39,18 @@ namespace Makeen._Planner.Controllers
         public async Task<IActionResult> GetByEmail([EmailAddress] string email)
         {
             return Ok(await _userService.GetUserByEmail(email));
+        }
+
+        //[Authorize]
+        [HttpPost("Avatar")]
+        [EndpointSummary("Sets the user Picture by token")]
+        public async Task<IActionResult> UpdateUserAvatar(IFormFile file)
+        {
+            //var userid = new Guid(User.FindFirst("id")!.Value);
+            var userid = new Guid("58b4f769-fd3d-42c1-9d1d-6823bf67c41a");
+            var avatarurl = await IformfileToUrl.UploadFile(file!, userid);
+            await _userService.UpdateUserAvatar(avatarurl, userid);
+            return Ok();
         }
 
         [Authorize]

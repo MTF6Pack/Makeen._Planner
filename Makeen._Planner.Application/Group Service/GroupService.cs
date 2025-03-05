@@ -72,7 +72,7 @@ namespace Application.Group_Service
         {
             var thegroup = await _repository.GetByIdAsync(id);
             if (thegroup == null) throw new NotFoundException(nameof(thegroup));
-            thegroup.UpdateGroup(command.Title, command.AvatarUrl, command.Color);
+            thegroup.UpdateGroup(command.Title, await IformfileToUrl.UploadFile(command.AvatarUrl!, id), command.Color);
             await _unitOfWork.SaveChangesAsync();
         }
     }
