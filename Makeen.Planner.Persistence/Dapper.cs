@@ -1,8 +1,12 @@
 ﻿using Dapper;
 using Domain;
+using Domain.Task;
+using Infrustucture;
 using Microsoft.Data.SqlClient;
 using System.Numerics;
 using System.Text.Json;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Text.RegularExpressions;
 using Task = Domain.Task.Task;
 
 namespace Persistence;
@@ -15,7 +19,6 @@ public static class Dapper
 
         using var connection = new SqlConnection(connectionString);
         connection.Open();
-
 
         var today = DateTime.Now.Date;
         var yesterday = DateTime.Now.AddDays(-1).Date;
@@ -34,41 +37,42 @@ public static class Dapper
         int weekAllTasksCount = userweekreport.Count;
         int weekAllCompeletedTaskscount = userweekreport.Count(x => x.Status == "Done");
         int weekPendingCount = weekAllTasksCount - weekAllCompeletedTaskscount;
-        int allremainingFutureTasksCount = userweekreport.FirstOrDefault()!.FutureTasksCount;
+        var firstReport = userweekreport.FirstOrDefault();
+        int allremainingFutureTasksCount = firstReport != null ? firstReport.FutureTasksCount : 0;
         string weeklabel = $"{weekAllCompeletedTaskscount}/{weekAllTasksCount}";
 
-        var todayDayOfWeek = today.DayOfWeek;
+        var todayDayOfWeek = HelperMethods.GetPersianDayName(today.DayOfWeek);
         int todayAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == today);
         int todayAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == today && x.Status == "Done");
         string todayLabel = $"{todayAllCompeletedTaskscount}/{todayAllTaskscount}";
 
-        var yesterdayDayOfWeek = yesterday.DayOfWeek;
+        var yesterdayDayOfWeek = HelperMethods.GetPersianDayName(yesterday.DayOfWeek);
         int yesterdayAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == yesterday);
         int yesterdayAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == yesterday && x.Status == "Done");
         string yesterdayLabel = $"{yesterdayAllCompeletedTaskscount}/{yesterdayAllTaskscount}";
 
-        var twodaysagoDayOfWeek = twodaysago.DayOfWeek;
+        var twodaysagoDayOfWeek = HelperMethods.GetPersianDayName(twodaysago.DayOfWeek);
         int twodaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == twodaysago);
         int twodaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == twodaysago && x.Status == "Done");
         string twodaysagoLabel = $"{twodaysagoAllCompeletedTaskscount}/{twodaysagoAllTaskscount}";
 
 
-        var threedaysagoDayOfWeek = threedaysago.DayOfWeek;
+        var threedaysagoDayOfWeek = HelperMethods.GetPersianDayName(threedaysago.DayOfWeek);
         int threedaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == threedaysago);
         int threedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == threedaysago && x.Status == "Done");
         string threedaysagoLabel = $"{threedaysagoAllCompeletedTaskscount}/{threedaysagoAllTaskscount}";
 
-        var fourdaysagoDayOfWeek = fourdaysago.DayOfWeek;
+        var fourdaysagoDayOfWeek = HelperMethods.GetPersianDayName(fourdaysago.DayOfWeek);
         int fourdaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == fourdaysago);
         int fourdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == fourdaysago && x.Status == "Done");
         string fourdaysagoLabel = $"{fourdaysagoAllCompeletedTaskscount}/{fourdaysagoAllTaskscount}";
 
-        var fivedaysagoDayOfWeek = fivedaysago.DayOfWeek;
+        var fivedaysagoDayOfWeek = HelperMethods.GetPersianDayName(fivedaysago.DayOfWeek);
         int fivedaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == fivedaysago);
         int fivedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == fivedaysago && x.Status == "Done");
         string fivedaysagoLabel = $"{fivedaysagoAllCompeletedTaskscount}/{fivedaysagoAllTaskscount}";
 
-        var sixdaysagoDayOfWeek = sixdaysago.DayOfWeek;
+        var sixdaysagoDayOfWeek = HelperMethods.GetPersianDayName(sixdaysago.DayOfWeek);
         int sixdaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == sixdaysago);
         int sixdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == sixdaysago && x.Status == "Done");
         string sixdaysagoLabel = $"{sixdaysagoAllCompeletedTaskscount}/{sixdaysagoAllTaskscount}";
@@ -110,16 +114,18 @@ public static class Dapper
 
         return myDictionary;
     }
+
+    public static async Task<List<Task>> GroupTodayTasks(Guid groupid)
+    {
+        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        using var connection = new SqlConnection(connectionString);
+        connection.Open();
+
+        var todaygrouptasks = (await connection.QueryAsync<Task>($"SELECT [UserId],[Name],[Status],[DeadLine],[CreationTime]," +
+            $"[TaskCategory], [PriorityCategory] FROM[Planner].[dbo].[Task] where(GroupId = '{groupid}'" +
+            $" and CAST(DeadLine as date) = '{DateTime.Now.Date}')")).ToList();
+
+        return todaygrouptasks;
+    }
 }
-
-
-//var userweekreport = (await connection.QueryAsync<Task>($"SELECT status,FORMAT(DeadLine, 'yyyy-MM-dd') AS DeadLine FROM[Planner].[dbo].[Task]" +
-//    $" Where (userid = '{id}' or Groupid = '{id}') and (" +
-//    $" DeadLine like '{today:yyyy-MM-dd}%' or" +
-//    $" DeadLine like '{yesterday:yyyy-MM-dd}%' or" +
-//    $" DeadLine like '{twodaysago:yyyy-MM-dd}%' or" +
-//    $" DeadLine like '{threedaysago:yyyy-MM-dd)}%' or" +
-//    $" DeadLine like '{fourdaysago:yyyy-MM-dd}%' or" +
-//    $" DeadLine like '{fivedaysago:yyyy-MM-dd)}%' or" +
-//    $" DeadLine like '{sixdaysago:yyyy-MM-dd}%')"))
-//    .ToList();

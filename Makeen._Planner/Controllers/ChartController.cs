@@ -1,18 +1,31 @@
 ﻿using Infrustucture;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Runtime.InteropServices;
 
 
 namespace Makeen._Planner.Controllers
 {
+
     [Route("api/v1/charts")]
     [ApiController]
     public class ChartController : ControllerBase
     {
-        [HttpGet("{id}")]
-        [EndpointSummary("Fetches recent week tasks result of a user or a group by the id ")]
-        public async Task<IActionResult> GetWeeklyReport(Guid id)
+        [Authorize]
+        [HttpGet]
+        [EndpointSummary("Fetches recent week tasks result of a user by token or a group by groupid ")]
+        public async Task<IActionResult> GetWeeklyReport([FromQuery] Guid? groupid = null)
         {
-            return Ok(await Persistence.Dapper.TasksReport(id) ?? throw new NotFoundException(nameof(id)));
+            var userId = new Guid(User.FindFirst("id")!.Value);
+            if (groupid == null) return Ok(await Persistence.Dapper.TasksReport(userId));
+            return Ok(await Persistence.Dapper.TasksReport((Guid)groupid));
+        }
+
+        [HttpGet("{groupid}")]
+        [EndpointSummary("Fetches today group tasks by groupid")]
+        public async Task<IActionResult> GetTodayGroupTasks(Guid groupid)
+        {
+            return Ok(await Persistence.Dapper.GroupTodayTasks(groupid));
         }
     }
 }

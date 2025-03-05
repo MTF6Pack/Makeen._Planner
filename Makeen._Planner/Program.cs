@@ -71,24 +71,21 @@ namespace Makeen._Planner
             app.UseCors("AllowAllOrigins");
             app.UseRouting();
             app.UseAuthentication();
-            app.Use(async (context, next) =>
-            {
-                Console.WriteLine($"🛠 Middleware Check: {context.Request.Method} {context.Request.Path}");
-                if (context.Request.Headers.ContainsKey("Authorization"))
-                {
-                    Console.WriteLine($"🔍 Token Found: {context.Request.Headers.Authorization}");
-                }
-                else
-                {
-                    Console.WriteLine("🚨 No Authorization Header Found!");
-                }
-                await next();
-            });
+            //app.Use(async (context, next) =>
+            //{
+            //    Console.WriteLine($"🛠 Middleware Check: {context.Request.Method} {context.Request.Path}");
+            //    if (context.Request.Headers.ContainsKey("Authorization"))
+            //    {
+            //        Console.WriteLine($"🔍 Token Found: {context.Request.Headers.Authorization}");
+            //    }
+            //    else
+            //    {
+            //        Console.WriteLine("🚨 No Authorization Header Found!");
+            //    }
+            //    await next();
+            //});
             app.UseAuthorization();
             app.MapControllers();
-
-
-
             builder.Consoleshits();
             app.Run();
         }

@@ -1,4 +1,6 @@
-﻿using Application.User_And_Otp.Commands;
+﻿using Application.DataSeeder.OTP;
+using Application.User_And_Otp.Commands;
+using Application.UserAndOtp;
 using Application.UserAndOtp.Services;
 using Azure.Core;
 using Domain;
@@ -18,42 +20,11 @@ namespace Makeen._Planner.Controllers
 {
     [Route("api/v1/accounts")]
     [ApiController]
-    public class AccountController(IOTPService oTPService, IUserService userService, UserManager<User> userManager) : ControllerBase
+    public class AccountController(IOtpEmailService otpEmailService, IUserService userService, UserManager<User> userManager) : ControllerBase
     {
-        private readonly IOTPService _oTPService = oTPService;
+        private readonly IOtpEmailService _otpEmailService = otpEmailService;
         private readonly IUserService _userService = userService;
         private readonly UserManager<User> _userManager = userManager;
-
-
-        //private readonly JwtToken _jwt = jwt;
-
-        //[HttpGet("google-login")]
-        //public IActionResult GoogleLogin(string returnUrl = "/")
-        //{
-        //    var redirectUrl = Url.Action("GoogleResponse", "https://192.168.1.156:6969/Account/google-response", null, Request.Scheme);
-        //    var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-        //    return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-        //}
-
-        //[HttpGet("google-response")]
-        //public async Task<IActionResult> GoogleResponse(User user)
-        //{
-        //    var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
-
-        //    //Console.WriteLine(JsonSerializer.Serialize(result.Principal.Claims.ToList()));
-        //    if (!result.Succeeded)
-        //    {
-        //        return BadRequest(); // Handle failure
-        //    }
-
-        //    // Here you can create a JWT token and return it to the client
-        //    var claims = result.Principal.Claims;
-        //    // Generate JWT token logic here...
-        //    await _userService.SigninByClaims(user, (System.Security.Claims.Claim)claims);
-
-        //    return Ok(new { Token = claims });
-        //}
-
 
         // هدایت به صفحه گوگل برای لاگین
         //////////////////////[HttpGet("google-login")]
@@ -99,21 +70,21 @@ namespace Makeen._Planner.Controllers
         {
             var existinguser = await _userManager.FindByEmailAsync(email) ?? throw new NotFoundException("User");
             if (!existinguser.EmailConfirmed) throw new UnauthorizedException("Email is not confirmed");
-            await _oTPService.SendOTP(email);
+            await _otpEmailService.SendOTPAsync(email);
             return Ok(new { message = "OTP sent successfully" });
         }
         [HttpPost("OTP-result")]
         [EndpointSummary("Verifies if the user input matches to the sent one-time-password")]
         public IActionResult CheckOTP(CheckOtpDto dto)
         {
-            return Ok(_oTPService.CheckOTP(dto.Email, dto.UserInput));
+            return Ok(_otpEmailService.CheckOTP(dto.Email, dto.UserInput));
         }
 
         [HttpPost("Forget-Password")]
         [EndpointSummary("Resets password; Use it only for the otp-verified user")]
         public async Task<IActionResult> ResetPassword(ForgetPasswordDto request)
         {
-            return Ok(await _oTPService.ResetPassword(request));
+            return Ok(await _userService.ResetPassword(request));
         }
 
         [HttpGet("confirm-emails")]
@@ -131,14 +102,6 @@ namespace Makeen._Planner.Controllers
                 return Ok("Email confirmed successfully!");
 
             return BadRequest("Email confirmation failed.");
-        }
-
-        [HttpGet("test-token")]
-        [Authorize]
-        public IActionResult TestToken()
-        {
-            var userId = User.FindFirst("id")?.Value;
-            return Ok(new { UserId = userId });
         }
     }
 }

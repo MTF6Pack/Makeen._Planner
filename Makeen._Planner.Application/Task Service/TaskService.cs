@@ -3,6 +3,7 @@ using Domain;
 using Infrustucture;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Persistence;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
 using System;
@@ -31,8 +32,7 @@ namespace Makeen._Planner.Task_Service
         }
         public async Task<List<Domain.Task.Task>> GetAllUserTasks(Guid userid)
         {
-            var theuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid);
-            return theuser == null ? throw new NotFoundException(nameof(theuser)) : ([.. theuser!.Tasks]);
+            return await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).SelectMany(u => u.Tasks).ToListAsync();
         }
         public async Task<List<Domain.Task.Task>?> GetAllTasks()
         {

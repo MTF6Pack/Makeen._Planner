@@ -17,7 +17,7 @@ namespace Makeen._Planner.Controllers
         private readonly IUserService _userService = userService;
         private readonly ITaskService _taskService = taskService;
 
-        [HttpGet]
+        [HttpGet("All")]
         [EndpointSummary("Fetches all users")]
         public async Task<IActionResult> GetAllUsers()
         {
@@ -29,11 +29,13 @@ namespace Makeen._Planner.Controllers
         {
             return Ok(await _userService.DeleteUser(id));
         }
-        [HttpGet("{id}")]
-        [EndpointSummary("Fetches a user by userid")]
-        public async Task<IActionResult> GetById([FromRoute] Guid id)
+        [Authorize]
+        [HttpGet]
+        [EndpointSummary("Fetches a user by token")]
+        public async Task<IActionResult> GetById()
         {
-            return Ok(await _userService.GetUserById(id));
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await _userService.GetUserById(userid));
         }
         [HttpGet("email")]
         [EndpointSummary("Fetches a user by email")]
@@ -44,7 +46,7 @@ namespace Makeen._Planner.Controllers
 
         [Authorize]
         [HttpPut]
-        [EndpointSummary("Edits the user")]
+        [EndpointSummary("Edits the user by token")]
         public async Task<IActionResult> Update([FromBody] UpdateUserCommand command)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
@@ -54,7 +56,7 @@ namespace Makeen._Planner.Controllers
 
         [Authorize]
         [HttpPost("tasks")]
-        [EndpointSummary("Creates a task for the user")]
+        [EndpointSummary("Creates a task for the user by token")]
         public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
@@ -63,7 +65,7 @@ namespace Makeen._Planner.Controllers
         }
         [Authorize]
         [HttpPut("tasks")]
-        [EndpointSummary("Edits a task for the user")]
+        [EndpointSummary("Edits a task for the user by token")]
         public async Task UpdateTask([FromBody] UpdateTaskCommand command)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
@@ -78,7 +80,7 @@ namespace Makeen._Planner.Controllers
         }
         [Authorize]
         [HttpGet("tasks")]
-        [EndpointSummary("Fetches all tasks of the user")]
+        [EndpointSummary("Fetches all tasks of the user by token")]
         public async Task<IActionResult> GetTheUserTasks()
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
@@ -86,14 +88,14 @@ namespace Makeen._Planner.Controllers
         }
         [Authorize]
         [HttpGet("tasks/Calender")]
-        [EndpointSummary("Fetches all tasks of the user in a specific date")]
+        [EndpointSummary("Fetches all tasks of the user in a specific date and token")]
         public async Task<IActionResult> GetTheUserTasksByCalander(DateOnly date)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
             return Ok(await _taskService.GetTheUserTasksByCalander(date, userid));
         }
         [HttpGet("tasks/All")]
-        [EndpointSummary("Fetches all tasks")]
+        [EndpointSummary("Fetches all tasks of all users")]
         public async Task<IActionResult> GetAllTasks()
         {
             return Ok(await _taskService.GetAllTasks());

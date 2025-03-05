@@ -41,12 +41,11 @@ namespace Makeen._Planner.Controllers
             await _groupService.AddMember(groupid, id);
             return Ok();
         }
-        //[Authorize]
+        [Authorize]
         [HttpPost]
-        [EndpointSummary("Creates a group")]
+        [EndpointSummary("Creates a group by token")]
         public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command)
         {
-            Console.WriteLine("Received request to AddGroup"); // Debugging line
             var userid = new Guid(User.FindFirst("id")!.Value);
             await _groupService.AddGroup(command, userid);
             return Ok();

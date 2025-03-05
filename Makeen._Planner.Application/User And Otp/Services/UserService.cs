@@ -1,9 +1,11 @@
 ﻿using Application.DataSeeder;
+using Application.EmailConfirmation;
 using Application.User_And_Otp.Commands;
 using Azure.Core;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +13,11 @@ using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Application.UserAndOtp.Services
 {
-    public class UserService(UserManager<User> userManager, JwtTokenService jwt, IEmailSender emailSender) : IUserService
+    public class UserService(UserManager<User> userManager, JwtTokenService jwt, IEmailConfirmService emailSender) : IUserService
     {
         private readonly UserManager<User> _userManager = userManager;
         private readonly JwtTokenService _jwt = jwt;
-        private readonly IEmailSender _emailSender = emailSender;
+        private readonly IEmailConfirmService _emailSender = emailSender;
 
         public async Task<object?> GetUserById(Guid id)
         {
@@ -58,7 +60,7 @@ namespace Application.UserAndOtp.Services
         {
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var confirmationLink = $"https://109.230.200.230:6969/api/v1/accounts/confirm-emails?userId={user.Id}&token={Uri.EscapeDataString(token)}";
-            await _emailSender.SendEmailAsync(user.Email!, "Confirm Your Email",
+            await _emailSender.SendConfirmEmailAsync(user.Email!, "Confirm Your Email",
             $"Please confirm your account by clicking <a href='{confirmationLink}'>here</a>.");
             return "User registered successfully. Please check your email to confirm your account.";
         }
@@ -72,10 +74,50 @@ namespace Application.UserAndOtp.Services
         public async Task UpdateUser(UpdateUserCommand command, Guid userid)
         {
             var theuser = await _userManager.FindByIdAsync(userid.ToString()) ?? throw new NotFoundException("User");
-            if (command.Email != theuser.Email) { if (await _userManager.FindByEmailAsync(command.Email) != null) throw new BadRequestException("Email already in use"); }
-            theuser.UpdateUser(command.UserName ?? theuser.UserName!, command.Email ?? theuser.Email!,
-                command.PhoneNumber ?? theuser.PhoneNumber!, command.AvatarUrl ?? theuser.AvatarUrl);
-            await _userManager.UpdateAsync(theuser);
+
+            // Handle email change safely
+            if (!string.IsNullOrWhiteSpace(command.Email)) // Ensure email is not null or empty
+            {
+                string newEmail = command.Email.ToLower(); // Normalize email
+
+                if (!string.Equals(newEmail, theuser.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    var existingUser = await _userManager.FindByEmailAsync(newEmail);
+                    if (existingUser != null)
+                        throw new BadRequestException("Email already in use");
+
+                    theuser.Email = newEmail; // Assign the normalized email
+                }
+            }
+
+            // Ensure email is not null before calling UpdateUser
+            string safeEmail = theuser.Email ?? throw new BadRequestException("Email cannot be null");
+
+            // Handle username change
+            if (!string.IsNullOrWhiteSpace(command.UserName))
+            {
+                string newUserName = command.UserName.Trim();
+
+                if (newUserName != theuser.UserName)
+                {
+                    if (await _userManager.FindByNameAsync(newUserName) != null)
+                        throw new BadRequestException("The username has already been taken");
+
+                    var usernameResult = await _userManager.SetUserNameAsync(theuser, newUserName);
+                    if (!usernameResult.Succeeded)
+                        throw new BadRequestException($"Failed to update username: {string.Join(", ", usernameResult.Errors.Select(e => e.Description))}");
+                }
+            }
+
+            // Update other user details
+            theuser.UpdateUser(command.UserName?.Trim() ?? theuser.UserName!,
+                               safeEmail, // Use the ensured non-null email
+                               command.PhoneNumber ?? theuser.PhoneNumber!,
+                               command.AvatarUrl ?? theuser.AvatarUrl);
+
+            var updateResult = await _userManager.UpdateAsync(theuser);
+            if (!updateResult.Succeeded)
+                throw new BadRequestException($"Failed to update user details: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
         }
         public async Task<string> Signin(SigninDto request)
         {
@@ -84,6 +126,16 @@ namespace Application.UserAndOtp.Services
             var isPasswordValid = await _userManager.CheckPasswordAsync(user, request.Password);
             if (!isPasswordValid) throw new BadRequestException("Invalid credentials");
             return _jwt.GenerateToken(user);
+        }
+        public async Task<IdentityResult> ResetPassword(ForgetPasswordDto request)
+        {
+            var theuser = await _userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundException("User");
+            var isSamePassword = await _userManager.CheckPasswordAsync(theuser, request.ConfirmPassword);
+            if (isSamePassword) throw new BadRequestException("New password cannot be the same as the previous password.");
+            var token = await _userManager.GeneratePasswordResetTokenAsync(theuser);
+            var result = await _userManager.ResetPasswordAsync(theuser, token, request.Password);
+            if (!result.Succeeded) throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
+            return result;
         }
     }
 }

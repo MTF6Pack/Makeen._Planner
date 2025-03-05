@@ -31,8 +31,16 @@ namespace Application.Group_Service
             {
                 g.Id,
                 g.Title,
+                g.Color,
                 g.AvatarUrl,
-                Members = g.Members!.Select(m => m.UserName).ToList()
+                Members = g.Members!.Select(m => new
+                {
+                    m.UserName,
+                    m.AvatarUrl,
+                    m.Email,
+                    m.Id,
+                    m.PhoneNumber
+                }).ToList()
             })
     .FirstOrDefaultAsync();
             if (thegroup != null) return thegroup;
@@ -46,6 +54,7 @@ namespace Application.Group_Service
             await AddMember(newgroup.Id, ownerid);
             await _unitOfWork.SaveChangesAsync();
         }
+
         public async Task AddMember(Guid groupId, Guid userId)
         {
             User? theuser = await _repository.StraitAccess.Set<User>().FindAsync(userId);

@@ -37,48 +37,14 @@ namespace Makeen._Planner
             builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
             builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
 
-            //////////       // Authentication Setup
-            //////////       builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            //////////.AddJwtBearer(options =>
-            //////////{
-            //////////    options.RequireHttpsMetadata = false;
-            //////////    options.SaveToken = true;
-            //////////    options.TokenValidationParameters = new TokenValidationParameters
-            //////////    {
-            //////////        ValidateIssuer = false,
-            //////////        ValidateAudience = false,
-            //////////        ValidateIssuerSigningKey = true,
-            //////////        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSettings.Key))
-            //////////    };
-            //////////    // 🔥 Fix the redirect issue
-            //////////    options.Events = new JwtBearerEvents
-            //////////    {
-            //////////        OnChallenge = context =>
-            //////////        {
-            //////////            context.HandleResponse();
-            //////////            context.Response.StatusCode = 401;
-            //////////            context.Response.ContentType = "application/json";
-            //////////            return context.Response.WriteAsync("{\"error\": \"Unauthorized. Please provide a valid token.\"}");
-            //////////        }
-            //////////    };
-            //////////})
-            //////////       .AddCookie()
-            //////////       .AddGoogle(options =>
-            //////////       {
-            //////////           options.ClientId = builder.Configuration["Google:ClientId"]!;
-            //////////           options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
-            //////////       });
-
-            // Database Context
             builder.Services.AddDbContext<DataBaseContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
 
-            // Register JwtTokenService as Scoped before dependent services
             builder.Services.AddScoped<JwtTokenService>();
+            builder.Services.AddMemoryCache();
 
-            // Register Application Services
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserRepository>()
                 .AddClasses()
@@ -108,10 +74,7 @@ namespace Makeen._Planner
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
             });
 
-            builder.Services.AddTransient<IEmailSender, EmailSender>();
-            //builder.Services.AddTransient<IBaseEmailOTP, OTPSender>();
-
-            builder.Services.AddMemoryCache();
+            //builder.Services.AddTransient<IEmailConfirmService, EmailConfirmService>();
 
             builder.Services.Configure<JsonOptions>(options =>
             {
@@ -139,7 +102,6 @@ namespace Makeen._Planner
 
             var jwtSettings = new JwtSettings();
             configuration.GetSection("JWT").Bind(jwtSettings);
-            Console.WriteLine($"🔑 Loaded JWT Secret Key: {jwtSettings.Key}");
 
             if (string.IsNullOrEmpty(jwtSettings?.Key)) throw new UnauthorizedException("JWT Key is missing in the configuration.");
 
@@ -170,7 +132,6 @@ namespace Makeen._Planner
                 {
                     OnMessageReceived = context =>
                     {
-                        Console.WriteLine($"🔍 Token Received: {context.Token}");
                         return Task.CompletedTask;
                     },
                     OnAuthenticationFailed = context =>
@@ -180,13 +141,7 @@ namespace Makeen._Planner
                     },
                     OnTokenValidated = context =>
                     {
-                        if (context.Principal?.Identity is ClaimsIdentity claimsIdentity)
-                        {
-                            Console.WriteLine("✅ Token successfully validated!");
-                            Console.WriteLine($"📌 User ID: {claimsIdentity.FindFirst("id")?.Value}");
-                            Console.WriteLine($"📌 Email: {claimsIdentity.FindFirst("email")?.Value}");
-                        }
-                        else
+                        if (context.Principal?.Identity is not ClaimsIdentity claimsIdentity)
                         {
                             Console.WriteLine("⚠️ Token validated, but no claims found!");
                         }
@@ -194,8 +149,6 @@ namespace Makeen._Planner
                     }
                 };
             });
-
-            Console.WriteLine("🚀 Authentication Middleware Configured!");
         }
 
 
@@ -211,10 +164,10 @@ namespace Makeen._Planner
         public static void Consoleshits(this WebApplicationBuilder builder)
         {
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Kirrrrr bokhoooooooooooooorrrrrrrrrrrrrrrrrrrrr Amo yossssssssseeeeeeeeeeeeeefffffffff");
+            Console.WriteLine("MTF6Pack God of C#");
 
-            Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine("-------------------------------------------------------------------------------------------");
+            //Console.ForegroundColor = ConsoleColor.Yellow;
+            //Console.WriteLine("-------------------------------------------------------------------------------------------");
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine($"https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)}:{builder.Configuration["Port"]}/swagger");
