@@ -123,7 +123,7 @@ public static class Dapper
         connection.Open();
 
         var todaygrouptasks = (await connection.QueryAsync<Task>($"SELECT [UserId],[Name],[Status],[DeadLine],[CreationTime]," +
-            $"[TaskCategory], [PriorityCategory] FROM[Planner].[dbo].[Task] where(GroupId = '{groupid}'" +
+            $"[PriorityCategory] FROM[Planner].[dbo].[Task] where(GroupId = '{groupid}'" +
             $" and CAST(DeadLine as date) = '{DateTime.Now.Date}')")).ToList();
 
         return todaygrouptasks;

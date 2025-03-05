@@ -47,7 +47,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Groups", (string)null);
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Domain.Task.Task", b =>
@@ -80,10 +80,6 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("TaskCategory")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
@@ -93,7 +89,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Task", (string)null);
+                    b.ToTable("Task");
                 });
 
             modelBuilder.Entity("Domain.User", b =>
@@ -207,7 +203,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("MembersId");
 
-                    b.ToTable("GroupUser", (string)null);
+                    b.ToTable("GroupUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>

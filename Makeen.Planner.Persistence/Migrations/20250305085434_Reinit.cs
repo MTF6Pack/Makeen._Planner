@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class YosiPussy : Migration
+    public partial class Reinit : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -30,7 +30,6 @@ namespace Persistence.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Age = table.Column<int>(type: "int", nullable: true),
                     AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -61,6 +60,7 @@ namespace Persistence.Migrations
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Color = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     OwnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Grouptype = table.Column<bool>(type: "bit", nullable: false),
                     AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -210,7 +210,6 @@ namespace Persistence.Migrations
                     Status = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     DeadLine = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    TaskCategory = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PriorityCategory = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>

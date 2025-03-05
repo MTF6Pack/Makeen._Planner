@@ -9,7 +9,6 @@
                 command.GroupId,
                 command.Name,
                 command.DeadLine,
-                command.TaskCategory,
                 command.PriorityCategory
                 );
 

@@ -59,7 +59,7 @@ namespace Makeen._Planner.Task_Service
         public async Task UpdateTask(UpdateTaskCommand command, Guid userid)
         {
             Domain.Task.Task? thetask = await _repository.GetByIdAsync(userid);
-            if (command != null) thetask?.UpdateTask(command.Name, command.DeadLine, command.TaskCategory, command.PriorityCategory);
+            if (command != null) thetask?.UpdateTask(command.Name, command.DeadLine, command.PriorityCategory);
             else throw new NotFoundException(nameof(thetask));
         }
         public async Task UpdateTaskStatus(Guid id, Domain.Task.TaskStatus status)
