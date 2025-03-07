@@ -28,7 +28,7 @@ namespace Domain.Task
             CreationTime = DateTime.Now;
             IsInGroup = groupId != null;
             PriorityCategory = priorityCategory;
-            if (DateTime.Now > DeadLine && Status == (TaskStatus)2) Status = (TaskStatus)3;
+            //if (DateTime.Now > DeadLine && Status == (TaskStatus)2) Status = (TaskStatus)3;
         }
         public void UpdateTask(string name, DateTime deadline, PriorityCategory priorityCategory)
         {

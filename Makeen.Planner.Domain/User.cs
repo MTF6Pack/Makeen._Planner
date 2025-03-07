@@ -16,10 +16,11 @@ namespace Domain
             Id = Guid.NewGuid();
             CreationTime = DateTime.Now;
         }
-        public void UpdateUser(string username, string email, string phonenumber)
+        public void UpdateUser(string username, string email, string? avatarurl, string phonenumber)
         {
             Email = email;
             UserName = username;
+            AvatarUrl = avatarurl;
             PhoneNumber = phonenumber;
         }
 

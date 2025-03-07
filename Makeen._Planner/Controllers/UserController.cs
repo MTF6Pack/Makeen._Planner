@@ -41,22 +41,10 @@ namespace Makeen._Planner.Controllers
             return Ok(await _userService.GetUserByEmail(email));
         }
 
-        //[Authorize]
-        [HttpPost("Avatar")]
-        [EndpointSummary("Sets the user Picture by token")]
-        public async Task<IActionResult> UpdateUserAvatar(IFormFile file)
-        {
-            //var userid = new Guid(User.FindFirst("id")!.Value);
-            var userid = new Guid("58b4f769-fd3d-42c1-9d1d-6823bf67c41a");
-            var avatarurl = await IformfileToUrl.UploadFile(file!, userid);
-            await _userService.UpdateUserAvatar(avatarurl, userid);
-            return Ok();
-        }
-
         [Authorize]
-        [HttpPut]
+        [HttpPatch]
         [EndpointSummary("Edits the user by token")]
-        public async Task<IActionResult> Update([FromBody] UpdateUserCommand command)
+        public async Task<IActionResult> Update(UpdateUserCommand command)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
             await _userService.UpdateUser(command, userid);
@@ -73,7 +61,7 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
         [Authorize]
-        [HttpPut("tasks")]
+        [HttpPatch("tasks")]
         [EndpointSummary("Edits a task for the user by token")]
         public async Task UpdateTask([FromBody] UpdateTaskCommand command)
         {

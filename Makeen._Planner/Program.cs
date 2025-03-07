@@ -61,7 +61,7 @@ namespace Makeen._Planner
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             // Open Swagger automatically
-            Process.Start("cmd", $"/c start https://192.168.26.222:6969/swagger");
+            //Process.Start("cmd", $"/c start https://192.168.26.222:6969/swagger");
 
             app.UseSwagger();
             app.UseSwaggerUI(options => options.EnableTryItOutByDefault());

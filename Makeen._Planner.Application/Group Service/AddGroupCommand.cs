@@ -1,11 +1,12 @@
 ﻿using Domain;
+using Infrustucture;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Group_Service
 {
     public class AddGroupCommand
     {
-        public string? AvatarUrl { get; set; }
+        public IFormFile? AvatarUrl { get; set; }
         public required string Title { get; set; }
         public bool Grouptype { get; set; } = false;
         public required string Color { get; set; }
@@ -13,14 +14,18 @@ namespace Application.Group_Service
 
     public static class GroupMapper
     {
-        public static Group ToModel(this AddGroupCommand command, Guid ownerid)
+        public static async Task<Group> ToModel(this AddGroupCommand command, Guid ownerid)
         {
-            Group group = new(
+            string? avatar = null;
+            if (command.AvatarUrl != null)
+            {
+                avatar = await IformfileToUrl.UploadFile(command.AvatarUrl, ownerid);
+            }
+            return new Group(
                 command.Title,
-                command.AvatarUrl,
+                avatar,
                 command.Color, ownerid,
                 command.Grouptype);
-            return group;
         }
     }
 }

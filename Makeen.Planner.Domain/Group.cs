@@ -4,7 +4,6 @@ namespace Domain
 {
     public class Group
     {
-
         public Guid Id { get; private set; }
         public string Title { get; private set; } = string.Empty;
         public string Color { get; private set; } = string.Empty;
@@ -30,6 +29,21 @@ namespace Domain
             Title = title;
             AvatarUrl = avatar;
             Color = color;
+        }
+
+        public void UpdateTitle(string title)
+        {
+            Title = title;
+        }
+
+        public void UpdateColor(string color)
+        {
+            Color = color;
+        }
+
+        public void UpdateAvatar(string? avatarUrl)
+        {
+            AvatarUrl = avatarUrl;
         }
 
         public Group()

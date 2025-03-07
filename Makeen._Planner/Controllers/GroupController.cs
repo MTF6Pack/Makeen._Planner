@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
@@ -36,17 +37,17 @@ namespace Makeen._Planner.Controllers
             await _groupService.Delete(id);
             return Ok();
         }
-        [HttpPost("{groupid}/users/{id}")]
-        [EndpointSummary("Adds a user by userid, to a group by the groupid")]
-        public async Task<IActionResult> AddUser(Guid groupid, Guid id)
+        [HttpPost("groupid/users/id")]
+        [EndpointSummary("Adds a user by email, to a group by the groupid")]
+        public async Task<IActionResult> AddUser(AddUserByEmailDto request)
         {
-            await _groupService.AddMember(groupid, id);
+            await _groupService.AddMemberByEmail(request);
             return Ok();
         }
         [Authorize]
         [HttpPost]
         [EndpointSummary("Creates a group by token")]
-        public async Task<IActionResult> AddGroup([FromBody] AddGroupCommand command)
+        public async Task<IActionResult> AddGroup(AddGroupCommand command)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
             await _groupService.AddGroup(command, userid);

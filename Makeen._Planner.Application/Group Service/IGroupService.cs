@@ -1,4 +1,5 @@
 ﻿using Domain;
+using System.ComponentModel.DataAnnotations;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service
@@ -8,7 +9,7 @@ namespace Application.Group_Service
         Task Delete(Guid id);
         Task<List<Group>?> GetAllAsync();
         Task<object> GetByIdAsync(Guid groupid);
-        Task AddMember(Guid groupId, Guid userId);
+        Task AddMemberByEmail(AddUserByEmailDto request);
         Task AddGroup(AddGroupCommand command, Guid ownerid);
         Task Update(Guid id, UpdateGroupCommand command);
     }

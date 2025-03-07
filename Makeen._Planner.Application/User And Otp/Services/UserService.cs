@@ -74,12 +74,13 @@ namespace Application.UserAndOtp.Services
         }
         public async Task UpdateUser(UpdateUserCommand command, Guid userid)
         {
-            var theuser = await _userManager.FindByIdAsync(userid.ToString()) ?? throw new NotFoundException("User");
+            var theuser = await _userManager.FindByIdAsync(userid.ToString())
+                ?? throw new NotFoundException("User");
 
-            // Handle email change safely
-            if (!string.IsNullOrWhiteSpace(command.Email)) // Ensure email is not null or empty
+            // Handle email change
+            if (!string.IsNullOrWhiteSpace(command.Email))
             {
-                string newEmail = command.Email.ToLower(); // Normalize email
+                string newEmail = command.Email.ToLower();
 
                 if (!string.Equals(newEmail, theuser.Email, StringComparison.OrdinalIgnoreCase))
                 {
@@ -87,19 +88,18 @@ namespace Application.UserAndOtp.Services
                     if (existingUser != null)
                         throw new BadRequestException("Email already in use");
 
-                    theuser.Email = newEmail; // Assign the normalized email
+                    var emailResult = await _userManager.SetEmailAsync(theuser, newEmail);
+                    if (!emailResult.Succeeded)
+                        throw new BadRequestException($"Failed to update email: {string.Join(", ", emailResult.Errors.Select(e => e.Description))}");
                 }
             }
-
-            // Ensure email is not null before calling UpdateUser
-            string safeEmail = theuser.Email ?? throw new BadRequestException("Email cannot be null");
 
             // Handle username change
             if (!string.IsNullOrWhiteSpace(command.UserName))
             {
                 string newUserName = command.UserName.Trim();
 
-                if (newUserName != theuser.UserName)
+                if (!string.Equals(newUserName, theuser.UserName, StringComparison.OrdinalIgnoreCase))
                 {
                     if (await _userManager.FindByNameAsync(newUserName) != null)
                         throw new BadRequestException("The username has already been taken");
@@ -110,21 +110,20 @@ namespace Application.UserAndOtp.Services
                 }
             }
 
+            // Handle avatar update
+            string avatarUrl = command.Avatarurl != null
+                ? await IformfileToUrl.UploadFile(command.Avatarurl, theuser.Id)
+                : theuser.AvatarUrl!;
+
             // Update other user details
             theuser.UpdateUser(command.UserName?.Trim() ?? theuser.UserName!,
-                               safeEmail, // Use the ensured non-null email
+                               theuser.Email!, // Ensured by previous validation
+                               avatarUrl,
                                command.PhoneNumber ?? theuser.PhoneNumber!);
 
             var updateResult = await _userManager.UpdateAsync(theuser);
             if (!updateResult.Succeeded)
                 throw new BadRequestException($"Failed to update user details: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
-        }
-
-        public async Task UpdateUserAvatar(string avatarUrl, Guid userid)
-        {
-            var theuser = await _userManager.FindByIdAsync(userid.ToString()) ?? throw new NotFoundException("Theuser");
-            theuser.UpdateUserAvatar(avatarUrl);
-            await _userManager.UpdateAsync(theuser);
         }
 
         public async Task<string> Signin(SigninDto request)

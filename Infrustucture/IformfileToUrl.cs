@@ -9,7 +9,7 @@ namespace Infrustucture
 {
     public static class IformfileToUrl
     {
-        public static async Task<string> UploadFile(IFormFile file, Guid id)
+        public static async Task<string> UploadFile(IFormFile file, Guid id, bool isgroup = false)
         {
             if (file == null || file.Length == 0)
                 throw new BadRequestException("File is empty");
@@ -17,7 +17,7 @@ namespace Infrustucture
             string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
             Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
 
-            string uniqueFileName = id.ToString() + Path.GetExtension(file.FileName);
+            string uniqueFileName = isgroup ? id.ToString() + "g" + Path.GetExtension(file.FileName) : id.ToString() + Path.GetExtension(file.FileName);
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
             using (var stream = new FileStream(filePath, FileMode.Create))

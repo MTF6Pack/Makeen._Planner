@@ -48,17 +48,31 @@ namespace Application.Group_Service
         }
         public async Task AddGroup(AddGroupCommand command, Guid ownerid)
         {
-            Group newgroup = command.ToModel(ownerid);
+            Group newgroup = await command.ToModel(ownerid);
             await _repository.AddAsync(newgroup);
             await _unitOfWork.SaveChangesAsync();
             await AddMember(newgroup.Id, ownerid);
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task AddMember(Guid groupId, Guid userId)
+        public async Task AddMember(Guid groupid, Guid ownerid)
         {
-            User? theuser = await _repository.StraitAccess.Set<User>().FindAsync(userId);
-            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.Members).FirstOrDefaultAsync(x => x.Id == groupId);
+            User? theuser = await _repository.StraitAccess.Set<User>().FindAsync(ownerid);
+            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.Members).FirstOrDefaultAsync(x => x.Id == groupid);
+
+            if (theuser != null && thegroup != null)
+            {
+                thegroup.Members!.Add(theuser);
+                await _unitOfWork.SaveChangesAsync();
+            }
+
+            else throw new NotFoundException(nameof(theuser) + " or/and " + nameof(thegroup));
+        }
+
+        public async Task AddMemberByEmail(AddUserByEmailDto request)
+        {
+            User? theuser = await _repository.StraitAccess.Set<User>().FirstOrDefaultAsync(u => u.Email == request.Email);
+            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.Members).FirstOrDefaultAsync(x => x.Id == request.Groupid);
 
             if (theuser != null && thegroup != null)
             {
@@ -72,7 +86,22 @@ namespace Application.Group_Service
         {
             var thegroup = await _repository.GetByIdAsync(id);
             if (thegroup == null) throw new NotFoundException(nameof(thegroup));
-            thegroup.UpdateGroup(command.Title, await IformfileToUrl.UploadFile(command.AvatarUrl!, id), command.Color);
+
+            // Update only provided fields
+            if (!string.IsNullOrWhiteSpace(command.Title))
+                thegroup.UpdateTitle(command.Title);
+
+            if (!string.IsNullOrWhiteSpace(command.Color))
+                thegroup.UpdateColor(command.Color);
+
+            // Only update AvatarUrl if provided
+            if (command.AvatarUrl != null)
+            {
+                string avatarUrl = await IformfileToUrl.UploadFile(command.AvatarUrl, id);
+                thegroup.UpdateAvatar(avatarUrl);
+            }
+
+            // Commit changes using Unit of Work
             await _unitOfWork.SaveChangesAsync();
         }
     }

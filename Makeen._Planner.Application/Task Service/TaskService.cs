@@ -56,11 +56,17 @@ namespace Makeen._Planner.Task_Service
             _repository.Delete(thetask);
             await _unitOfWork.SaveChangesAsync();
         }
-        public async Task UpdateTask(UpdateTaskCommand command, Guid userid)
+        public async Task UpdateTask(UpdateTaskCommand command, Guid taskId)
         {
-            Domain.Task.Task? thetask = await _repository.GetByIdAsync(userid);
-            if (command != null) thetask?.UpdateTask(command.Name, command.DeadLine, command.PriorityCategory);
-            else throw new NotFoundException(nameof(thetask));
+            // Fetch the task using taskId
+            Domain.Task.Task? thetask = await _repository.GetByIdAsync(taskId)
+                ?? throw new NotFoundException("Task not found.");
+
+            // Update the task using the values from the command
+            thetask.UpdateTask(command.Name, command.DeadLine, command.PriorityCategory);
+
+            // Commit changes using Unit of Work
+            await _unitOfWork.SaveChangesAsync();
         }
         public async Task UpdateTaskStatus(Guid id, Domain.Task.TaskStatus status)
         {
