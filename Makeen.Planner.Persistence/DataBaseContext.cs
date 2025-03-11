@@ -17,8 +17,26 @@ namespace Persistence
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             modelBuilder.UseEnumToStringConverter();
+            modelBuilder.Entity<GroupMembership>()
+      .HasKey(gm => new { gm.UserId, gm.GroupId });
+
+            modelBuilder.Entity<GroupMembership>()
+                .HasOne(gm => gm.User)
+                .WithMany(u => u.Memberships)
+                .HasForeignKey(gm => gm.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<GroupMembership>()
+                .HasOne(gm => gm.Group)
+                .WithMany(g => g.GroupMemberships)
+                .HasForeignKey(gm => gm.GroupId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            base.OnModelCreating(modelBuilder);
         }
 
         public required DbSet<Group> Groups { get; set; }
+        public required DbSet<GroupMembership> GroupMemberships { get; set; }
+
     }
 }

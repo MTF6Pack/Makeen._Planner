@@ -10,7 +10,7 @@ namespace Persistence.Mapping
         {
             builder.HasMany(x => x.Tasks);
             builder.Property(x => x.Id).ValueGeneratedNever();
-            builder.HasMany(x => x.Groups);/*.WithMany(x => x.Members);*/
+            builder.HasMany(x => x.Memberships);/*.WithMany(x => x.Members);*/
         }
     }
 }

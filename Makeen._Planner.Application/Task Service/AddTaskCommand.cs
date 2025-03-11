@@ -9,7 +9,24 @@ namespace Makeen._Planner.Task_Service
         public Guid? GroupId { get; set; }
         [JsonConverter(typeof(FlexibleDateTimeConverter))]
         public DateTime DeadLine { get; set; }
+        [JsonConverter(typeof(FlexibleDateTimeConverter))]
+        public DateTime StartTime { get; set; }
         required public string Name { get; set; }
         public PriorityCategory PriorityCategory { get; set; }
+        public Alarm Alarm { get; set; }
+        public Repeat Repeat { get; set; }
+    }
+
+    public class AddSendTaskCommand
+    {
+        public required string ReceiverUserName { get; set; }
+        [JsonConverter(typeof(FlexibleDateTimeConverter))]
+        public DateTime DeadLine { get; set; }
+        [JsonConverter(typeof(FlexibleDateTimeConverter))]
+        public DateTime StartTime { get; set; }
+        required public string Name { get; set; }
+        public PriorityCategory PriorityCategory { get; set; }
+        public Alarm Alarm { get; set; }
+        public Repeat Repeat { get; set; }
     }
 }

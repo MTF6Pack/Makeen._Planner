@@ -11,5 +11,6 @@ namespace Makeen._Planner.Task_Service
         Task UpdateTask(UpdateTaskCommand command, Guid userid);
         Task<List<Domain.Task.Task>?> GetAllTasks();
         Task<List<Domain.Task.Task>?> GetTheUserTasksByCalander(DateOnly date, Guid userid);
+        Task AddTaskForOthers(AddSendTaskCommand command, Guid senderid, string receiveruserid);
     }
 }

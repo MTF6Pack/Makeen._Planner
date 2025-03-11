@@ -9,8 +9,8 @@ namespace Application.Group_Service
 {
     public class UpdateGroupCommand
     {
-        public required string Title { get; set; }
+        public string? Title { get; set; }
         public IFormFile? AvatarUrl { get; set; }
-        public required string Color { get; set; }
+        public string? Color { get; set; }
     }
 }

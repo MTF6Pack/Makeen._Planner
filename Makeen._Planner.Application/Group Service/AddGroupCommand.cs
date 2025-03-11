@@ -19,7 +19,7 @@ namespace Application.Group_Service
             string? avatar = null;
             if (command.AvatarUrl != null)
             {
-                avatar = await IformfileToUrl.UploadFile(command.AvatarUrl, ownerid);
+                avatar = await IFormFileToUrl.UploadFileAsync(command.AvatarUrl);
             }
             return new Group(
                 command.Title,

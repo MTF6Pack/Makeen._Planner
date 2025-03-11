@@ -1,14 +1,6 @@
-﻿using Application.DataSeeder;
-using Application.Group_Service;
-using Infrustucture;
-using Makeen._Planner.Service;
+﻿using Application.Group_Service;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Makeen._Planner.Controllers
 {
@@ -18,44 +10,67 @@ namespace Makeen._Planner.Controllers
     {
         private readonly IGroupService _groupService = groupService;
 
+        [Authorize]
         [HttpGet]
-        [EndpointSummary("Fetches all groups")]
-        public async Task<IActionResult> GetAllGroups()
+        [EndpointSummary("Fetches all groups of User")]
+        public async Task<IActionResult> GetAllGroupsOfUser()
         {
-            return Ok(await _groupService.GetAllAsync());
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await _groupService.GetAllGroupsOfUser(userid));
         }
-        [HttpGet("{groupid}")]
-        [EndpointSummary("Fetches a group by the groupid")]
-        public async Task<IActionResult> GetGroupById([FromRoute] Guid groupid)
+
+        [HttpGet("{groupId}")]
+        [EndpointSummary("Fetches a group by the groupId")]
+        public async Task<IActionResult> GetGroupById([FromRoute] Guid groupId)
         {
-            return Ok(await _groupService.GetByIdAsync(groupid));
+            return Ok(await _groupService.GetByIdAsync(groupId));
         }
+
         [HttpDelete("{id}")]
-        [EndpointSummary("Deletes a group by the groupid")]
-        public async Task<IActionResult> DeleteGroups(Guid id)
+        [EndpointSummary("Deletes a group by the groupId")]
+        public async Task<IActionResult> DeleteGroup(Guid id)
         {
             await _groupService.Delete(id);
             return Ok();
         }
-        [HttpPost("groupid/users/id")]
-        [EndpointSummary("Adds a user by email, to a group by the groupid")]
-        public async Task<IActionResult> AddUser(AddUserByEmailDto request)
+
+        [HttpPost("groupId/users")]
+        [EndpointSummary("Adds a user to a group by email")]
+        public async Task<IActionResult> AddUserByEmail([FromBody] AddUserByEmailDto request)
         {
             await _groupService.AddMemberByEmail(request);
             return Ok();
         }
+
+        [HttpPatch("{groupId}/users/{userId}/toggleadmin")]
+        [EndpointSummary("toggles a user to or from admin in a group")]
+        public async Task<IActionResult> Togglradmin([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        {
+            await _groupService.ToggleMemberToAdmin(groupId, userId);
+            return Ok();
+        }
+
+        [HttpDelete("{groupId}/users/{userId}")]
+        [EndpointSummary("Removes a user from a group")]
+        public async Task<IActionResult> RemoveMember([FromRoute] Guid groupId, [FromRoute] Guid userId)
+        {
+            await _groupService.RemoveMember(groupId, userId);
+            return Ok();
+        }
+
         [Authorize]
         [HttpPost]
         [EndpointSummary("Creates a group by token")]
         public async Task<IActionResult> AddGroup(AddGroupCommand command)
         {
-            var userid = new Guid(User.FindFirst("id")!.Value);
-            await _groupService.AddGroup(command, userid);
+            var userId = new Guid(User.FindFirst("id")!.Value);
+            await _groupService.AddGroup(command, userId);
             return Ok();
         }
-        [HttpPut("{id}")]
-        [EndpointSummary("Edites a group by the groupid")]
-        public async Task<IActionResult> UpdateGroups(Guid id, [FromBody] UpdateGroupCommand command)
+
+        [HttpPatch("{id}")]
+        [EndpointSummary("Edits a group by the groupId")]
+        public async Task<IActionResult> UpdateGroup(Guid id, UpdateGroupCommand command)
         {
             await _groupService.Update(id, command);
             return Ok();

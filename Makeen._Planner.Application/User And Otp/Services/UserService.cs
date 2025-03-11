@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace Application.UserAndOtp.Services
@@ -23,20 +25,20 @@ namespace Application.UserAndOtp.Services
         public async Task<object?> GetUserById(Guid id)
         {
             var theuser = await _userManager.Users.Where(u => u.Id == id)
-        .Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl }).FirstOrDefaultAsync();
+        .Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl, u.Fullname }).FirstOrDefaultAsync();
             return theuser ?? throw new NotFoundException(nameof(theuser));
         }
         public async Task<object?> GetUserByEmail(string email)
         {
             var theuser = await _userManager.Users.Where(u => u.Email == email).
-            Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl }).FirstOrDefaultAsync();
+            Select(u => new { u.Id, u.UserName, u.Email, u.PhoneNumber, u.AvatarUrl, u.Fullname }).FirstOrDefaultAsync();
             return theuser ?? throw new NotFoundException(nameof(theuser));
         }
         public async Task<List<object>> GetAllUsers()
         {
             var Userslist = new List<object>();
             var users = await _userManager.Users.ToListAsync();
-            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.AvatarUrl, user.PhoneNumber, user.Email, user.Id });
+            if (users != null) foreach (var user in users) Userslist.Add(new { user.UserName, user.AvatarUrl, user.PhoneNumber, user.Email, user.Id, user.Fullname });
             return Userslist;
         }
         public async Task<string> SignUP(AddUserCommand command)
@@ -80,7 +82,7 @@ namespace Application.UserAndOtp.Services
             // Handle email change
             if (!string.IsNullOrWhiteSpace(command.Email))
             {
-                string newEmail = command.Email.ToLower();
+                string newEmail = command.Email.ToLower().Trim();
 
                 if (!string.Equals(newEmail, theuser.Email, StringComparison.OrdinalIgnoreCase))
                 {
@@ -110,20 +112,85 @@ namespace Application.UserAndOtp.Services
                 }
             }
 
-            // Handle avatar update
-            string avatarUrl = command.Avatarurl != null
-                ? await IformfileToUrl.UploadFile(command.Avatarurl, theuser.Id)
-                : theuser.AvatarUrl!;
+            // Handle password change
+            if (!string.IsNullOrWhiteSpace(command.Password))
+            {
+                if (command.ConfirmPassword == null) throw new BadRequestException("Confirm password is required");
+                if (command.Password != command.ConfirmPassword)
+                    throw new BadRequestException("Passwords do not match.");
 
-            // Update other user details
+                var isSamePassword = await _userManager.CheckPasswordAsync(theuser, command.Password);
+                if (isSamePassword) throw new BadRequestException("New password cannot be the same as the previous password.");
+
+                var token = await _userManager.GeneratePasswordResetTokenAsync(theuser);
+                var result = await _userManager.ResetPasswordAsync(theuser, token, command.Password);
+                if (!result.Succeeded)
+                    throw new UnauthorizedException(string.Join("; ", result.Errors.Select(e => e.Description)));
+            }
+
+            string? avatarUrl = string.IsNullOrWhiteSpace(command.Avatarurl?.FileName)
+            ? theuser.AvatarUrl // If no new avatar, keep old one
+            : await IFormFileToUrl.UploadFileAsync(command.Avatarurl); // Upload new avatar
+
+            // Update user details (if changes occurred)
             theuser.UpdateUser(command.UserName?.Trim() ?? theuser.UserName!,
-                               theuser.Email!, // Ensured by previous validation
+                               theuser.Email!, // Already validated
                                avatarUrl,
-                               command.PhoneNumber ?? theuser.PhoneNumber!);
+                               command.PhoneNumber ?? theuser.PhoneNumber!,
+                               command.Fullname);
 
             var updateResult = await _userManager.UpdateAsync(theuser);
             if (!updateResult.Succeeded)
                 throw new BadRequestException($"Failed to update user details: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
+        }
+
+        public async Task<string> InviteFriend(InviteUserDto request, string senderemail)
+        {
+            // Check if both phone number and email are null
+            if (request.PhoneNumber == null && request.Email == null)
+                throw new BadRequestException("A PhoneNumber or Email is required");
+
+            string? smsLink = null;
+
+            // If phone number is provided, generate SMS invite link
+            if (request.PhoneNumber != null)
+            {
+                smsLink = GenerateInviteLink(request.PhoneNumber, request.Fullname, false);
+            }
+
+            // If email is provided, prepare the email body and send details to the front-end
+            if (request.Email != null)
+            {
+                string body = GenerateInviteLink(request.Email, request.Fullname, true);
+
+                // Prepare email details and send to the front-end (return JSON)
+                var emailDetails = new
+                {
+                    From = senderemail, // The sender's email
+                    To = request.Email, // The recipient's email
+                    Subject = "You have been invited!",
+                    Body = body
+                };
+
+                // Assuming you're using an email sender that has an async method
+                await EmailServiceBase.SendEmailOnBehalfOfUserAsync(senderemail, request.Email, body); // Send email asynchronously
+
+                // Return the email details as JSON to the front-end (instead of just sending it)
+                return JsonConvert.SerializeObject(emailDetails); // Send this JSON to the front-end
+            }
+
+            // If no email is provided, return SMS link or message
+            return smsLink ?? "Email invitation sent successfully";
+        }
+        private static string GenerateInviteLink(string recipient, string fullname, bool isEmail)
+        {
+            string baseUrl = "https://plaller.liara.run";
+            string message = $"Dear {fullname}, you have been invited! Click here: {baseUrl}";
+            string encodedMessage = Uri.EscapeDataString(message);
+
+            return isEmail
+                ? $"mailto:{recipient}?subject=Invitation&body={encodedMessage}" // Email format
+                : $"sms:{recipient}?body={encodedMessage}"; // SMS format
         }
 
         public async Task<string> Signin(SigninDto request)

@@ -122,9 +122,9 @@ public static class Dapper
         using var connection = new SqlConnection(connectionString);
         connection.Open();
 
-        var todaygrouptasks = (await connection.QueryAsync<Task>($"SELECT [UserId],[Name],[Status],[DeadLine],[CreationTime]," +
+        var todaygrouptasks = (await connection.QueryAsync<Task>($"SELECT [UserId],[Name],[Status],[DeadLine],[StartTime],[CreationTime]," +
             $"[PriorityCategory] FROM[Planner].[dbo].[Task] where(GroupId = '{groupid}'" +
-            $" and CAST(DeadLine as date) = '{DateTime.Now.Date}')")).ToList();
+            $" and CAST(StartTime as date) = '{DateTime.Now.Date}')")).ToList();
 
         return todaygrouptasks;
     }

@@ -14,5 +14,6 @@ namespace Makeen._Planner.Service
         Task UpdateUser(UpdateUserCommand command, Guid userid);
         Task<IdentityResult> DeleteUser(Guid id);
         Task<IdentityResult> ResetPassword(ForgetPasswordDto request);
+        Task<string> InviteFriend(InviteUserDto request, string senderemail);
     }
 }

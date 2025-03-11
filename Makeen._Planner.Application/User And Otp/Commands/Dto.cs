@@ -29,6 +29,24 @@ namespace Application.User_And_Otp.Commands
         public required string Password { get; set; }
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public required string ConfirmPassword { get; set; }
+    }
 
+    public record UserDto
+    {
+        public Guid Id { get; set; }
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string? Fullname { get; set; }
+    }
+
+    public record InviteUserDto
+    {
+        [EmailAddress]
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public required string Fullname { get; set; }
+        public required string InviteCode { get; set; }
     }
 }

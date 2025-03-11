@@ -12,5 +12,8 @@ namespace Application.Group_Service
         Task AddMemberByEmail(AddUserByEmailDto request);
         Task AddGroup(AddGroupCommand command, Guid ownerid);
         Task Update(Guid id, UpdateGroupCommand command);
+        Task RemoveMember(Guid groupId, Guid userId);
+        Task ToggleMemberToAdmin(Guid groupId, Guid userId);
+        Task<List<GroupWithTaskCountsDto>> GetAllGroupsOfUser(Guid userid);
     }
 }

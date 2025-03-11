@@ -4,14 +4,15 @@ namespace Domain
 {
     public class Group
     {
+
         public Guid Id { get; private set; }
         public string Title { get; private set; } = string.Empty;
         public string Color { get; private set; } = string.Empty;
         public Guid OwnerId { get; private set; }
         public bool Grouptype { get; private set; }
         public string? AvatarUrl { get; private set; }
-        [JsonIgnore]
-        public List<User>? Members { get; private set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<GroupMembership> GroupMemberships { get; private set; } = [];
         public List<Task.Task>? Tasks { get; private set; }
 
         public Group(string title, string? avatar, string color, Guid ownerId, bool grouptype = false)
@@ -24,11 +25,9 @@ namespace Domain
             Id = Guid.NewGuid();
         }
 
-        public void UpdateGroup(string title, string? avatar, string color)
+        public void AddMember(Guid userId, bool isAdmin = false)
         {
-            Title = title;
-            AvatarUrl = avatar;
-            Color = color;
+            GroupMemberships.Add(new GroupMembership(userId, this.Id, isAdmin));
         }
 
         public void UpdateTitle(string title)

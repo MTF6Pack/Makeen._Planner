@@ -14,4 +14,15 @@ namespace Application.Group_Service
         public required string Email { get; set; }
 
     }
+
+    public record GroupWithTaskCountsDto
+    {
+        public Guid GroupId { get; set; }
+        public string? GroupName { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string? Color { get; set; }
+        public bool Grouptype { get; set; } = false;
+        public int TotalTasks { get; set; }
+        public int DoneTasks { get; set; }
+    }
 }

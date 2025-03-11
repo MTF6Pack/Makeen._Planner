@@ -80,7 +80,7 @@ namespace Makeen._Planner.Controllers
             return Ok(_otpEmailService.CheckOTP(dto.Email, dto.UserInput));
         }
 
-        [HttpPost("Forget-Password")]
+        [HttpPost("Forget-OldPassword")]
         [EndpointSummary("Resets password; Use it only for the otp-verified user")]
         public async Task<IActionResult> ResetPassword(ForgetPasswordDto request)
         {

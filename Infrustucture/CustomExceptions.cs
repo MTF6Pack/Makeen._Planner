@@ -13,7 +13,7 @@ namespace Infrustucture
     {
         readonly static string defaultmessage = " Error Invalid input";
         public BadRequestException() : base(defaultmessage) { }
-        public BadRequestException(string message) : base(message + defaultmessage) { }
+        public BadRequestException(string message) : base(message) { }
     }
 
     [CustomException(401)]
