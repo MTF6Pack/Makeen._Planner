@@ -21,11 +21,28 @@ namespace Makeen._Planner.Controllers
             return Ok(await Persistence.Dapper.TasksReport((Guid)groupid));
         }
 
-        [HttpGet("{groupid}")]
-        [EndpointSummary("Fetches today group tasks by groupid")]
-        public async Task<IActionResult> GetTodayGroupTasks(Guid groupid)
+        [HttpGet("donetasks")]
+        [EndpointSummary("Fetches all donetasks of a user by token")]
+        public async Task<IActionResult> GetUserDoneTasks()
         {
-            return Ok(await Persistence.Dapper.GroupTodayTasks(groupid));
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await Persistence.Dapper.UserDoneTasks(userid));
+        }
+
+        [HttpGet("futuretasks")]
+        [EndpointSummary("Fetches all futuretasks of a user by token")]
+        public async Task<IActionResult> GetUserFutureTasks()
+        {
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await Persistence.Dapper.UserFutureTasks(userid));
+        }
+
+        [HttpGet("failedtasks")]
+        [EndpointSummary("Fetches all failedtasks of a user by token")]
+        public async Task<IActionResult> GetUserFailedTasks()
+        {
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await Persistence.Dapper.UserFailedTasks(userid));
         }
     }
 }

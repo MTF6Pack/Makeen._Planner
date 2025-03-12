@@ -39,6 +39,10 @@ namespace Application.Group_Service
                 {
                     GroupId = g.Id,
                     GroupName = g.Title,
+                    IsUserAdmin = g.GroupMemberships
+                                   .Where(m => m.UserId == userid) // Filter memberships by userId
+                                   .Select(m => m.IsAdmin) // Get the IsAdmin value from the membership
+                                   .FirstOrDefault(), // This should give the IsAdmin value for the user, or false if not found
                     AvatarUrl = g.AvatarUrl,
                     Color = g.Color,
                     Grouptype = g.Grouptype,

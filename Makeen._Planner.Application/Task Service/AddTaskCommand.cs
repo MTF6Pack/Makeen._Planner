@@ -7,26 +7,16 @@ namespace Makeen._Planner.Task_Service
     public class AddTaskCommand
     {
         public Guid? GroupId { get; set; }
+        public string? ReceiverUserName { get; set; }
+        public Guid? ReceiveId { get; set; }
         [JsonConverter(typeof(FlexibleDateTimeConverter))]
         public DateTime DeadLine { get; set; }
         [JsonConverter(typeof(FlexibleDateTimeConverter))]
         public DateTime StartTime { get; set; }
         required public string Name { get; set; }
-        public PriorityCategory PriorityCategory { get; set; }
+        public PriorityCategory? PriorityCategory { get; set; }
         public Alarm Alarm { get; set; }
-        public Repeat Repeat { get; set; }
-    }
-
-    public class AddSendTaskCommand
-    {
-        public required string ReceiverUserName { get; set; }
-        [JsonConverter(typeof(FlexibleDateTimeConverter))]
-        public DateTime DeadLine { get; set; }
-        [JsonConverter(typeof(FlexibleDateTimeConverter))]
-        public DateTime StartTime { get; set; }
-        required public string Name { get; set; }
-        public PriorityCategory PriorityCategory { get; set; }
-        public Alarm Alarm { get; set; }
-        public Repeat Repeat { get; set; }
+        public Repeat? Repeat { get; set; }
+        public string? Description { get; set; }
     }
 }

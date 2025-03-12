@@ -9,6 +9,7 @@ namespace Domain
         public List<GroupMembership> Memberships { get; private set; } = [];
         public DateTime CreationTime { get; private set; }
         public List<Task.Task> Tasks { get; private set; } = [];
+        public List<User> Contacts { get; private set; } = [];
 
         public User(string email)
         {

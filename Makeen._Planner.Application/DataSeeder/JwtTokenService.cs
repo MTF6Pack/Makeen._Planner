@@ -16,34 +16,31 @@ namespace Application.DataSeeder
 
     public class JwtTokenService(IConfiguration configuration)
     {
-        private readonly string Secretkey = configuration["JWT:Key"] ?? throw new ArgumentNullException("JWT Key is missing");
-        private readonly string Issuer = configuration["JWT:Issuer"] ?? throw new ArgumentNullException("JWT Issuer is missing");
-        private readonly string Audience = configuration["JWT:Audience"] ?? throw new ArgumentNullException("JWT Audience is missing");
+        private readonly string _secretKey = configuration["JWT:Key"] ?? throw new ArgumentNullException("JWT Key is missing in the configuration.");
 
         public string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(Secretkey);
+            var key = Encoding.ASCII.GetBytes(_secretKey);
 
-            var userclaims = new ClaimsIdentity([
-               new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-               new Claim("id", user.Id.ToString()),
-               new Claim("email", user.Email!)
-            ]);
+            var claims = new ClaimsIdentity(
+            [
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim("id", user.Id.ToString()),
+        new Claim("email", user.Email ?? string.Empty)
+    ]);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = userclaims,
-                Expires = DateTime.UtcNow.AddDays(7),
-                Issuer = Issuer,
-                Audience = Audience,
+                Subject = claims,
+                Expires = DateTime.Now.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            Console.WriteLine($"Generated Token: {tokenString}"); // ✅ Debugging line
+            Console.WriteLine($"Generated Token: {tokenString}"); // Debugging line
             return tokenString;
         }
     }

@@ -3,7 +3,6 @@
     public enum TaskStatus
     {
         Done = 1,
-        Pending = 2,
-        Failed = 3
+        Pending = 2
     }
 }

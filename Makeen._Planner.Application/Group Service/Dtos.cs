@@ -17,6 +17,7 @@ namespace Application.Group_Service
 
     public record GroupWithTaskCountsDto
     {
+        public bool IsUserAdmin { get; set; }
         public Guid GroupId { get; set; }
         public string? GroupName { get; set; }
         public string? AvatarUrl { get; set; }

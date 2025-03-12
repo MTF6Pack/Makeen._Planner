@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 
@@ -11,9 +12,11 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    partial class DataBaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250311150922_Alarm")]
+    partial class Alarm
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -90,7 +93,7 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("GroupId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool?>("IsInGroup")
+                    b.Property<bool>("IsInGroup")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
@@ -101,9 +104,10 @@ namespace Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Repeat")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("SenderId")
+                    b.Property<Guid>("SenderId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("StartTime")
@@ -122,7 +126,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tasks");
+                    b.ToTable("Task");
                 });
 
             modelBuilder.Entity("Domain.User", b =>
@@ -182,9 +186,6 @@ namespace Persistence.Migrations
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -198,8 +199,6 @@ namespace Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -367,13 +366,6 @@ namespace Persistence.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.User", b =>
-                {
-                    b.HasOne("Domain.User", null)
-                        .WithMany("Contacts")
-                        .HasForeignKey("UserId");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("Domain.UserRole", null)
@@ -434,8 +426,6 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.User", b =>
                 {
-                    b.Navigation("Contacts");
-
                     b.Navigation("Memberships");
 
                     b.Navigation("Tasks");

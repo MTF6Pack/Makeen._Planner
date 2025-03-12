@@ -8,6 +8,7 @@ using System.Text.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 using System.Text.RegularExpressions;
 using Task = Domain.Task.Task;
+using Persistence.Migrations;
 
 namespace Persistence;
 
@@ -124,8 +125,53 @@ public static class Dapper
 
         var todaygrouptasks = (await connection.QueryAsync<Task>($"SELECT [UserId],[Name],[Status],[DeadLine],[StartTime],[CreationTime]," +
             $"[PriorityCategory] FROM[Planner].[dbo].[Task] where(GroupId = '{groupid}'" +
-            $" and CAST(StartTime as date) = '{DateTime.Now.Date}')")).ToList();
+            $" and CAST(StartTime as date) = '{DateTime.Now.Date}')")).OrderByDescending(t => t.StartTime).ToList();
 
         return todaygrouptasks;
+    }
+
+    public static async Task<List<Task>> UserDoneTasks(Guid userid)
+    {
+        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        using var connection = new SqlConnection(connectionString);
+        connection.Open();
+
+        var userDoneTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
+            $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
+            $" AS SenderName FROM [Planner].[dbo].[Task]t JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+            $" = 'done' and t.[UserId] = '{userid}'")).OrderByDescending(t => t.StartTime).ToList();
+
+        return userDoneTasks;
+    }
+
+    public static async Task<List<Task>> UserFutureTasks(Guid userid)
+    {
+        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        using var connection = new SqlConnection(connectionString);
+        connection.Open();
+
+        var userFutureTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
+          $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
+          $" AS SenderName FROM [Planner].[dbo].[Task] t JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+          $" = 'done' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
+
+        return userFutureTasks;
+    }
+
+    public static async Task<List<Task>> UserFailedTasks(Guid userid)
+    {
+        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        using var connection = new SqlConnection(connectionString);
+        connection.Open();
+
+        var userFailedTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
+          $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
+          $" AS SenderName FROM [Planner].[dbo].[Task] t JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+          $" = 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
+
+        return userFailedTasks;
     }
 }

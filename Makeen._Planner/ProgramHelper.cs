@@ -1,5 +1,6 @@
 ﻿using Application.DataSeeder;
 using Application.EmailConfirmation;
+using Application.Services;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
@@ -13,6 +14,8 @@ using Microsoft.OpenApi.Models;
 using Persistence;
 using Persistence.Repository.Interface;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Globalization;
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Claims;
@@ -25,6 +28,7 @@ namespace Makeen._Planner
     {
         public static void StartUp(this WebApplicationBuilder builder)
         {
+
             builder.Services.ConfigureJWT(builder.Configuration);
             RegisterServices(builder);
             ConvertEnumToString(builder);
@@ -44,7 +48,6 @@ namespace Makeen._Planner
 
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddMemoryCache();
-
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserRepository>()
                 .AddClasses()
@@ -88,9 +91,11 @@ namespace Makeen._Planner
                 o.DocumentFilter<TitleFilter>();
             });
         }
-
         public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
         {
+            // Clear default inbound claim mapping to keep claims as they are.
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
             services.ConfigureApplicationCookie(options =>
             {
                 options.Events.OnRedirectToLogin = context =>
@@ -103,11 +108,11 @@ namespace Makeen._Planner
             var jwtSettings = new JwtSettings();
             configuration.GetSection("JWT").Bind(jwtSettings);
 
-            if (string.IsNullOrEmpty(jwtSettings?.Key)) throw new UnauthorizedException("JWT Key is missing in the configuration.");
+            if (string.IsNullOrEmpty(jwtSettings?.Key))
+                throw new UnauthorizedAccessException("JWT Key is missing in the configuration.");
 
-            services.AddSingleton(jwtSettings); // Register JwtSettings
+            services.AddSingleton(jwtSettings); // Register JwtSettings as a singleton
 
-            // Explicitly set JWT as the default scheme
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -130,10 +135,7 @@ namespace Makeen._Planner
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = context =>
-                    {
-                        return Task.CompletedTask;
-                    },
+                    OnMessageReceived = context => Task.CompletedTask,
                     OnAuthenticationFailed = context =>
                     {
                         Console.WriteLine($"❌ Authentication Failed: {context.Exception.Message}");
@@ -141,7 +143,7 @@ namespace Makeen._Planner
                     },
                     OnTokenValidated = context =>
                     {
-                        if (context.Principal?.Identity is not ClaimsIdentity claimsIdentity)
+                        if (context.Principal?.Identity is not ClaimsIdentity)
                         {
                             Console.WriteLine("⚠️ Token validated, but no claims found!");
                         }
@@ -152,11 +154,13 @@ namespace Makeen._Planner
         }
 
 
+
         public static void ConvertEnumToString(this WebApplicationBuilder builder)
         {
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 //options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+                options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
@@ -184,3 +188,4 @@ namespace Makeen._Planner
         }
     }
 }
+

@@ -1,4 +1,5 @@
 ﻿using Application.User_And_Otp.Commands;
+using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
 using Makeen._Planner.Task_Service;
@@ -47,7 +48,7 @@ namespace Makeen._Planner.Controllers
         [EndpointSummary("Edits the user by token")]
         public async Task<IActionResult> Update(UpdateUserCommand command)
         {
-            var userid = new Guid(User.FindFirst("")!.Value);
+            var userid = new Guid(User.FindFirst("id")!.Value);
             await _userService.UpdateUser(command, userid);
             return Ok();
         }
@@ -56,30 +57,42 @@ namespace Makeen._Planner.Controllers
         [EndpointSummary("invites a user to the app by email or phonenumber")]
         public async Task<IActionResult> Update(InviteUserDto request)
         {
-            var useremail = User.FindFirst("email")!.Value;
-            await _userService.InviteFriend(request, useremail);
+            var userid = User.FindFirst("id")!.Value;
+            await _userService.InviteFriend(request, userid);
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpPost("contacts")]
+        [EndpointSummary("Adds a user to user contacts by userid or email or username")]
+        public async Task<IActionResult> AddContacts(AddContactDto request)
+        {
+            var theuserid = User.FindFirst("id")!.Value;
+            await _userService.AddContact(theuserid, request);
+            return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("contacts")]
+        [EndpointSummary("get user contacts by token")]
+        public async Task<IActionResult> GetContacts()
+        {
+            var theuserid = User.FindFirst("id")!.Value;
+            await _userService.GetContacts(theuserid);
             return Ok();
         }
 
         [Authorize]
         [HttpPost("tasks")]
-        [EndpointSummary("Creates a task for the user by token")]
+        [EndpointSummary("Creates a task")]
         public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
+            //var useremail = User.FindFirst("email")!.Value;
             await _taskService.AddTask(command, userid);
             return Ok();
         }
 
-        [Authorize]
-        [HttpPost("tasks/user")]
-        [EndpointSummary("Creates a task for the user by token")]
-        public async Task<IActionResult> AddTaskForOthers([FromBody] AddSendTaskCommand command, string receiverUserName)
-        {
-            var userid = new Guid(User.FindFirst("id")!.Value);
-            await _taskService.AddTaskForOthers(command, userid, receiverUserName);
-            return Ok();
-        }
         [Authorize]
         [HttpPatch("tasks")]
         [EndpointSummary("Edits a task for the user by token")]

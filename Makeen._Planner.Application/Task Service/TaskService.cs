@@ -3,6 +3,7 @@ using Domain;
 using Infrustucture;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 using Persistence.Repository;
@@ -20,62 +21,56 @@ namespace Makeen._Planner.Task_Service
 
         public async Task AddTask(AddTaskCommand command, Guid userid)
         {
-            if (command.DeadLine < DateTime.Now)
-                throw new BadRequestException("Deadline cannot be in the past");
+            if (command.DeadLine < DateTime.Now || command.StartTime < DateTime.Now) throw new BadRequestException("Deadline nor Start time cannot be in the past");
+            if (command.DeadLine < command.StartTime) throw new BadRequestException("Deadline cannot be before Starttime");
+            if (command.ReceiveId == null && command.GroupId == null) throw new BadRequestException("Select At least a group or a user");
 
-            if (command.DeadLine < command.StartTime)
-                throw new BadRequestException("Deadline cannot be before Starttime");
+            bool? isREALLYInGroup = command.GroupId.HasValue ? await _repository.StraitAccess.Set<Group>().Where(g => g.Id == command.GroupId)
+                 .AsNoTracking().Select(g => (bool?)g.Grouptype).FirstOrDefaultAsync() : null;
 
-            // Check if the user is an admin in the specified group
-            if (command.GroupId.HasValue)
+            bool isGroupExists = isREALLYInGroup.HasValue;
+            bool isGroupPublic = isREALLYInGroup == true; // If the group exists, check its type.
+            bool hasGroupId = command.GroupId.HasValue;
+            bool hasReceiver = command.ReceiveId.HasValue;
+
+            bool AdminIsSendingATask_ForAUserInsideAGroup = isGroupPublic && hasGroupId && hasReceiver;
+            bool AdminIsSendingATask_ForALLUsersInsideAGroup = isGroupPublic && hasGroupId && !hasReceiver;
+            bool UserIsSendingATask_ForAUserOutsideGroup = isGroupPublic && !hasGroupId && hasReceiver;
+            bool UserIsSendingATask_ForHisList = !isGroupPublic && hasGroupId && !hasReceiver;
+            bool UserIsCreatingATask_ForHimself = !isGroupPublic && !hasGroupId && !hasReceiver;
+            Guid? senderid = !UserIsCreatingATask_ForHimself ? userid : null;
+            User? targetuser = null;
+
+            if (AdminIsSendingATask_ForAUserInsideAGroup)
             {
-                bool isAdmin = await _repository.StraitAccess.Set<GroupMembership>()
-                    .AnyAsync(g => g.GroupId == command.GroupId && g.UserId == userid && g.IsAdmin);
-
-                if (!isAdmin)
-                    throw new UnauthorizedException("User is not an admin in this group");
+                bool isAdmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(g => g.GroupId == command.GroupId && g.UserId == userid && g.IsAdmin);
+                if (!isAdmin) throw new UnauthorizedException("User is not an admin in this group");
+                targetuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.UserName == command.ReceiverUserName) ?? throw new NotFoundException("User");
+            }
+            else if (AdminIsSendingATask_ForALLUsersInsideAGroup)
+            {
+                bool isAdmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(g => g.GroupId == command.GroupId && g.UserId == userid && g.IsAdmin);
+                if (!isAdmin) throw new UnauthorizedException("User is not an admin in this group");
             }
 
-            User? theuser = await _repository.StraitAccess.Set<User>()
-                .Include(x => x.Tasks)
-                .FirstOrDefaultAsync(x => x.Id == userid);
-
-            if (theuser != null)
+            else if (UserIsSendingATask_ForAUserOutsideGroup)
             {
-                var task = command.ToModel();
-                theuser.Tasks!.Add(task);
-                _repository.StraitAccess.Set<Domain.Task.Task>().Add(task);
-                await _unitOfWork.SaveChangesAsync();
+                targetuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.UserName == command.ReceiverUserName) ?? throw new NotFoundException("User");
+                //Something must be done here
+                return;
             }
-            else
-                throw new NotFoundException(nameof(theuser));
-        }
-        public async Task AddTaskForOthers(AddSendTaskCommand command, Guid senderid, string receiveruserid)
-        {
-            if (command.DeadLine < DateTime.Now)
-                throw new BadRequestException("Deadline cannot be in the past");
 
-            if (command.DeadLine < command.StartTime)
-                throw new BadRequestException("Deadline cannot be before Starttime");
+            else if (UserIsCreatingATask_ForHimself) targetuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.Id == userid);
 
-
-            User? thereceiver = await _repository.StraitAccess.Set<User>()
-                .Include(x => x.Tasks)
-                .FirstOrDefaultAsync(x => x.UserName == receiveruserid);
-
-            if (thereceiver != null)
-            {
-                var task = command.ToModel(senderid);
-                thereceiver.Tasks!.Add(task);
-                _repository.StraitAccess.Set<Domain.Task.Task>().Add(task);
-                await _unitOfWork.SaveChangesAsync();
-            }
-            else
-                throw new NotFoundException(nameof(thereceiver));
+            else throw new BadRequestException();
+            var task = command.ToModel(senderid);
+            if (targetuser != null) targetuser.Tasks!.Add(task);
+            _repository.StraitAccess.Set<Domain.Task.Task>().Add(task);
+            await _unitOfWork.SaveChangesAsync();
         }
         public async Task<List<Domain.Task.Task>> GetAllUserTasks(Guid userid)
         {
-            return await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).SelectMany(u => u.Tasks).ToListAsync();
+            return await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).SelectMany(u => u.Tasks).OrderByDescending(t => t.CreationTime).ToListAsync();
         }
         public async Task<List<Domain.Task.Task>?> GetAllTasks()
         {
@@ -83,13 +78,13 @@ namespace Makeen._Planner.Task_Service
         }
         public async Task<List<Domain.Task.Task>?> GetTheUserTasksByCalander(DateOnly date, Guid userid)
         {
-            var theuserTasks = await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).Select(u => u.Tasks!.Where(t => (DateOnly.FromDateTime(t.StartTime)) == date).ToList()).FirstOrDefaultAsync();
+            var theuserTasks = await _repository.StraitAccess.Set<User>().Where(u => u.Id == userid).Select(u => u.Tasks!.Where(t => (DateOnly.FromDateTime(t.StartTime)) == date).OrderByDescending(t => t.CreationTime).ToList()).FirstOrDefaultAsync();
             return theuserTasks ?? throw new NotFoundException(nameof(theuserTasks));
         }
 
         public async Task<List<Domain.Task.Task>> GetObjectByName(string name)
         {
-            List<Domain.Task.Task> tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(x => x.Name == name).ToListAsync();
+            List<Domain.Task.Task> tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(x => x.Name == name).OrderByDescending(t => t.CreationTime).ToListAsync();
             return tasks;
         }
         public async Task RemoveTask(Guid taskid)
@@ -103,10 +98,10 @@ namespace Makeen._Planner.Task_Service
         {
             // Fetch the task using taskId
             Domain.Task.Task? thetask = await _repository.GetByIdAsync(taskId)
-                ?? throw new NotFoundException("Task not found.");
+                ?? throw new NotFoundException("Task");
 
             // Directly use PriorityCategory if it's non-nullable
-            thetask.UpdateTask(command.Name, command.DeadLine, (int?)command.PriorityCategory, command.StartTime, command.Repeat, command.Alarm);
+            thetask.UpdateTask(command.Name, command.DeadLine, command.PriorityCategory, command.StartTime, command.Repeat, command.Alarm, command.Description);
 
             // Commit changes using Unit of Work
             await _unitOfWork.SaveChangesAsync();
@@ -118,5 +113,7 @@ namespace Makeen._Planner.Task_Service
             thetask?.UpdateTaskStatus(status);
             await _unitOfWork.SaveChangesAsync();
         }
+
+        //public async Task SendNotification(Guid userid,)
     }
 }

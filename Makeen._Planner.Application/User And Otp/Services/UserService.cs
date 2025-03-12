@@ -144,8 +144,9 @@ namespace Application.UserAndOtp.Services
                 throw new BadRequestException($"Failed to update user details: {string.Join(", ", updateResult.Errors.Select(e => e.Description))}");
         }
 
-        public async Task<string> InviteFriend(InviteUserDto request, string senderemail)
+        public async Task<string> InviteFriend(InviteUserDto request, string userid)
         {
+            var user = await _userManager.FindByIdAsync(userid);
             // Check if both phone number and email are null
             if (request.PhoneNumber == null && request.Email == null)
                 throw new BadRequestException("A PhoneNumber or Email is required");
@@ -166,14 +167,14 @@ namespace Application.UserAndOtp.Services
                 // Prepare email details and send to the front-end (return JSON)
                 var emailDetails = new
                 {
-                    From = senderemail, // The sender's email
+                    From = user!.Email!, // The sender's email
                     To = request.Email, // The recipient's email
                     Subject = "You have been invited!",
                     Body = body
                 };
 
                 // Assuming you're using an email sender that has an async method
-                await EmailServiceBase.SendEmailOnBehalfOfUserAsync(senderemail, request.Email, body); // Send email asynchronously
+                await EmailServiceBase.SendEmailOnBehalfOfUserAsync(user!.Email!, request.Email, body); // Send email asynchronously
 
                 // Return the email details as JSON to the front-end (instead of just sending it)
                 return JsonConvert.SerializeObject(emailDetails); // Send this JSON to the front-end
@@ -210,6 +211,33 @@ namespace Application.UserAndOtp.Services
             var result = await _userManager.ResetPasswordAsync(theuser, token, request.Password);
             if (!result.Succeeded) throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
             return result;
+        }
+
+        public async Task AddContact(string theuserid, AddContactDto request)
+        {
+            if (request == null) throw new BadRequestException("At least one field must be filled");
+            User? targetuser = null;
+            if (request.TargetId != null) targetuser = await _userManager.FindByIdAsync(request.TargetId);
+            if (targetuser == null && !string.IsNullOrWhiteSpace(request.Email)) targetuser = await _userManager.FindByEmailAsync(request.Email);
+            if (targetuser == null && !string.IsNullOrWhiteSpace(request.UserName)) targetuser = await _userManager.FindByNameAsync(request.UserName);
+            if (targetuser == null) throw new BadRequestException("User not found.");
+            var theuser = await _userManager.FindByIdAsync(theuserid);
+            theuser!.Contacts.Add(targetuser);
+            await _userManager.UpdateAsync(theuser);
+        }
+
+        public async Task<List<GetContactDto>> GetContacts(string theuserid)
+        {
+            var user = await _userManager.FindByIdAsync(theuserid);
+            return user!.Contacts.Select(u => new GetContactDto
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                Email = u.Email,
+                PhoneNumber = u.PhoneNumber,
+                AvatarUrl = u.AvatarUrl,
+                Fullname = u.Fullname
+            }).ToList();
         }
     }
 }

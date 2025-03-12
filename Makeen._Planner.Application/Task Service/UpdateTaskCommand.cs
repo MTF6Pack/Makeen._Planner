@@ -12,9 +12,10 @@ namespace Makeen._Planner.Task_Service
         public DateTime? DeadLine { get; set; }
         [JsonConverter(typeof(FlexibleDateTimeConverter))]
         public DateTime? StartTime { get; set; }
-        public PriorityCategory PriorityCategory { get; set; }
+        public PriorityCategory? PriorityCategory { get; set; }
         public Domain.Task.TaskStatus Status { get; set; }
         public Alarm Alarm { get; set; }
         public Repeat Repeat { get; set; }
+        public string? Description { get; set; }
     }
 }

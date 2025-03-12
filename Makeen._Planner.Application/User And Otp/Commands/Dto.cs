@@ -49,4 +49,22 @@ namespace Application.User_And_Otp.Commands
         public required string Fullname { get; set; }
         public required string InviteCode { get; set; }
     }
+
+    public record GetContactDto
+    {
+        public Guid Id { get; set; }
+        public string? UserName { get; set; }
+        public string? Email { get; set; }
+        public string? PhoneNumber { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string? Fullname { get; set; }
+    }
+
+    public record AddContactDto
+    {
+        [EmailAddress]
+        public string? Email { get; set; }
+        public string? UserName { get; set; }
+        public string? TargetId { get; set; }
+    }
 }

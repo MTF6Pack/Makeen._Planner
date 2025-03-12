@@ -1,8 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Application.Hubs;
+using Application.Services;
+using Infrustucture;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using Persistence;
 using System.Diagnostics;
-using System.Net.Sockets;
 using System.Net;
+using System.Net.Sockets;
 
 namespace Makeen._Planner
 {
@@ -28,24 +32,50 @@ namespace Makeen._Planner
 
             builder.StartUp();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            builder.Services.ConfigureApplicationCookie(options =>
+            builder.Services.AddSwaggerGen(c =>
             {
-                options.LoginPath = PathString.Empty;
-                options.AccessDeniedPath = PathString.Empty;
-                options.Events.OnRedirectToLogin = context =>
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    context.Response.StatusCode = 401;
-                    return Task.CompletedTask;
-                };
-                options.Events.OnRedirectToAccessDenied = context =>
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    BearerFormat = "JWT",
+                    Description = "Enter 'Bearer' followed by a space and your token"
+                });
+
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
                 {
-                    context.Response.StatusCode = 403;
-                    return Task.CompletedTask;
-                };
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                Array.Empty<string>()
+            }
+        });
             });
 
+            builder.Services.ConfigureApplicationCookie(options =>
+                {
+                    options.LoginPath = PathString.Empty;
+                    options.AccessDeniedPath = PathString.Empty;
+                    options.Events.OnRedirectToLogin = context =>
+                    {
+                        context.Response.StatusCode = 401;
+                        return Task.CompletedTask;
+                    };
+                    options.Events.OnRedirectToAccessDenied = context =>
+                    {
+                        context.Response.StatusCode = 403;
+                        return Task.CompletedTask;
+                    };
+                });
+            builder.Services.AddHostedService<TaskNotificationService>();
+            builder.Services.AddSignalR();
             var app = builder.Build();
 
             // Run migrations automatically if pending
@@ -59,14 +89,21 @@ namespace Makeen._Planner
             }
 
             app.Urls.Add("https://*:" + builder.Configuration["Port"]);
-
+            app.UseMiddleware<GlobalDateTimeMiddleware>();
             app.UseMiddleware<GlobalExceptionMiddleware>();
 
             // Open Swagger automatically
             Process.Start("cmd", $"/c start https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)}:{builder.Configuration["Port"]}/swagger");
 
             app.UseSwagger();
-            app.UseSwaggerUI(options => options.EnableTryItOutByDefault());
+            app.UseSwaggerUI(c =>
+     {
+         c.EnableTryItOutByDefault();
+         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+         c.OAuthClientId("your-client-id"); // Optional, if OAuth is used
+     });
+
+            app.MapHub<NotificationHub>("/notifications");
 
             app.UseStaticFiles();
             app.UseHttpsRedirection();
