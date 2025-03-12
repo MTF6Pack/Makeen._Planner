@@ -17,5 +17,6 @@ namespace Makeen._Planner.Service
         Task<string> InviteFriend(InviteUserDto request, string userid);
         Task AddContact(string theuserid, AddContactDto request);
         Task<List<GetContactDto>> GetContacts(string theuserid);
+        Task DeleteContact(string theuserid, Guid targetuserid);
     }
 }

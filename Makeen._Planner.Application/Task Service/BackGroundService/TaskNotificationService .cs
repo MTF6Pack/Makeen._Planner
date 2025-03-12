@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Domain;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Persistence;
@@ -16,31 +18,55 @@ namespace Application.Services
             {
                 try
                 {
-                    using var scope = _serviceProvider.CreateScope();  // ✅ Create Scope Here
+                    using var scope = _serviceProvider.CreateScope();
                     var dbContext = scope.ServiceProvider.GetRequiredService<DataBaseContext>();
 
                     DateTime now = DateTime.Now;
-                    var tasksToNotify = dbContext.Tasks
-                        .Where(t => t.DeadLine.AddMinutes(-(int)t.Alarm) <= now && t.Status != Domain.Task.TaskStatus.Done)
-                        .ToList();
+                    var tasksToNotify = await dbContext.Tasks
+                        .Where(t => t.StartTime.AddMinutes(-(int)t.Alarm) <= now
+                                    && t.Status != Domain.Task.TaskStatus.Done)
+                        .ToListAsync(stoppingToken);
 
                     foreach (var task in tasksToNotify)
                     {
-                        SendNotification(task);
+                        await PlantNotification(task, task.User!.Id, dbContext);
                     }
+
+                    await dbContext.SaveChangesAsync(stoppingToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"Error in TaskNotificationService: {ex.Message}");
+                    _logger.LogError("Error in TaskNotificationService: {ex.Message}", ex.Message);
                 }
 
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Run every minute
             }
         }
 
-        private void SendNotification(Domain.Task.Task task)
+        private async Task PlantNotification(Domain.Task.Task task, Guid userId, DataBaseContext dbContext)
         {
-            _logger.LogInformation($"🔔 Notification: Task '{task.Name}' is due at {task.DeadLine}.");
+            string message = "... زمان فعالیت شما سر رسیده";
+            // Check if a notification already exists for this task
+            bool alreadyNotified = await dbContext.Notifications
+                .AnyAsync(n => n.Task!.Id == task.Id, CancellationToken.None);
+
+            if (!alreadyNotified)
+            {
+                var user = await dbContext.Users.FindAsync(userId);
+                if (user == null)
+                {
+                    _logger.LogWarning("User with ID {userId} not found. Skipping notification.", userId);
+                    return;
+                }
+
+                Notification notification = new(task, message, userId);
+                notification.Activate();
+
+                user.Notifications?.Add(notification);
+                dbContext.Notifications.Add(notification);
+
+                _logger.LogInformation("🔔 Notification sent for Task '{task.Name}' to user {userId} at {DateTime.Now}.", task.Name, userId, DateTime.Now);
+            }
         }
     }
 }

@@ -83,6 +83,16 @@ namespace Makeen._Planner.Controllers
         }
 
         [Authorize]
+        [HttpDelete("contacts")]
+        [EndpointSummary("Deletes a user from user contacts by target id")]
+        public async Task<IActionResult> DeleteContacts(Guid targetid)
+        {
+            var theuserid = User.FindFirst("id")!.Value;
+            await _userService.DeleteContact(theuserid, targetid);
+            return Ok();
+        }
+
+        [Authorize]
         [HttpPost("tasks")]
         [EndpointSummary("Creates a task")]
         public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command)

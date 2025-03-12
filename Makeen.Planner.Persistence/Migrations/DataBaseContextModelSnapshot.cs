@@ -68,15 +68,41 @@ namespace Persistence.Migrations
                     b.ToTable("GroupMemberships");
                 });
 
+            modelBuilder.Entity("Domain.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsActivated")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("Userid")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.HasIndex("Userid");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("Domain.Task.Task", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Alarm")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Alarm")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
@@ -354,6 +380,21 @@ namespace Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Notification", b =>
+                {
+                    b.HasOne("Domain.Task.Task", "Task")
+                        .WithMany()
+                        .HasForeignKey("TaskId");
+
+                    b.HasOne("Domain.User", null)
+                        .WithMany("Notifications")
+                        .HasForeignKey("Userid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
             modelBuilder.Entity("Domain.Task.Task", b =>
                 {
                     b.HasOne("Domain.Group", null)
@@ -437,6 +478,8 @@ namespace Persistence.Migrations
                     b.Navigation("Contacts");
 
                     b.Navigation("Memberships");
+
+                    b.Navigation("Notifications");
 
                     b.Navigation("Tasks");
                 });

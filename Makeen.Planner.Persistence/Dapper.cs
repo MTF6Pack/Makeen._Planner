@@ -1,14 +1,7 @@
 ﻿using Dapper;
-using Domain;
-using Domain.Task;
 using Infrustucture;
 using Microsoft.Data.SqlClient;
-using System.Numerics;
-using System.Text.Json;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Text.RegularExpressions;
 using Task = Domain.Task.Task;
-using Persistence.Migrations;
 
 namespace Persistence;
 

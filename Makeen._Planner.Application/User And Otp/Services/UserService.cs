@@ -132,7 +132,7 @@ namespace Application.UserAndOtp.Services
             ? theuser.AvatarUrl // If no new avatar, keep old one
             : await IFormFileToUrl.UploadFileAsync(command.Avatarurl); // Upload new avatar
 
-            // Update user details (if changes occurred)
+            // Activate user details (if changes occurred)
             theuser.UpdateUser(command.UserName?.Trim() ?? theuser.UserName!,
                                theuser.Email!, // Already validated
                                avatarUrl,
@@ -238,6 +238,12 @@ namespace Application.UserAndOtp.Services
                 AvatarUrl = u.AvatarUrl,
                 Fullname = u.Fullname
             }).ToList();
+        }
+        public async Task DeleteContact(string theuserid, Guid targetuserid)
+        {
+            var user = await _userManager.FindByIdAsync(theuserid);
+            var targetuser = await _userManager.FindByIdAsync(theuserid) ?? throw new NotFoundException("Target user");
+            user!.Contacts.Remove(targetuser);
         }
     }
 }

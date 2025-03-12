@@ -30,7 +30,9 @@ namespace Makeen._Planner
                 });
             });
 
+            // This call registers services including TaskNotificationService.
             builder.StartUp();
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(c =>
             {
@@ -44,38 +46,42 @@ namespace Makeen._Planner
                 });
 
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-            {
-                new OpenApiSecurityScheme
                 {
-                    Reference = new OpenApiReference
                     {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
                     }
-                },
-                Array.Empty<string>()
-            }
-        });
+                });
             });
 
             builder.Services.ConfigureApplicationCookie(options =>
+            {
+                options.LoginPath = PathString.Empty;
+                options.AccessDeniedPath = PathString.Empty;
+                options.Events.OnRedirectToLogin = context =>
                 {
-                    options.LoginPath = PathString.Empty;
-                    options.AccessDeniedPath = PathString.Empty;
-                    options.Events.OnRedirectToLogin = context =>
-                    {
-                        context.Response.StatusCode = 401;
-                        return Task.CompletedTask;
-                    };
-                    options.Events.OnRedirectToAccessDenied = context =>
-                    {
-                        context.Response.StatusCode = 403;
-                        return Task.CompletedTask;
-                    };
-                });
-            builder.Services.AddHostedService<TaskNotificationService>();
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = 403;
+                    return Task.CompletedTask;
+                };
+            });
+
+            // Remove this duplicate registration:
+            // builder.Services.AddHostedService<TaskNotificationService>();
+
             builder.Services.AddSignalR();
+
             var app = builder.Build();
 
             // Run migrations automatically if pending
@@ -97,11 +103,11 @@ namespace Makeen._Planner
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
-     {
-         c.EnableTryItOutByDefault();
-         c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-         c.OAuthClientId("your-client-id"); // Optional, if OAuth is used
-     });
+            {
+                c.EnableTryItOutByDefault();
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+                c.OAuthClientId("your-client-id"); // Optional, if OAuth is used
+            });
 
             app.MapHub<NotificationHub>("/notifications");
 

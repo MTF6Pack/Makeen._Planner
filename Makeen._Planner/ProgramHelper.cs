@@ -49,14 +49,14 @@ namespace Makeen._Planner
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddMemoryCache();
             builder.Services.Scan(scan => scan
-                .FromAssemblyOf<IUserRepository>()
-                .AddClasses()
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
+     .FromAssemblyOf<IUserRepository>()
+     .AddClasses(classes => classes.Where(type => !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
+     .AsImplementedInterfaces()
+     .WithScopedLifetime());
 
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserService>()
-                .AddClasses()
+                .AddClasses(classes => classes.Where(type => !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 

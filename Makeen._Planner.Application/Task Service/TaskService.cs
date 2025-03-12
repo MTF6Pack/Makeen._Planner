@@ -1,15 +1,8 @@
-﻿using Application.DataSeeder;
-using Domain;
+﻿using Domain;
 using Infrustucture;
-using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Persistence;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
-using System;
-using System.Collections.Generic;
 using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Task_Service
@@ -51,12 +44,14 @@ namespace Makeen._Planner.Task_Service
             {
                 bool isAdmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(g => g.GroupId == command.GroupId && g.UserId == userid && g.IsAdmin);
                 if (!isAdmin) throw new UnauthorizedException("User is not an admin in this group");
+
             }
 
             else if (UserIsSendingATask_ForAUserOutsideGroup)
             {
                 targetuser = await _repository.StraitAccess.Set<User>().Include(x => x.Tasks).FirstOrDefaultAsync(x => x.UserName == command.ReceiverUserName) ?? throw new NotFoundException("User");
-                //Something must be done here
+                var thetask = command.ToModel(senderid);
+                await SendTaskRequestNotif(thetask, userid);
                 return;
             }
 
@@ -66,6 +61,7 @@ namespace Makeen._Planner.Task_Service
             var task = command.ToModel(senderid);
             if (targetuser != null) targetuser.Tasks!.Add(task);
             _repository.StraitAccess.Set<Domain.Task.Task>().Add(task);
+
             await _unitOfWork.SaveChangesAsync();
         }
         public async Task<List<Domain.Task.Task>> GetAllUserTasks(Guid userid)
@@ -114,6 +110,15 @@ namespace Makeen._Planner.Task_Service
             await _unitOfWork.SaveChangesAsync();
         }
 
-        //public async Task SendNotification(Guid userid,)
+        private async Task SendTaskRequestNotif(Domain.Task.Task task, Guid userid)
+        {
+            string message = "... درخواست جدید";
+            Notification notification = new(task, message, userid);
+            notification.Activate();
+            var user = await _repository.StraitAccess.Set<User>().FindAsync(userid);
+            user!.Notifications!.Add(notification);
+            _repository.StraitAccess.Set<Notification>().Add(notification);
+            await _unitOfWork.SaveChangesAsync();
+        }
     }
 }

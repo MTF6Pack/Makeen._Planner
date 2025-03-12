@@ -15,8 +15,21 @@ namespace Persistence
                 {
                     if (property.ClrType.IsEnum)
                     {
-                        var converterType = typeof(EnumToStringConverter<>).MakeGenericType(property.ClrType);
-                        property.SetValueConverter(Activator.CreateInstance(converterType, (object?)null) as ValueConverter);
+                        // Check if the property name is "Alarm" and handle it differently
+                        if (property.Name == "Alarm")
+                        {
+                            var converterType = typeof(EnumToNumberConverter<,>)
+                                .MakeGenericType(property.ClrType, typeof(int)); // Store as int
+
+                            property.SetValueConverter(Activator.CreateInstance(converterType) as ValueConverter);
+                        }
+                        else
+                        {
+                            var converterType = typeof(EnumToStringConverter<>)
+                                .MakeGenericType(property.ClrType); // Store as string
+
+                            property.SetValueConverter(Activator.CreateInstance(converterType) as ValueConverter);
+                        }
                     }
                 }
             }
