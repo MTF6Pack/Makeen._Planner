@@ -70,7 +70,7 @@ namespace Makeen._Planner.Controllers
         {
             var existinguser = await _userManager.FindByEmailAsync(email) ?? throw new NotFoundException("User");
             if (!existinguser.EmailConfirmed) throw new UnauthorizedException("Email is not confirmed");
-            await _otpEmailService.SendOTPAsync(email);
+            _otpEmailService.SendOTPAsync(email);
             return Ok(new { message = "OTP sent successfully" });
         }
         [HttpPost("OTP-result")]

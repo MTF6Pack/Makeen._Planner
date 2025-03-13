@@ -78,7 +78,7 @@ namespace Makeen._Planner
             });
 
             // Remove this duplicate registration:
-            // builder.Services.AddHostedService<TaskNotificationService>();
+            builder.Services.AddHostedService<TaskNotificationService>();
 
             builder.Services.AddSignalR();
 
@@ -113,8 +113,8 @@ namespace Makeen._Planner
 
             app.UseStaticFiles();
             app.UseHttpsRedirection();
-            app.UseCors("AllowAllOrigins");
             app.UseRouting();
+            app.UseCors("AllowAllOrigins");
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();

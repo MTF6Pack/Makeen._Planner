@@ -11,7 +11,7 @@ namespace Application.UserAndOtp
     {
         private readonly IMemoryCache _cache = cache;
 
-        public async Task SendOTPAsync(string email)
+        public async void SendOTPAsync(string email)
         {
             _cache.Remove(email);
             string otp = GenerateOTP();

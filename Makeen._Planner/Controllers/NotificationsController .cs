@@ -18,6 +18,7 @@ namespace Makeen._Planner.Controllers
             var userid = new Guid(User.FindFirst("id")!.Value);
             DateTime now = DateTime.Now;
             var tasksDue = await _dbContext.Notifications
+                .Include(x => x.Task)
                 .Where(n => n.Userid == userid && n.IsActivated == true).OrderByDescending(n => n.Task!.CreationTime)
                 .ToListAsync();
 

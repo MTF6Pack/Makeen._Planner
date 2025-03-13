@@ -6,7 +6,7 @@ namespace Application.DataSeeder.OTP
 {
     public interface IOtpEmailService
     {
-        Task SendOTPAsync(string email);
+        void SendOTPAsync(string email);
         bool CheckOTP([EmailAddress] string email, string userInput);
     }
 }

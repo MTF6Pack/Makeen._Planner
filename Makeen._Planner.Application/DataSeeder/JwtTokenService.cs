@@ -40,7 +40,7 @@ namespace Application.DataSeeder
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenString = tokenHandler.WriteToken(token);
 
-            Console.WriteLine($"Generated Token: {tokenString}"); // Debugging line
+            //Console.WriteLine($"Generated Token: {tokenString}"); // Debugging line
             return tokenString;
         }
     }

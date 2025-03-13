@@ -78,8 +78,7 @@ namespace Makeen._Planner.Controllers
         public async Task<IActionResult> GetContacts()
         {
             var theuserid = User.FindFirst("id")!.Value;
-            await _userService.GetContacts(theuserid);
-            return Ok();
+            return Ok(await _userService.GetContacts(theuserid));
         }
 
         [Authorize]

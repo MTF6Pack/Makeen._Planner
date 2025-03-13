@@ -29,15 +29,8 @@ namespace Application
 
             mailMessage.To.Add(new MailAddress(email));
 
-            try
-            {
-                await client.SendMailAsync(mailMessage);
-                Console.WriteLine($"{subject} sent to {email}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to send email: {ex.Message}");
-            }
+            // Send the email asynchronously
+            await client.SendMailAsync(mailMessage);
         }
 
         // New method to send email on behalf of the user

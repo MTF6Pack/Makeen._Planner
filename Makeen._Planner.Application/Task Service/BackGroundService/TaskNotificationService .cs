@@ -23,13 +23,17 @@ namespace Application.Services
 
                     DateTime now = DateTime.Now;
                     var tasksToNotify = await dbContext.Tasks
-                        .Where(t => t.StartTime.AddMinutes(-(int)t.Alarm) <= now
-                                    && t.Status != Domain.Task.TaskStatus.Done)
-                        .ToListAsync(stoppingToken);
+    .Include(t => t.User)
+    .Where(t => t.User != null &&
+                t.StartTime.AddMinutes(-(int)t.Alarm) <= now &&
+                t.Status != Domain.Task.TaskStatus.Done)
+    .ToListAsync(stoppingToken);
 
                     foreach (var task in tasksToNotify)
                     {
-                        await PlantNotification(task, task.User!.Id, dbContext);
+                        // Here, task contains all its properties, and task.User is fully loaded.
+                        Guid userId = task.User!.Id;  // Access the user's Id directly
+                        await PlantNotification(task, userId, dbContext);
                     }
 
                     await dbContext.SaveChangesAsync(stoppingToken);
@@ -39,11 +43,11 @@ namespace Application.Services
                     _logger.LogError("Error in TaskNotificationService: {ex.Message}", ex.Message);
                 }
 
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken); // Run every minute
+                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Run every minute
             }
         }
 
-        private async Task PlantNotification(Domain.Task.Task task, Guid userId, DataBaseContext dbContext)
+        private async Task PlantNotification(Domain.Task.Task task, Guid? userId, DataBaseContext dbContext)
         {
             string message = "... زمان فعالیت شما سر رسیده";
             // Check if a notification already exists for this task

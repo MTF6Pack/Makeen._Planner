@@ -16,7 +16,7 @@ namespace Makeen._Planner.Task_Service
         {
             if (command.DeadLine < DateTime.Now || command.StartTime < DateTime.Now) throw new BadRequestException("Deadline nor Start time cannot be in the past");
             if (command.DeadLine < command.StartTime) throw new BadRequestException("Deadline cannot be before Starttime");
-            if (command.ReceiveId == null && command.GroupId == null) throw new BadRequestException("Select At least a group or a user");
+            //if (command.ReceiveId == null && command.GroupId == null) throw new BadRequestException("Select At least a group or a user");
 
             bool? isREALLYInGroup = command.GroupId.HasValue ? await _repository.StraitAccess.Set<Group>().Where(g => g.Id == command.GroupId)
                  .AsNoTracking().Select(g => (bool?)g.Grouptype).FirstOrDefaultAsync() : null;

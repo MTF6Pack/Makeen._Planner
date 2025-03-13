@@ -8,6 +8,7 @@ namespace Domain.Task
     public class Task
     {
         public Guid? SenderId { get; private set; }
+        //public Guid? Userid { get; set; }
         public Guid Id { get; private set; }
         [JsonIgnore]
         public User? User { get; private set; }

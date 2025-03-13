@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 
@@ -11,9 +12,11 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    partial class DataBaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250312220355_Test")]
+    partial class Test
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -139,14 +142,14 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid?>("Userid")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GroupId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Userid");
 
                     b.ToTable("Tasks");
                 });
@@ -401,7 +404,7 @@ namespace Persistence.Migrations
 
                     b.HasOne("Domain.User", "User")
                         .WithMany("Tasks")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("Userid");
 
                     b.Navigation("User");
                 });

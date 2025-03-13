@@ -220,24 +220,31 @@ namespace Application.UserAndOtp.Services
             if (request.TargetId != null) targetuser = await _userManager.FindByIdAsync(request.TargetId);
             if (targetuser == null && !string.IsNullOrWhiteSpace(request.Email)) targetuser = await _userManager.FindByEmailAsync(request.Email);
             if (targetuser == null && !string.IsNullOrWhiteSpace(request.UserName)) targetuser = await _userManager.FindByNameAsync(request.UserName);
-            if (targetuser == null) throw new BadRequestException("User not found.");
+            if (targetuser == null) throw new NotFoundException("User");
             var theuser = await _userManager.FindByIdAsync(theuserid);
+            if (targetuser == theuser) throw new BadRequestException("You cannot add yourself");
+            if (theuser!.Contacts.Any(c => c.Id == targetuser.Id)) throw new BadRequestException("Contact already added.");
             theuser!.Contacts.Add(targetuser);
             await _userManager.UpdateAsync(theuser);
         }
-
         public async Task<List<GetContactDto>> GetContacts(string theuserid)
         {
-            var user = await _userManager.FindByIdAsync(theuserid);
-            return user!.Contacts.Select(u => new GetContactDto
-            {
-                Id = u.Id,
-                UserName = u.UserName,
-                Email = u.Email,
-                PhoneNumber = u.PhoneNumber,
-                AvatarUrl = u.AvatarUrl,
-                Fullname = u.Fullname
-            }).ToList();
+            // Use the Users property to include Contacts
+            var user = await _userManager.Users
+                .Include(u => u.Contacts)
+                .FirstOrDefaultAsync(u => u.Id == new Guid(theuserid));
+
+            return user == null
+                ? throw new NotFoundException("User")
+                : user.Contacts.Select(u => new GetContactDto
+                {
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    Email = u.Email,
+                    PhoneNumber = u.PhoneNumber,
+                    AvatarUrl = u.AvatarUrl,
+                    Fullname = u.Fullname
+                }).ToList();
         }
         public async Task DeleteContact(string theuserid, Guid targetuserid)
         {
