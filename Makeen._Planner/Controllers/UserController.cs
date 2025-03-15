@@ -6,44 +6,46 @@ using Makeen._Planner.Task_Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {
+    [Authorize]
     [Route("api/v1/users")]
     [ApiController]
-    public class UserController(IUserService userService, ITaskService taskService) : ControllerBase
+    public class UserController(IUserService userService) : ControllerBase
     {
         private readonly IUserService _userService = userService;
-        private readonly ITaskService _taskService = taskService;
 
-        [HttpGet("All")]
-        [EndpointSummary("Fetches all users")]
-        public async Task<IActionResult> GetAllUsers()
-        {
-            return Ok(await _userService.GetAllUsers());
-        }
+        //[HttpGet]
+        //[EndpointSummary("Fetches all users")]
+        //public async Task<IActionResult> GetAllUsers()
+        //{
+        //    return Ok(await _userService.GetAllUsers());
+        //}
+
         [HttpDelete("{id}")]
         [EndpointSummary("Deletes a user by userid")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<IActionResult> Delete([FromRoute] Guid id)
         {
             return Ok(await _userService.DeleteUser(id));
         }
-        [Authorize]
-        [HttpGet]
+
+        [HttpGet("me")]
         [EndpointSummary("Fetches a user by token")]
         public async Task<IActionResult> GetById()
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
             return Ok(await _userService.GetUserById(userid));
         }
-        [HttpGet("email")]
+
+        [HttpGet("by-email")]
         [EndpointSummary("Fetches a user by email")]
-        public async Task<IActionResult> GetByEmail([EmailAddress] string email)
+        public async Task<IActionResult> GetByEmail([FromQuery, EmailAddress] string email)
         {
             return Ok(await _userService.GetUserByEmail(email));
         }
 
-        [Authorize]
         [HttpPatch]
         [EndpointSummary("Edits the user by token")]
         public async Task<IActionResult> Update(UpdateUserCommand command)
@@ -52,7 +54,6 @@ namespace Makeen._Planner.Controllers
             await _userService.UpdateUser(command, userid);
             return Ok();
         }
-        [Authorize]
         [HttpPost("invite")]
         [EndpointSummary("invites a user to the app by email or phonenumber")]
         public async Task<IActionResult> Update(InviteUserDto request)
@@ -62,7 +63,6 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [Authorize]
         [HttpPost("contacts")]
         [EndpointSummary("Adds a user to user contacts by userid or email or username")]
         public async Task<IActionResult> AddContacts(AddContactDto request)
@@ -72,7 +72,6 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [Authorize]
         [HttpGet("contacts")]
         [EndpointSummary("get user contacts by token")]
         public async Task<IActionResult> GetContacts()
@@ -81,69 +80,12 @@ namespace Makeen._Planner.Controllers
             return Ok(await _userService.GetContacts(theuserid));
         }
 
-        [Authorize]
-        [HttpDelete("contacts")]
-        [EndpointSummary("Deletes a user from user contacts by target id")]
-        public async Task<IActionResult> DeleteContacts(Guid targetid)
+        [HttpDelete("contacts/{contactId}")]
+        [EndpointSummary("Deletes a user from user contacts by contactid")]
+        public async Task<IActionResult> DeleteContacts(Guid contactId)
         {
             var theuserid = User.FindFirst("id")!.Value;
-            await _userService.DeleteContact(theuserid, targetid);
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpPost("tasks")]
-        [EndpointSummary("Creates a task")]
-        public async Task<IActionResult> AddTask([FromBody] AddTaskCommand command)
-        {
-            var userid = new Guid(User.FindFirst("id")!.Value);
-            //var useremail = User.FindFirst("email")!.Value;
-            await _taskService.AddTask(command, userid);
-            return Ok();
-        }
-
-        [Authorize]
-        [HttpPatch("tasks")]
-        [EndpointSummary("Edits a task for the user by token")]
-        public async Task UpdateTask([FromBody] UpdateTaskCommand command)
-        {
-            var userid = new Guid(User.FindFirst("id")!.Value);
-            await _taskService.UpdateTask(command, userid);
-        }
-
-        [HttpGet("tasks/name")]
-        [EndpointSummary("Fetches a task by the task name")]
-        public async Task<IActionResult> GetTaskByName(string name)
-        {
-            return Ok(await _taskService.GetObjectByName(name));
-        }
-        [Authorize]
-        [HttpGet("tasks")]
-        [EndpointSummary("Fetches all tasks of the user by token")]
-        public async Task<IActionResult> GetTheUserTasks()
-        {
-            var userid = new Guid(User.FindFirst("id")!.Value);
-            return Ok(await _taskService.GetAllUserTasks(userid));
-        }
-        [Authorize]
-        [HttpGet("tasks/Calender")]
-        [EndpointSummary("Fetches all tasks of the user in a specific date and token")]
-        public async Task<IActionResult> GetTheUserTasksByCalander(DateOnly date)
-        {
-            var userid = new Guid(User.FindFirst("id")!.Value);
-            return Ok(await _taskService.GetTheUserTasksByCalander(date, userid));
-        }
-        [HttpGet("tasks/All")]
-        [EndpointSummary("Fetches all tasks of all users")]
-        public async Task<IActionResult> GetAllTasks()
-        {
-            return Ok(await _taskService.GetAllTasks());
-        }
-        [HttpDelete("tasks/{taskid}")]
-        [EndpointSummary("Deletes a task of the user by taskid")]
-        public async Task<IActionResult> DeleteTask(Guid taskid)
-        {
-            await _taskService.RemoveTask(taskid);
+            await _userService.DeleteContact(theuserid, contactId);
             return Ok();
         }
     }

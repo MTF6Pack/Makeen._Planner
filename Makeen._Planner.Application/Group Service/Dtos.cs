@@ -7,14 +7,6 @@ using System.Threading.Tasks;
 
 namespace Application.Group_Service
 {
-    public record AddUserByEmailDto
-    {
-        public Guid Groupid { get; set; }
-        [EmailAddress]
-        public required string Email { get; set; }
-
-    }
-
     public record GroupWithTaskCountsDto
     {
         public bool IsUserAdmin { get; set; }

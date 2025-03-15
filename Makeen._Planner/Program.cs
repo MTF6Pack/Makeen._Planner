@@ -109,8 +109,6 @@ namespace Makeen._Planner
                 c.OAuthClientId("your-client-id"); // Optional, if OAuth is used
             });
 
-            app.MapHub<NotificationHub>("/notifications");
-
             app.UseStaticFiles();
             app.UseHttpsRedirection();
             app.UseRouting();

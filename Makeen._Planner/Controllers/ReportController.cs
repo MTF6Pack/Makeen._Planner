@@ -2,22 +2,23 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.InteropServices;
+using System.Security.Claims;
 
 
 namespace Makeen._Planner.Controllers
 {
-
-    [Route("api/v1/charts")]
+    [Authorize]
+    [Route("api/v1/reports")]
     [ApiController]
-    public class ChartController : ControllerBase
+    public class ReportController : ControllerBase
     {
-        [Authorize]
+
         [HttpGet]
-        [EndpointSummary("Fetches recent week tasks result of a user by token or a group by groupid ")]
+        [EndpointSummary("Fetches recent week tasks result of a user by token or a group by groupid")]
         public async Task<IActionResult> GetWeeklyReport([FromQuery] Guid? groupid = null)
         {
-            var userId = new Guid(User.FindFirst("id")!.Value);
-            if (groupid == null) return Ok(await Persistence.Dapper.TasksReport(userId));
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            if (groupid == null) return Ok(await Persistence.Dapper.TasksReport(userid));
             return Ok(await Persistence.Dapper.TasksReport((Guid)groupid));
         }
 

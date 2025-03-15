@@ -13,10 +13,10 @@ namespace Infrustucture
         public static async Task<string> UploadFileAsync(IFormFile file)
         {
             if (file == null || file.Length == 0)
-                throw new InvalidOperationException("File is empty");
+                throw new BadRequestException("File is empty");
 
             if (file.Length > MaxFileSizeInBytes)
-                throw new InvalidOperationException("File size is too large. Max allowed size is 1 MB.");
+                throw new BadRequestException("File size is too large. Max allowed size is 1 MB.");
 
             string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
             Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
@@ -32,7 +32,7 @@ namespace Infrustucture
             }
             catch (IOException ex)
             {
-                throw new InvalidOperationException($"File save failed: {ex.Message}", ex);
+                throw new BadRequestException($"File save failed: {ex.Message}");
             }
 
             return $"/uploads/{uniqueFileName}"; // Return relative URL

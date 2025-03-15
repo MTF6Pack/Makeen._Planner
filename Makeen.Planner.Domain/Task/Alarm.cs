@@ -12,5 +12,6 @@ namespace Domain.Task
         Thirty_Minutes = 30,
         One_Hour = 60,
         One_Day = 1440,
+        None = 0
     }
 }

@@ -87,11 +87,12 @@ namespace Application.Group_Service
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task AddMemberByEmail(AddUserByEmailDto request)
+        public async Task AddMemberByEmail(Guid groupid, string email)
         {
-            User? theuser = await _repository.StraitAccess.Set<User>().FirstOrDefaultAsync(u => u.Email == request.Email);
-            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.GroupMemberships).FirstOrDefaultAsync(x => x.Id == request.Groupid);
+            User? theuser = await _repository.StraitAccess.Set<User>().FirstOrDefaultAsync(u => u.Email == email);
+            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.GroupMemberships).FirstOrDefaultAsync(x => x.Id == groupid) ?? throw new NotFoundException("Group");
 
+            if (thegroup!.Grouptype == false) throw new BadRequestException("You cannot add User to your personal task lists");
             if (theuser != null && thegroup != null)
             {
                 if (thegroup.GroupMemberships!.Any(m => m.UserId == theuser.Id))
@@ -145,9 +146,16 @@ namespace Application.Group_Service
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task RemoveMember(Guid groupId, Guid userId)
+        public async Task RemoveMember(Guid groupId, Guid userid, Guid targetuserId)
         {
-            var membership = await _repository.StraitAccess.Set<GroupMembership>().FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId) ?? throw new NotFoundException("Membership not found");
+            var membership = await _repository.StraitAccess.Set<GroupMembership>()
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == targetuserId)
+                ?? throw new NotFoundException("Membership not found");
+
+            var callerMembership = await _repository.StraitAccess.Set<GroupMembership>()
+                .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userid);
+            if (callerMembership == null || !callerMembership.IsAdmin) throw new UnauthorizedException("You are not an admin");
+
             _repository.StraitAccess.Set<GroupMembership>().Remove(membership);
             await _unitOfWork.SaveChangesAsync();
         }

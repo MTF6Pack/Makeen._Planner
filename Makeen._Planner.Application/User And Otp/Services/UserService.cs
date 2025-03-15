@@ -193,7 +193,6 @@ namespace Application.UserAndOtp.Services
                 ? $"mailto:{recipient}?subject=Invitation&body={encodedMessage}" // Email format
                 : $"sms:{recipient}?body={encodedMessage}"; // SMS format
         }
-
         public async Task<string> Signin(SigninDto request)
         {
             User user = await _userManager.FindByEmailAsync(request.Email) ?? throw new NotFoundException("User");
@@ -212,7 +211,6 @@ namespace Application.UserAndOtp.Services
             if (!result.Succeeded) throw new BadRequestException(string.Join(", ", result.Errors.Select(e => e.Description)));
             return result;
         }
-
         public async Task AddContact(string theuserid, AddContactDto request)
         {
             if (request == null) throw new BadRequestException("At least one field must be filled");

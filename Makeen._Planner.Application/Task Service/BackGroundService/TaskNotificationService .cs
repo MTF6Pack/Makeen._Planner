@@ -25,7 +25,7 @@ namespace Application.Services
                     var tasksToNotify = await dbContext.Tasks
     .Include(t => t.User)
     .Where(t => t.User != null &&
-                t.StartTime.AddMinutes(-(int)t.Alarm) <= now &&
+                t.StartTime.AddMinutes(-(int)t.Alarm!) <= now &&
                 t.Status != Domain.Task.TaskStatus.Done)
     .ToListAsync(stoppingToken);
 
@@ -43,7 +43,7 @@ namespace Application.Services
                     _logger.LogError("Error in TaskNotificationService: {ex.Message}", ex.Message);
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Run every minute
+                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Run every 30 seconds
             }
         }
 

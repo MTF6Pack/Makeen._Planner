@@ -20,11 +20,11 @@ namespace Domain.Task
         public DateTime StartTime { get; private set; }
         public DateTime CreationTime { get; private set; }
         public PriorityCategory? PriorityCategory { get; private set; }
-        public Alarm Alarm { get; private set; }
+        public Alarm? Alarm { get; private set; }
         public Repeat? Repeat { get; private set; }
         public string? Description { get; private set; }
         public Task(Guid? groupId, string name, DateTime deadLine,
-               PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm alarm, string? description, Guid? senderId)
+               PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
         {
             Name = name;
             GroupId = groupId;
@@ -33,12 +33,12 @@ namespace Domain.Task
             StartTime = starttime;
             Status = (TaskStatus)2;
             CreationTime = DateTime.Now;
-            IsInGroup = SenderId.HasValue;
-            PriorityCategory = priorityCategory;
-            Alarm = alarm;
-            Repeat = repeat;
-            Description = description;
             SenderId = senderId;
+            IsInGroup = SenderId.HasValue;
+            PriorityCategory = priorityCategory == null ? Domain.Task.PriorityCategory.none : priorityCategory;
+            Alarm = alarm == null ? Domain.Task.Alarm.None : alarm;
+            Repeat = repeat == null ? Domain.Task.Repeat.None : repeat;
+            Description = description;
         }
 
 

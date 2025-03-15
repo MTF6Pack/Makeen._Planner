@@ -23,9 +23,9 @@ public static class Dapper
         var sixdaysago = DateTime.Now.AddDays(-6).Date;
 
         var userweekreport = (await connection.QueryAsync<TaskDapperDto>($"SELECT status, Convert(date, DeadLine) AS DeadLine," +
-            $"(SELECT COUNT(*) FROM[Planner].[dbo].[Task] WHERE DeadLine > '{today:yyyy-MM-dd}'" +
+            $"(SELECT COUNT(*) FROM [Planner].[dbo].[Tasks] WHERE DeadLine > '{today:yyyy-MM-dd}'" +
             $"AND(userid = '{id}' OR groupid = '{id}')" +
-            $"AND Status = 'Pending') AS FutureTasksCount FROM[Planner].[dbo].[Task]" +
+            $"AND Status = 'Pending') AS FutureTasksCount FROM [Planner].[dbo].[Tasks]" +
             $"WHERE DeadLine BETWEEN '{sixdaysago:yyyy-MM-dd}' AND '{today.AddDays(1):yyyy-MM-dd}'")).ToList();
 
         int weekAllTasksCount = userweekreport.Count;
@@ -109,20 +109,6 @@ public static class Dapper
         return myDictionary;
     }
 
-    public static async Task<List<Task>> GroupTodayTasks(Guid groupid)
-    {
-        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
-        using var connection = new SqlConnection(connectionString);
-        connection.Open();
-
-        var todaygrouptasks = (await connection.QueryAsync<Task>($"SELECT [UserId],[Name],[Status],[DeadLine],[StartTime],[CreationTime]," +
-            $"[PriorityCategory] FROM[Planner].[dbo].[Task] where(GroupId = '{groupid}'" +
-            $" and CAST(StartTime as date) = '{DateTime.Now.Date}')")).OrderByDescending(t => t.StartTime).ToList();
-
-        return todaygrouptasks;
-    }
-
     public static async Task<List<Task>> UserDoneTasks(Guid userid)
     {
         string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
@@ -132,7 +118,7 @@ public static class Dapper
 
         var userDoneTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
             $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
-            $" AS SenderName FROM [Planner].[dbo].[Task]t JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+            $" AS SenderName FROM [Planner].[dbo].[Tasks]t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
             $" = 'done' and t.[UserId] = '{userid}'")).OrderByDescending(t => t.StartTime).ToList();
 
         return userDoneTasks;
@@ -147,7 +133,7 @@ public static class Dapper
 
         var userFutureTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
           $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
-          $" AS SenderName FROM [Planner].[dbo].[Task] t JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+          $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
           $" = 'done' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
 
         return userFutureTasks;
@@ -162,8 +148,8 @@ public static class Dapper
 
         var userFailedTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
           $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
-          $" AS SenderName FROM [Planner].[dbo].[Task] t JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-          $" = 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
+          $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+          $" != 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
 
         return userFailedTasks;
     }

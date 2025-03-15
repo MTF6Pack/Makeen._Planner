@@ -12,8 +12,8 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    [Migration("20250313073343_UseridInTask")]
-    partial class UseridInTask
+    [Migration("20250313104506_EnumNull")]
+    partial class EnumNull
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -104,7 +104,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Alarm")
+                    b.Property<int?>("Alarm")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")

@@ -12,8 +12,8 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    [Migration("20250312215540_TaskUserid")]
-    partial class TaskUserid
+    [Migration("20250313092834_Reinit")]
+    partial class Reinit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -86,7 +86,7 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("Userid")
+                    b.Property<Guid?>("Userid")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
@@ -142,14 +142,14 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("Userid")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GroupId");
 
-                    b.HasIndex("Userid");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
                 });
@@ -391,9 +391,7 @@ namespace Persistence.Migrations
 
                     b.HasOne("Domain.User", null)
                         .WithMany("Notifications")
-                        .HasForeignKey("Userid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("Userid");
 
                     b.Navigation("Task");
                 });
@@ -406,7 +404,7 @@ namespace Persistence.Migrations
 
                     b.HasOne("Domain.User", "User")
                         .WithMany("Tasks")
-                        .HasForeignKey("Userid");
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });

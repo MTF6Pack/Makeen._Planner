@@ -1,20 +1,11 @@
 ﻿using Application.DataSeeder.OTP;
 using Application.User_And_Otp.Commands;
-using Application.UserAndOtp;
-using Application.UserAndOtp.Services;
-using Azure.Core;
 using Domain;
 using Infrustucture;
 using Makeen._Planner.Service;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {

@@ -240,6 +240,31 @@ namespace Persistence.Migrations
                         principalColumn: "Id");
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Notifications",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Userid = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    TaskId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsActivated = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Notifications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Notifications_AspNetUsers_Userid",
+                        column: x => x.Userid,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Notifications_Tasks_TaskId",
+                        column: x => x.TaskId,
+                        principalTable: "Tasks",
+                        principalColumn: "Id");
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -290,6 +315,16 @@ namespace Persistence.Migrations
                 column: "GroupId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Notifications_TaskId",
+                table: "Notifications",
+                column: "TaskId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Notifications_Userid",
+                table: "Notifications",
+                column: "Userid");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tasks_GroupId",
                 table: "Tasks",
                 column: "GroupId");
@@ -322,10 +357,13 @@ namespace Persistence.Migrations
                 name: "GroupMemberships");
 
             migrationBuilder.DropTable(
-                name: "Tasks");
+                name: "Notifications");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Tasks");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

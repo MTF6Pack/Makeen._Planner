@@ -9,10 +9,10 @@ namespace Application.Group_Service
         Task Delete(Guid id);
         Task<List<Group>?> GetAllAsync();
         Task<object> GetByIdAsync(Guid groupid);
-        Task AddMemberByEmail(AddUserByEmailDto request);
+        Task AddMemberByEmail(Guid groupid, string email);
         Task AddGroup(AddGroupCommand command, Guid ownerid);
         Task Update(Guid id, UpdateGroupCommand command);
-        Task RemoveMember(Guid groupId, Guid userId);
+        Task RemoveMember(Guid groupId, Guid userid, Guid userId);
         Task ToggleMemberToAdmin(Guid groupId, Guid userId);
         Task<List<GroupWithTaskCountsDto>> GetAllGroupsOfUser(Guid userid);
     }
