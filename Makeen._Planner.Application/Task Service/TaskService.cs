@@ -1,5 +1,4 @@
-﻿using Application.Task_Service;
-using Domain;
+﻿using Domain;
 using Infrustucture;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
@@ -112,7 +111,7 @@ namespace Makeen._Planner.Task_Service
 
         public async Task<List<Domain.Task.Task>?> GetTheUserOrGroupTasksByCalander(DateOnly? date, Guid userid, Guid? groupid, bool? wantAllgroups = false)
         {
-            if (groupid.HasValue && wantAllgroups == true) throw new BadRequestException("If you want to get all groups task, groupid must be null");
+            if (groupid.HasValue && wantAllgroups == true) throw new BadRequestException("If you want to get all groups tasks, groupid must be null");
             var today = DateTime.Now;
             var thedate = date != null ? date : DateOnly.FromDateTime(today);
             if (groupid == null && wantAllgroups != true)
@@ -175,10 +174,52 @@ namespace Makeen._Planner.Task_Service
         public async Task Done(Guid taskid)
         {
             var task = await _repository.GetByIdAsync(taskid) ?? throw new NotFoundException("Task");
-            if (task.Status != Domain.Task.TaskStatus.Done) task?.Done();
-            else throw new BadRequestException("Task is already done");
+            if (task.Status == Domain.Task.TaskStatus.Done) throw new BadRequestException("Task is already done");
+            task.Done();
             await _unitOfWork.SaveChangesAsync();
         }
+
+        public async Task Done(List<Guid>? tasksid, DateOnly? date)
+        {
+            if (tasksid is { Count: > 0 } && date is null)
+            {
+                var tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => tasksid.Contains(t.Id) && t.Status == Domain.Task.TaskStatus.Pending).ToListAsync();
+
+                foreach (var task in tasks)
+                {
+                    task.Done();
+                }
+                await _unitOfWork.SaveChangesAsync();
+                return;
+            }
+
+            if (tasksid is null && date is not null)
+            {
+                var tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => DateOnly.FromDateTime(t.StartTime) == date && t.Status == Domain.Task.TaskStatus.Pending).ToListAsync();
+                foreach (var task in tasks)
+                {
+                    task.Done();
+                }
+                await _unitOfWork.SaveChangesAsync();
+                return;
+            }
+            throw new BadRequestException();
+        }
+
+        public async Task Done(DateOnly? date)
+        {
+            var tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => DateOnly.FromDateTime(t.StartTime) == date).ToListAsync();
+
+            foreach (var task in tasks)
+            {
+                if (task.Status == Domain.Task.TaskStatus.Pending)
+                    task.Done();
+            }
+            await _unitOfWork.SaveChangesAsync();
+        }
+
+
+
         private async Task SendTaskRequestNotif(Domain.Task.Task task, Guid userid)
         {
             string message = "... درخواست جدید";
