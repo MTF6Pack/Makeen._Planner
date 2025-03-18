@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Persistence;
 
-namespace Application.Services
+namespace Application.Notification_Service.BackGroundService
 {
     public class TaskNotificationService(IServiceProvider serviceProvider, ILogger<TaskNotificationService> logger) : BackgroundService
     {
@@ -49,7 +49,7 @@ namespace Application.Services
 
         private async Task PlantNotification(Domain.Task.Task task, Guid? userId, DataBaseContext dbContext)
         {
-            string message = "... زمان فعالیت شما سر رسیده";
+            string message = "زمان فعالیت شما سر رسیده";
             // Check if a notification already exists for this task
             bool alreadyNotified = await dbContext.Notifications
                 .AnyAsync(n => n.Task!.Id == task.Id, CancellationToken.None);

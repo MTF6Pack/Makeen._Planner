@@ -1,4 +1,4 @@
-﻿using Infrustucture;
+﻿using Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.InteropServices;

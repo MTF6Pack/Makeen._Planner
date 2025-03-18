@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Infrustucture
+namespace Infrastructure
 {
     public static class IFormFileToUrl
     {

@@ -1,24 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Remove="ِDapper.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="wwwroot\custom.css" />
   </ItemGroup>
-
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.0" />
+    <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.23.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.12" />
     <PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.3.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Common" Version="9.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -32,16 +29,14 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.3.1" />
   </ItemGroup>
-
   <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
     <ProjectReference Include="..\Makeen.Planner.Domain\Domain.csproj" />
     <ProjectReference Include="..\Makeen.Planner.Persistence\Persistence.csproj" />
     <ProjectReference Include="..\Makeen._Planner.Application\Application.csproj" />
   </ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="Logs\" />
-		<Folder Include="wwwroot\uploads\" />
-	</ItemGroup>
-	
+  <ItemGroup>
+    <Folder Include="Logs\" />
+    <Folder Include="wwwroot\uploads\" />
+  </ItemGroup>
 </Project>

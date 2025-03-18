@@ -1,5 +1,5 @@
 ﻿using Domain.Task;
-using Infrustucture;
+using Infrastructure;
 using System.Text.Json.Serialization;
 
 namespace Makeen._Planner.Task_Service
@@ -33,6 +33,25 @@ namespace Makeen._Planner.Task_Service
                 command.Repeat,
                 command.Alarm,
                 command.Description,
+               senderId
+                );
+
+            return newtask;
+        }
+
+        public static Domain.Task.Task ToModel(Guid? groupid, string name, DateTime deadline, PriorityCategory? priorityCategory,
+            DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
+        {
+            Domain.Task.Task newtask = new(
+
+                groupid,
+                name,
+                deadline,
+                priorityCategory,
+                starttime,
+                repeat,
+                alarm,
+                description,
                senderId
                 );
 

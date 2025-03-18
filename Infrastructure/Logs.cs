@@ -1,4 +1,4 @@
-﻿namespace Infrustucture
+﻿namespace Infrastructure
 {
     public static class Logs
     {

@@ -1,5 +1,5 @@
 ﻿using Domain;
-using Infrustucture;
+using Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Persistence.Repository.Interface;
 using Persistence.Repository;

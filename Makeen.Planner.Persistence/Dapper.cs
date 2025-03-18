@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using Infrustucture;
+using Infrastructure;
 using Microsoft.Data.SqlClient;
 using Task = Domain.Task.Task;
 

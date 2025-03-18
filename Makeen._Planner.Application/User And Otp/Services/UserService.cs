@@ -3,7 +3,7 @@ using Application.EmailConfirmation;
 using Application.User_And_Otp.Commands;
 using Azure.Core;
 using Domain;
-using Infrustucture;
+using Infrastructure;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -249,6 +249,7 @@ namespace Application.UserAndOtp.Services
             var user = await _userManager.FindByIdAsync(theuserid);
             var targetuser = await _userManager.FindByIdAsync(theuserid) ?? throw new NotFoundException("Target user");
             user!.Contacts.Remove(targetuser);
+            await _userManager.UpdateAsync(user);
         }
     }
 }

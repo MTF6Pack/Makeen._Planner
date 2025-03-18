@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
-using Infrustucture;
+using Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using System.IO;

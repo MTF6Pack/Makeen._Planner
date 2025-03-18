@@ -10,7 +10,7 @@ namespace Makeen._Planner.Task_Service
         Task RemoveTask(Guid taskid);
         Task UpdateTask(Guid taskid, UpdateTaskCommand command);
         //Task<List<Domain.Task.Task>?> GetAllTasks();
-        Task<List<Domain.Task.Task>?> GetTheUserOrGroupTasksByCalander(DateOnly? date, Guid userid, Guid? groupid, bool? wantAllgroups);
+        Task<List<Domain.Task.Task>> GetTheUserOrGroupTasksByCalander(DateOnly? date, Guid userid, Guid? groupid, bool isGrouptask);
         Task Done(Guid taskid);
         Task Done(List<Guid>? tasksid, DateOnly? date);
     }

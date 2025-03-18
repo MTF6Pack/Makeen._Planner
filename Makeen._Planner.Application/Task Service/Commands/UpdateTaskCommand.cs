@@ -1,6 +1,6 @@
 ﻿using Domain;
 using Domain.Task;
-using Infrustucture;
+using Infrastructure;
 using System.Text.Json.Serialization;
 
 namespace Makeen._Planner.Task_Service

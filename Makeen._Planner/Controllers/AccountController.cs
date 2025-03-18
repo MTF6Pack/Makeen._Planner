@@ -1,7 +1,7 @@
 ﻿using Application.DataSeeder.OTP;
 using Application.User_And_Otp.Commands;
 using Domain;
-using Infrustucture;
+using Infrastructure;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;

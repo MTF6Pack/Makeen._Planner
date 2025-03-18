@@ -1,12 +1,9 @@
 ﻿using Application.User_And_Otp.Commands;
-using Domain;
-using Infrustucture;
+using Infrastructure;
 using Makeen._Planner.Service;
-using Makeen._Planner.Task_Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {
@@ -35,7 +32,8 @@ namespace Makeen._Planner.Controllers
         [EndpointSummary("Fetches a user by token")]
         public async Task<IActionResult> GetById()
         {
-            var userid = new Guid(User.FindFirst("id")!.Value);
+            var token = User.FindFirst("id")!.Value ?? throw new UnauthorizedException();
+            var userid = new Guid(token);
             return Ok(await _userService.GetUserById(userid));
         }
 

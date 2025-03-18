@@ -74,10 +74,10 @@ namespace Makeen._Planner.Controllers
 
         [HttpGet("calendar")]
         [EndpointSummary("Fetches tasks for the user or a group on a specific date")]
-        public async Task<IActionResult> GetTheUserTasksByCalander([FromQuery] DateOnly? date, [FromQuery] Guid? groupid, [FromQuery] bool? wantAllgroups)
+        public async Task<IActionResult> GetTheUserTasksByCalander([FromQuery] DateOnly? date, [FromQuery] Guid? groupid, [FromQuery] bool isGrouptask)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
-            return Ok(await _taskService.GetTheUserOrGroupTasksByCalander(date, userid, groupid, wantAllgroups));
+            return Ok(await _taskService.GetTheUserOrGroupTasksByCalander(date, userid, groupid, isGrouptask));
         }
 
         //[HttpGet("All")]

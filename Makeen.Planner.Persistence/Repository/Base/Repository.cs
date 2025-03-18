@@ -1,4 +1,4 @@
-﻿using Infrustucture;
+﻿using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Persistence;
 

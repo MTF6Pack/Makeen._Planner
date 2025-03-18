@@ -1,6 +1,5 @@
-﻿using Application.Hubs;
-using Application.Services;
-using Infrustucture;
+﻿using Application.Notification_Service.BackGroundService;
+using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Persistence;
@@ -79,9 +78,7 @@ namespace Makeen._Planner
 
             // Remove this duplicate registration:
             builder.Services.AddHostedService<TaskNotificationService>();
-
-            builder.Services.AddSignalR();
-
+            builder.Services.AddHttpContextAccessor();
             var app = builder.Build();
 
             // Run migrations automatically if pending

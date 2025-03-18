@@ -1,5 +1,5 @@
 ﻿using Domain;
-using Infrustucture;
+using Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
@@ -109,46 +109,37 @@ namespace Makeen._Planner.Task_Service
             t.StartTime.Minute == command.StartTime.Minute);
         }
 
-        public async Task<List<Domain.Task.Task>?> GetTheUserOrGroupTasksByCalander(DateOnly? date, Guid userid, Guid? groupid, bool? wantAllgroups = false)
+        public async Task<List<Domain.Task.Task>> GetTheUserOrGroupTasksByCalander(DateOnly? date, Guid userid, Guid? groupid, bool isGrouptask)
         {
-            if (groupid.HasValue && wantAllgroups == true) throw new BadRequestException("If you want to get all groups tasks, groupid must be null");
-            var today = DateTime.Now;
-            var thedate = date != null ? date : DateOnly.FromDateTime(today);
-            if (groupid == null && wantAllgroups != true)
-            {
-                var userTasks = await _repository.StraitAccess.Set<User>()
-                    .Where(u => u.Id == userid)
-                    .SelectMany(u => u.Tasks!
-                        .Where(t => DateOnly.FromDateTime(t.StartTime) == thedate && t.IsInGroup == false)
-                        .OrderByDescending(t => t.CreationTime))
-                    .ToListAsync();
+            var thedate = date ?? DateOnly.FromDateTime(DateTime.Now);
 
-                return userTasks;
+            IQueryable<Domain.Task.Task> query;
+
+            if (!groupid.HasValue)
+            {
+                if (!isGrouptask)
+                {
+                    query = _repository.StraitAccess.Set<User>()
+                        .Where(u => u.Id == userid)
+                        .SelectMany(u => u.Tasks!.Where(t =>
+                            DateOnly.FromDateTime(t.StartTime) == thedate &&
+                            t.IsInGroup == false));
+                }
+                else
+                {
+                    query = _repository.StraitAccess.Set<Domain.Task.Task>()
+                        .Where(t => t.User!.Id == userid && t.IsInGroup == true &&
+                            DateOnly.FromDateTime(t.StartTime) == thedate);
+                }
+            }
+            else
+            {
+                query = _repository.StraitAccess.Set<Domain.Task.Task>()
+                    .Where(t => t.GroupId == groupid &&
+                        DateOnly.FromDateTime(t.StartTime) == thedate);
             }
 
-            if (groupid.HasValue && wantAllgroups != true)
-            {
-                var groupTasks = await _repository.StraitAccess.Set<Domain.Task.Task>()
-                    .Where(t => t.GroupId == groupid
-                                && DateOnly.FromDateTime(t.StartTime) == thedate)
-                    .OrderByDescending(t => t.CreationTime)
-                    .ToListAsync();
-
-                return groupTasks;
-            }
-
-            if (!groupid.HasValue && wantAllgroups == true)
-            {
-                var allGroupTasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Include(t => t.User)
-                    .Where(t => t.User!.Id == userid && t.IsInGroup == true
-                                && DateOnly.FromDateTime(t.StartTime) == thedate)
-                    .OrderByDescending(t => t.CreationTime)
-                    .ToListAsync();
-
-                return allGroupTasks;
-            }
-
-            return []; // Default return if none of the conditions match
+            return await query.OrderByDescending(t => t.CreationTime).ToListAsync();
         }
 
         public async Task RemoveTask(Guid taskid)
@@ -206,23 +197,11 @@ namespace Makeen._Planner.Task_Service
             throw new BadRequestException();
         }
 
-        public async Task Done(DateOnly? date)
-        {
-            var tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => DateOnly.FromDateTime(t.StartTime) == date).ToListAsync();
-
-            foreach (var task in tasks)
-            {
-                if (task.Status == Domain.Task.TaskStatus.Pending)
-                    task.Done();
-            }
-            await _unitOfWork.SaveChangesAsync();
-        }
-
 
 
         private async Task SendTaskRequestNotif(Domain.Task.Task task, Guid userid)
         {
-            string message = "... درخواست جدید";
+            string message = "درخواست جدید";
             Notification notification = new(task, message, userid);
             notification.Activate();
             var user = await _repository.StraitAccess.Set<User>().FindAsync(userid);
