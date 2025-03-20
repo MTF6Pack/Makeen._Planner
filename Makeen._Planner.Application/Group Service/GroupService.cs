@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Task = System.Threading.Tasks.Task;
 using Microsoft.EntityFrameworkCore;
 using Azure.Core;
+using Microsoft.Data.SqlClient;
 
 namespace Application.Group_Service
 {
@@ -87,21 +88,56 @@ namespace Application.Group_Service
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task AddMemberByEmail(Guid groupid, string email)
+        //public async Task AddMemberByEmail(Guid groupid, string email)
+        //{
+        //    User? theuser = await _repository.StraitAccess.Set<User>().FirstOrDefaultAsync(u => u.Email == email);
+        //    Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.GroupMemberships).FirstOrDefaultAsync(x => x.Id == groupid) ?? throw new NotFoundException("Group");
+
+        //    if (thegroup!.Grouptype == false) throw new BadRequestException("You cannot add User to your personal task lists");
+        //    if (theuser != null && thegroup != null)
+        //    {
+        //        if (thegroup.GroupMemberships!.Any(m => m.UserId == theuser.Id))
+        //            throw new Exception("User is already a member of this group.");
+
+        //        thegroup.GroupMemberships.Add(new GroupMembership(theuser.Id, thegroup.Id));
+        //        await _unitOfWork.SaveChangesAsync();
+        //    }
+        //    else throw new NotFoundException("User or Group not found");
+        //}
+
+        public async Task AddMembers(Guid userid, Guid groupid, List<Guid> membersId)
         {
-            User? theuser = await _repository.StraitAccess.Set<User>().FirstOrDefaultAsync(u => u.Email == email);
-            Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.GroupMemberships).FirstOrDefaultAsync(x => x.Id == groupid) ?? throw new NotFoundException("Group");
+            var isAdmin = await _repository.StraitAccess.Set<GroupMembership>()
+                .AnyAsync(gm => gm.GroupId == groupid && gm.UserId == userid && gm.IsAdmin);
 
-            if (thegroup!.Grouptype == false) throw new BadRequestException("You cannot add User to your personal task lists");
-            if (theuser != null && thegroup != null)
+            if (!isAdmin) throw new UnauthorizedException("You are not admin");
+            if (membersId == null || membersId.Count == 0) throw new BadRequestException("Member list cannot be null or empty.");
+
+            var group = await _repository.GetByIdAsync(groupid) ?? throw new NotFoundException("Group");
+
+            var existingMemberIds = await _repository.StraitAccess.Set<GroupMembership>()
+                .Where(gm => gm.GroupId == groupid && membersId.Contains(gm.UserId))
+                .Select(gm => gm.UserId)
+                .ToListAsync();
+
+            var newMembers = await _repository.StraitAccess.Set<User>()
+                .Where(u => membersId.Contains(u.Id) && !existingMemberIds.Contains(u.Id))
+                .ToListAsync();
+
+            if (newMembers.Count == 0) throw new BadRequestException("All selected users are already members of this group.");
+
+            var newMemberships = newMembers.Select(member => new GroupMembership(member.Id, groupid)).ToList();
+
+            await _repository.StraitAccess.Set<GroupMembership>().AddRangeAsync(newMemberships);
+
+            try
             {
-                if (thegroup.GroupMemberships!.Any(m => m.UserId == theuser.Id))
-                    throw new Exception("User is already a member of this group.");
-
-                thegroup.GroupMemberships.Add(new GroupMembership(theuser.Id, thegroup.Id));
                 await _unitOfWork.SaveChangesAsync();
             }
-            else throw new NotFoundException("User or Group not found");
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 2627)
+            {
+                throw new BadRequestException("Some users are already members of this group.");
+            }
         }
 
         public async Task Update(Guid id, UpdateGroupCommand command)

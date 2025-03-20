@@ -1,4 +1,5 @@
-﻿using Infrastructure;
+﻿using Domain;
+using Infrastructure;
 using Makeen._Planner.Task_Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -156,27 +157,35 @@ namespace Application.Notification_Service
         //    await _UnitOfWork.SaveChangesAsync();
         //}
 
-        public async Task Respond(Guid notificationid, bool isOkay)
+        public async Task Respond(Guid notificationId, bool isOkay)
         {
+            var taskEntity = await _dbContext.Tasks.Include(t => t.User).FirstOrDefaultAsync(n => n.Id == notificationId) ?? throw new NotFoundException("Notification");
+            var user = await _dbContext.Users.FindAsync(taskEntity.User!.Id) ?? throw new NotFoundException("User");
+
+
+            var task = TaskMapper.ToModel(
+                taskEntity.GroupId,
+                taskEntity.Name,
+                taskEntity.DeadLine,
+                taskEntity.PriorityCategory,
+                taskEntity.StartTime,
+                taskEntity.Repeat,
+                taskEntity.Alarm,
+                taskEntity.Description,
+                taskEntity.SenderId);
+
             if (isOkay)
             {
-                var t = await _dbContext.Tasks.Include(t => t.User).FirstOrDefaultAsync(n => n.Id == notificationid) ?? throw new NotFoundException("Notification");
-                var user = await _dbContext.Users.FindAsync(t.User!.Id) ?? throw new NotFoundException("User");
-                var task = TaskMapper.ToModel(
-                     t.GroupId,
-                     t.Name,
-                     t.DeadLine,
-                     t.PriorityCategory,
-                     t.StartTime,
-                     t.Repeat,
-                     t.Alarm,
-                     t.Description,
-                     t.SenderId);
-
                 _dbContext.Tasks.Add(task);
                 user.Tasks.Add(task);
-                await _dbContext.SaveChangesAsync();
             }
+
+            string message = isOkay ? "درخواست شما پذیرفته شد" : "درخواست شما رد شد";
+            var notification = new Notification(task, message, taskEntity.SenderId);
+            notification.Activate();
+            user.Notifications!.Add(notification);
+            _dbContext.Notifications.Add(notification);
+            await _dbContext.SaveChangesAsync();
         }
 
     }

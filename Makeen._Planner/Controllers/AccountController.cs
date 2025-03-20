@@ -17,31 +17,11 @@ namespace Makeen._Planner.Controllers
         private readonly IUserService _userService = userService;
         private readonly UserManager<User> _userManager = userManager;
 
-        // هدایت به صفحه گوگل برای لاگین
-        //////////////////////[HttpGet("google-login")]
-        //////////////////////[EndpointSummary("Not working yet!")]
-        //////////////////////public IActionResult GoogleLogin(string returnUrl = "/")
-        //////////////////////{
-        //////////////////////    var redirectUrl = Url.Action("GoogleResponse", "Account", new { returnUrl });
-        //////////////////////    var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-        //////////////////////    return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-        //////////////////////}
-
-        //////////////////////// دریافت اطلاعات پس از ورود موفق
-        //////////////////////[HttpGet("google-response")]
-        //////////////////////[EndpointSummary("Not working yet!")]
-        //////////////////////public async Task<IActionResult> GoogleResponse(string returnUrl = "/")
-        //////////////////////{
-        //////////////////////    var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-        //////////////////////    // اطلاعات کاربر
-        //////////////////////    var claims = result.Principal!.Identities.FirstOrDefault()?.Claims;
-        //////////////////////    var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-
-        //////////////////////    // ذخیره اطلاعات کاربر در سیستم شما (در صورت نیاز)
-        //////////////////////    // و سپس هدایت به صفحه مورد نظر
-        //////////////////////    return LocalRedirect(returnUrl);
-        //////////////////////}
+        [HttpGet("test-error")]
+        public IActionResult TestError()
+        {
+            throw new BadRequestException("This is a test exception!");
+        }
 
         [HttpPost("SignUp")]
         [EndpointSummary("Registers a user and sends token")]
@@ -49,6 +29,7 @@ namespace Makeen._Planner.Controllers
         {
             return Ok(await _userService.SignUP(command));
         }
+
         [HttpPost("Signin/email")]
         [EndpointSummary("Login by email and password and sends token")]
         public async Task<IActionResult> Signin(SigninDto request)
@@ -96,3 +77,29 @@ namespace Makeen._Planner.Controllers
         }
     }
 }
+
+// هدایت به صفحه گوگل برای لاگین
+//////////////////////[HttpGet("google-login")]
+//////////////////////[EndpointSummary("Not working yet!")]
+//////////////////////public IActionResult GoogleLogin(string returnUrl = "/")
+//////////////////////{
+//////////////////////    var redirectUrl = Url.Action("GoogleResponse", "Account", new { returnUrl });
+//////////////////////    var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
+//////////////////////    return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+//////////////////////}
+
+//////////////////////// دریافت اطلاعات پس از ورود موفق
+//////////////////////[HttpGet("google-response")]
+//////////////////////[EndpointSummary("Not working yet!")]
+//////////////////////public async Task<IActionResult> GoogleResponse(string returnUrl = "/")
+//////////////////////{
+//////////////////////    var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+//////////////////////    // اطلاعات کاربر
+//////////////////////    var claims = result.Principal!.Identities.FirstOrDefault()?.Claims;
+//////////////////////    var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+//////////////////////    // ذخیره اطلاعات کاربر در سیستم شما (در صورت نیاز)
+//////////////////////    // و سپس هدایت به صفحه مورد نظر
+//////////////////////    return LocalRedirect(returnUrl);
+//////////////////////}

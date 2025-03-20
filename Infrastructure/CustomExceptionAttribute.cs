@@ -1,8 +1,10 @@
-﻿namespace Infrastructure
+﻿using System;
+
+namespace Infrastructure
 {
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class CustomExceptionAttribute(int statusCode) : Attribute
     {
-        public int StatusCode { get; set; } = statusCode;
+        public int StatusCode { get; } = statusCode;
     }
 }

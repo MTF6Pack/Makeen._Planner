@@ -9,65 +9,64 @@ namespace Infrastructure
 
         /// <summary>
         /// Converts a Persian (Jalali) date string to a Gregorian DateTime.
-        /// Ensures that seconds are always removed.
         /// </summary>
         public static DateTime ConvertPersianToGregorian(string persianDateString)
         {
-            if (string.IsNullOrWhiteSpace(persianDateString)) throw new ArgumentNullException(nameof(persianDateString));
+            if (string.IsNullOrWhiteSpace(persianDateString))
+                throw new ArgumentNullException(nameof(persianDateString));
 
             string[] persianFormats =
-            [
+            {
                 "yyyy/MM/dd HH:mm",
                 "yyyy-MM-dd HH:mm",
                 "yyyy/MM/dd",
                 "yyyy-MM-dd"
-            ];
+            };
 
             CultureInfo persianCulture = new("fa-IR");
 
+            // Check for valid Persian date parsing
             foreach (var format in persianFormats)
             {
                 if (DateTime.TryParseExact(persianDateString, format, persianCulture, DateTimeStyles.None, out DateTime persianDate))
                 {
-                    if (persianDate.Year < 1500)
+                    DateTime gregorianDate = persianCalendar.ToDateTime(persianDate.Year, persianDate.Month, persianDate.Day, 0, 0, 0, 0);
+                    bool hasTime = persianDateString.Contains(':');
+                    if (hasTime)
                     {
-                        DateTime gregorianDate = persianCalendar.ToDateTime(persianDate.Year, persianDate.Month, persianDate.Day, persianDate.Hour, persianDate.Minute, 0, 0);
-                        bool hasTime = persianDateString.Contains(':');
-                        return hasTime ? gregorianDate : gregorianDate.Date;
+                        return new DateTime(gregorianDate.Year, gregorianDate.Month, gregorianDate.Day, persianDate.Hour, persianDate.Minute, 0);
                     }
                     else
                     {
-                        bool hasTime = persianDateString.Contains(':');
-                        return hasTime ? persianDate : persianDate.Date;
+                        return gregorianDate.Date;
                     }
                 }
             }
 
-            DateTime parsedDate = DateTime.Parse(persianDateString, CultureInfo.InvariantCulture);
-            return new DateTime(parsedDate.Year, parsedDate.Month, parsedDate.Day, parsedDate.Hour, parsedDate.Minute, 0);
+            return DateTime.Parse(persianDateString, CultureInfo.InvariantCulture);
         }
 
         /// <summary>
-        /// Converts a Gregorian DateTime to a Persian (Jalali) date string.
+        /// Checks if a string is in Persian date format.
         /// </summary>
-        /// <param name="gregorianDate">The Gregorian DateTime to convert.</param>
-        /// <param name="includeTime">If true, includes the time in the output string.</param>
-        /// <returns>A Persian date string in "yyyy/MM/dd" or "yyyy/MM/dd HH:mm" format.</returns>
-        public static string ConvertGregorianToPersian(DateTime gregorianDate, bool includeTime = false)
+        public static bool IsPersianDate(string dateString)
         {
-            int year = persianCalendar.GetYear(gregorianDate);
-            int month = persianCalendar.GetMonth(gregorianDate);
-            int day = persianCalendar.GetDayOfMonth(gregorianDate);
-            string persianDate = $"{year:D4}/{month:D2}/{day:D2}";
-
-            if (includeTime)
+            string[] persianFormats =
             {
-                int hour = gregorianDate.Hour;
-                int minute = gregorianDate.Minute;
-                persianDate += $" {hour:D2}:{minute:D2}";
-            }
+                "yyyy/MM/dd HH:mm",
+                "yyyy-MM-dd HH:mm",
+                "yyyy/MM/dd",
+                "yyyy-MM-dd"
+            };
 
-            return persianDate;
+            foreach (var format in persianFormats)
+            {
+                if (DateTime.TryParseExact(dateString, format, new CultureInfo("fa-IR"), DateTimeStyles.None, out _))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
-using Infrastructure;
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
+﻿using Infrastructure;
+using Microsoft.AspNetCore.Http;
+using System;
 using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Makeen._Planner
 {
@@ -22,38 +23,55 @@ namespace Makeen._Planner
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
-            var (statusCode, errorMessage) = GetExceptionDetails(exception);
+            var (statusCode, errorMessage, isHandled) = GetExceptionDetails(exception);
 
+            context.Response.Clear();
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = statusCode;
 
-            var result = JsonSerializer.Serialize(new { error = new { Message = errorMessage } });
+            var result = JsonSerializer.Serialize(new { error = new { message = errorMessage } });
+            await context.Response.WriteAsync(result);
 
-            return context.Response.WriteAsync(result);
+            // Only log unhandled exceptions to the console.
+            if (!isHandled)
+            {
+                LogToConsole(exception);
+            }
+            LogToFile(exception);
         }
 
-        private static (int, string) GetExceptionDetails(Exception exception)
+        private static (int, string, bool) GetExceptionDetails(Exception exception)
         {
-            var customExceptionAttribute = (CustomExceptionAttribute?)Attribute.GetCustomAttribute(
+            var customAttr = (CustomExceptionAttribute?)Attribute.GetCustomAttribute(
                 exception.GetType(), typeof(CustomExceptionAttribute));
-
-            if (customExceptionAttribute != null)
-                return (customExceptionAttribute.StatusCode, exception.Message);
-
-            LogError(exception);  // Log only when needed
-            return (400, "Something went wrong, Make sure the input data is valid then try again");
+            if (customAttr != null)
+            {
+                return (customAttr.StatusCode, exception.Message, true);
+            }
+            return (500, "Something went wrong. Please ensure your input data is valid and try again.", false);
         }
 
-        private static void LogError(Exception exception)
+        private static void LogToConsole(Exception exception)
         {
-            var logMessage = $"{DateTime.Now} | {exception.Message}\n{exception.InnerException}\n\nTrace:\n\n{exception.StackTrace}\n{new string('-', 100)}\n\n";
-            File.AppendAllText("Logs/Errors.txt", logMessage);
-
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine(logMessage);
+            Console.WriteLine($"{DateTime.Now} | Unhandled Exception: {exception.Message}");
+            Console.WriteLine($"Trace:\n{exception.StackTrace}");
             Console.ResetColor();
+        }
+
+        private static void LogToFile(Exception exception)
+        {
+            string logDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Logs");
+            if (!Directory.Exists(logDirectory))
+            {
+                Directory.CreateDirectory(logDirectory);
+            }
+            string logFilePath = Path.Combine(logDirectory, "Errors.txt");
+            string logMessage = $"{DateTime.Now} | {exception.Message}\n{exception.InnerException}\n" +
+                                $"Trace:\n{exception.StackTrace}\n{new string('-', 100)}\n\n";
+            File.AppendAllText(logFilePath, logMessage);
         }
     }
 }

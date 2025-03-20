@@ -117,7 +117,8 @@ public static class Dapper
         connection.Open();
 
         var userDoneTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-            $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
+            $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime," +
+            $"FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
             $" AS SenderName FROM [Planner].[dbo].[Tasks]t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
             $" = 'done' and t.[UserId] = '{userid}'")).OrderByDescending(t => t.StartTime).ToList();
 
@@ -132,9 +133,9 @@ public static class Dapper
         connection.Open();
 
         var userFutureTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-          $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
+          $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime,FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory], t.[SenderId],t.[Description],u.[Fullname]" +
           $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-          $" = 'done' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
+          $" = 'pending' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
 
         return userFutureTasks;
     }
@@ -147,7 +148,8 @@ public static class Dapper
         connection.Open();
 
         var userFailedTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-          $"t.[Status],t.[DeadLine],t.[CreationTime],t.[PriorityCategory],t.[StartTime],t.[SenderId],t.[Description],u.[Fullname]" +
+          $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime" +
+          $",FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
           $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
           $" != 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
 

@@ -12,7 +12,6 @@ namespace Makeen._Planner.Controllers
     [ApiController]
     public class ReportController : ControllerBase
     {
-
         [HttpGet]
         [EndpointSummary("Fetches recent week tasks result of a user by token or a group by groupid")]
         public async Task<IActionResult> GetWeeklyReport([FromQuery] Guid? groupid = null)

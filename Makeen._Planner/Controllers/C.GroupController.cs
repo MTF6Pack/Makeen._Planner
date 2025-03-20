@@ -36,12 +36,21 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [HttpPost("{groupid:guid}/users/{email}")]
-        [EndpointSummary("Adds a user to a group by email")]
-        public async Task<IActionResult> AddUserByEmail([FromRoute] Guid groupid, [FromRoute, EmailAddress] string email)
+        //[HttpPost("{groupid:guid}/users/{email}")]
+        //[EndpointSummary("Adds a user to a group by email")]
+        //public async Task<IActionResult> AddUserByEmail([FromRoute] Guid groupid, [FromRoute, EmailAddress] string email)
+        //{
+        //    await _groupService.AddMemberByEmail(groupid, email);
+        //    return Ok();
+        //}
+
+        [HttpPost("{groupid:guid}/users")]
+        [EndpointSummary("Adds a list of users to a group by Id")]
+        public async Task<IActionResult> AddMembers([FromRoute] Guid groupid, [FromBody] List<Guid> membersId)
         {
-            await _groupService.AddMemberByEmail(groupid, email);
-            return Ok();
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            await _groupService.AddMembers(userid, groupid, membersId);
+            return Ok(new { Message = "Members added successfully" });
         }
 
         [HttpPatch("{groupId:guid}/users/{userId:guid}/toggleadmin")]

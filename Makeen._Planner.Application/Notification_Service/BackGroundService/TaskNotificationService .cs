@@ -22,34 +22,43 @@ namespace Application.Notification_Service.BackGroundService
                     var dbContext = scope.ServiceProvider.GetRequiredService<DataBaseContext>();
 
                     DateTime now = DateTime.Now;
+
+                    // Fetch tasks that need notifications and ensure User is loaded
                     var tasksToNotify = await dbContext.Tasks
-    .Include(t => t.User)
-    .Where(t => t.User != null &&
-                t.StartTime.AddMinutes(-(int)t.Alarm!) <= now &&
-                t.Status != Domain.Task.TaskStatus.Done)
-    .ToListAsync(stoppingToken);
+                        .Include(t => t.User)
+                        .Where(t => t.User != null &&
+                                    t.Alarm.HasValue &&
+                                    t.StartTime.AddMinutes(-(int)t.Alarm.Value) <= now &&
+                                    t.Status != Domain.Task.TaskStatus.Done)
+                        .ToListAsync(stoppingToken);
 
                     foreach (var task in tasksToNotify)
                     {
-                        // Here, task contains all its properties, and task.User is fully loaded.
-                        Guid userId = task.User!.Id;  // Access the user's Id directly
-                        await PlantNotification(task, userId, dbContext);
+                        if (task.User == null)
+                        {
+                            _logger.LogWarning("Task '{TaskName}' does not have an associated user. Skipping.", task.Name);
+                            continue;
+                        }
+
+                        Guid userId = task.User.Id;  // Get User ID from navigation property
+                        await SendNotification(task, userId, dbContext);
                     }
 
                     await dbContext.SaveChangesAsync(stoppingToken);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError("Error in TaskNotificationService: {ex.Message}", ex.Message);
+                    _logger.LogError("Error in TaskNotificationService: {Message}", ex.Message);
                 }
 
                 await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Run every 30 seconds
             }
         }
 
-        private async Task PlantNotification(Domain.Task.Task task, Guid? userId, DataBaseContext dbContext)
+        private async Task SendNotification(Domain.Task.Task task, Guid userId, DataBaseContext dbContext)
         {
-            string message = "زمان فعالیت شما سر رسیده";
+            string message = "زمان فعالیت شما سر رسیده"; // "Your task time has arrived"
+
             // Check if a notification already exists for this task
             bool alreadyNotified = await dbContext.Notifications
                 .AnyAsync(n => n.Task!.Id == task.Id, CancellationToken.None);
@@ -59,7 +68,7 @@ namespace Application.Notification_Service.BackGroundService
                 var user = await dbContext.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    _logger.LogWarning("User with ID {userId} not found. Skipping notification.", userId);
+                    _logger.LogWarning("User with ID {UserId} not found. Skipping notification.", userId);
                     return;
                 }
 
@@ -69,7 +78,8 @@ namespace Application.Notification_Service.BackGroundService
                 user.Notifications?.Add(notification);
                 dbContext.Notifications.Add(notification);
 
-                _logger.LogInformation("🔔 Notification sent for Task '{task.Name}' to user {userId} at {DateTime.Now}.", task.Name, userId, DateTime.Now);
+                _logger.LogInformation("🔔 Notification sent for Task '{TaskName}' to user {UserId} at {Time}.",
+                    task.Name, userId, DateTime.Now);
             }
         }
     }

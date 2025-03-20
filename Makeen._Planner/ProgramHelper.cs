@@ -3,6 +3,7 @@ using Domain;
 using Infrastructure;
 using Makeen._Planner.Service;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -24,92 +25,73 @@ namespace Makeen._Planner
     {
         public static void StartUp(this WebApplicationBuilder builder)
         {
-
-            builder.Services.ConfigureJWT(builder.Configuration);
-            RegisterServices(builder);
-            ConvertEnumToString(builder);
+            builder.ConfigureJWT();
+            builder.RegisterServices();
+            builder.ConfigureJsonOptions();
         }
 
         public static void RegisterServices(this WebApplicationBuilder builder)
         {
             builder.Logging.ClearProviders();
-            builder.Logging.AddConsole(options => options.LogToStandardErrorThreshold = LogLevel.Warning);
+            builder.Logging.AddConsole(options =>
+                options.LogToStandardErrorThreshold = LogLevel.Warning);
             builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
             builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
 
             builder.Services.AddDbContext<DataBaseContext>(options =>
-            {
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-            });
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<JwtTokenService>();
             builder.Services.AddMemoryCache();
+
             builder.Services.Scan(scan => scan
-     .FromAssemblyOf<IUserRepository>()
-     .AddClasses(classes => classes.Where(type => !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
-     .AsImplementedInterfaces()
-     .WithScopedLifetime());
+                .FromAssemblyOf<IUserRepository>()
+                .AddClasses(classes => classes.Where(type =>
+                    !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
 
             builder.Services.Scan(scan => scan
                 .FromAssemblyOf<IUserService>()
-                .AddClasses(classes => classes.Where(type => !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
+                .AddClasses(classes => classes.Where(type =>
+                    !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
             builder.Services.AddIdentity<User, UserRole>()
-
                 .AddEntityFrameworkStores<DataBaseContext>()
                 .AddDefaultTokenProviders();
 
             builder.Services.Configure<IdentityOptions>(options =>
             {
-                // Ensure the user id claim type is set to the one we use (if needed)
                 options.ClaimsIdentity.UserIdClaimType = "id";
             });
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            });
 
-            //builder.Services.AddTransient<IEmailConfirmService, EmailConfirmService>();
+            builder.Services.AddAuthorizationBuilder()
+                .SetDefaultPolicy(new AuthorizationPolicyBuilder()
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser()
+                    .Build());
 
-            builder.Services.Configure<JsonOptions>(options =>
-            {
-                options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeConverter());
-            });
-
-            // Swagger Configuration
-            builder.Services.AddSwaggerGen(o =>
-            {
-                o.SwaggerDoc("v1", new OpenApiInfo { Title = "Makeen Planner API", Version = "v1" });
-                o.DocumentFilter<TitleFilter>();
-            });
+            // Authentication scheme is configured in ConfigureJWT.
         }
-        public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
+
+        public static void ConfigureJWT(this WebApplicationBuilder builder)
         {
-            // Clear default inbound claim mapping to keep claims as they are.
+            // Clear default inbound claim mapping.
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
-            services.ConfigureApplicationCookie(options =>
-            {
-                options.Events.OnRedirectToLogin = context =>
-                {
-                    context.Response.StatusCode = 401;
-                    return Task.CompletedTask;
-                };
-            });
-
+            // Bind and register JWT settings.
             var jwtSettings = new JwtSettings();
-            configuration.GetSection("JWT").Bind(jwtSettings);
+            builder.Configuration.GetSection("JWT").Bind(jwtSettings);
 
             if (string.IsNullOrEmpty(jwtSettings?.Key))
                 throw new UnauthorizedAccessException("JWT Key is missing in the configuration.");
 
-            services.AddSingleton(jwtSettings); // Register JwtSettings as a singleton
+            builder.Services.AddSingleton(jwtSettings);
 
-            services.AddAuthentication(options =>
+            // Add JWT bearer authentication.
+            builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -149,39 +131,88 @@ namespace Makeen._Planner
             });
         }
 
-
-
-        public static void ConvertEnumToString(this WebApplicationBuilder builder)
+        public static void ConfigureJsonOptions(this WebApplicationBuilder builder)
         {
+            // Add controllers and configure JSON serializer settings.
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
-                //options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-                options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
         }
 
-        public static void Consoleshits(this WebApplicationBuilder builder)
+        public static void ConfigureSwagger(this WebApplicationBuilder builder)
         {
+            // Configure Swagger/OpenAPI.
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Makeen Planner API", Version = "v1" });
+                options.DocumentFilter<TitleFilter>();
+
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey,
+                    BearerFormat = "JWT",
+                    Description = "Enter 'Bearer' followed by a space and your token"
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+            });
+        }
+
+        public static void ConfigureCors(this WebApplicationBuilder builder)
+        {
+            // Configure a permissive CORS policy.
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllOrigins", policy =>
+                {
+                    policy.SetIsOriginAllowed(_ => true)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            });
+        }
+
+        public static void LogStartupBanner(this WebApplicationBuilder builder)
+        {
+            // Log a startup banner with color formatting.
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("MTF6Pack God of C#");
-
-            //Console.ForegroundColor = ConsoleColor.Yellow;
-            //Console.WriteLine("-------------------------------------------------------------------------------------------");
-
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"https://{Dns.GetHostEntry(Dns.GetHostName()).AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)}:{builder.Configuration["Port"]}/swagger");
+
+            var hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+            var ipAddress = hostEntry.AddressList
+                .FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)?.ToString() ?? "localhost";
+            Console.WriteLine($"https://{ipAddress}:{builder.Configuration["Port"]}/swagger");
+
             Console.ResetColor();
         }
-    }
-    public class TitleFilter : IDocumentFilter
-    {
-        public void Apply(OpenApiDocument doc, DocumentFilterContext context)
+
+        // Custom Swagger document filter.
+        public class TitleFilter : IDocumentFilter
         {
-            doc.Info.Title = "ّFor those who seek Success ...";
-            doc.Info.Version = "Phase 1";
+            public void Apply(OpenApiDocument doc, DocumentFilterContext context)
+            {
+                doc.Info.Title = "ّFor those who seek Success ...";
+                doc.Info.Version = "Phase 1";
+            }
         }
     }
 }
-

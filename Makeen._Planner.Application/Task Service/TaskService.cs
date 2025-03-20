@@ -92,7 +92,8 @@ namespace Makeen._Planner.Task_Service
             var targetUser = await _repository.StraitAccess.Set<User>().Include(u => u.Tasks).FirstOrDefaultAsync(u => u.Id == command.ReceiverId) ?? throw new NotFoundException("User not found");
             var taskForUser = command.ToModel(senderId);
             // Notify the receiver; assume SendTaskRequestNotif handles notification and task assignment as needed
-            await SendTaskRequestNotif(taskForUser, userId);
+            await SendTaskRequestNotif(taskForUser, "درخواست جدید", userId);
+            await _unitOfWork.SaveChangesAsync();
         }
         private async Task<bool> HandleUserSelf(AddTaskCommand command, Guid userId, Guid? senderId = null)
         {
@@ -199,15 +200,13 @@ namespace Makeen._Planner.Task_Service
 
 
 
-        private async Task SendTaskRequestNotif(Domain.Task.Task task, Guid userid)
+        private async Task SendTaskRequestNotif(Domain.Task.Task task, string message, Guid userid)
         {
-            string message = "درخواست جدید";
             Notification notification = new(task, message, userid);
             notification.Activate();
             var user = await _repository.StraitAccess.Set<User>().FindAsync(userid);
             user!.Notifications!.Add(notification);
             _repository.StraitAccess.Set<Notification>().Add(notification);
-            await _unitOfWork.SaveChangesAsync();
         }
         //public async Task<List<Domain.Task.Task>?> GetAllTasks()
         //{
