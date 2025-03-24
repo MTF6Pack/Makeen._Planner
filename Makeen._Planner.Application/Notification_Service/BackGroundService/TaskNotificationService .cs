@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Persistence;
+using Task = System.Threading.Tasks.Task;
 
 namespace Application.Notification_Service.BackGroundService
 {
@@ -29,7 +30,7 @@ namespace Application.Notification_Service.BackGroundService
                         .Where(t => t.User != null &&
                                     t.Alarm.HasValue &&
                                     t.StartTime.AddMinutes(-(int)t.Alarm.Value) <= now &&
-                                    t.Status != Domain.Task.TaskStatus.Done)
+                                    t.Status != Domain.TaskEnums.Status.Done)
                         .ToListAsync(stoppingToken);
 
                     foreach (var task in tasksToNotify)
@@ -55,7 +56,7 @@ namespace Application.Notification_Service.BackGroundService
             }
         }
 
-        private async Task SendNotification(Domain.Task.Task task, Guid userId, DataBaseContext dbContext)
+        private async Task SendNotification(Domain.Task task, Guid userId, DataBaseContext dbContext)
         {
             string message = "زمان فعالیت شما سر رسیده"; // "Your task time has arrived"
 
@@ -73,7 +74,6 @@ namespace Application.Notification_Service.BackGroundService
                 }
 
                 Notification notification = new(task, message, userId);
-                notification.Activate();
 
                 user.Notifications?.Add(notification);
                 dbContext.Notifications.Add(notification);

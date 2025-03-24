@@ -7,14 +7,28 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var persianCulture = new CultureInfo("fa-IR")
+{
+    DateTimeFormat = { Calendar = new PersianCalendar() }
+};
+
+// For ASP.NET Core (in Program.cs or Startup.cs)
+CultureInfo.DefaultThreadCurrentCulture = persianCulture;
+CultureInfo.DefaultThreadCurrentUICulture = persianCulture;
 
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 builder.ConfigureCors();
 builder.StartUp();
 builder.ConfigureSwagger();
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    //options.ModelBinderProviders.Insert(0, new PersianDateModelBinderProvider());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -72,7 +86,7 @@ var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
 // DateTime Middleware (should be early in the request pipeline)
-app.UseMiddleware<GlobalDateTimeMiddleware>();
+//app.UseMiddleware<GlobalDateTimeMiddleware>();
 
 // Database Migration (before running the app)
 using (var scope = app.Services.CreateScope())
@@ -87,11 +101,13 @@ using (var scope = app.Services.CreateScope())
 // Set application URLs
 app.Urls.Add($"https://*:{builder.Configuration["Port"]}");
 
-
-// Open Swagger in Browser
-var hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-var ipAddress = hostEntry.AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)?.ToString() ?? "localhost";
-Process.Start("cmd", $"/c start https://{ipAddress}:{builder.Configuration["Port"]}/swagger");
+if (app.Environment.IsDevelopment())
+{
+    // Open Swagger in Browser
+    var hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+    var ipAddress = hostEntry.AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)?.ToString() ?? "localhost";
+    Process.Start("cmd", $"/c start https://{ipAddress}:{builder.Configuration["Port"]}/swagger");
+}
 
 // Ensure HTTPS redirection is enforced early
 app.UseHttpsRedirection();

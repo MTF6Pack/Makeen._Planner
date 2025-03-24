@@ -7,6 +7,7 @@ using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {
+
     [Authorize]
     [Route("api/v1/tasks")]
     [ApiController]
@@ -23,7 +24,7 @@ namespace Makeen._Planner.Controllers
 
             return Ok(new
             {
-                Message = hasConflict ? "Warning: You have a task conflict at this time! but the task added anyway" : "Task added successfully with no conflict",
+                Message = hasConflict ? "Warning: There is a task conflict at this time! but the task has been added anyway" : "Task has been added successfully with no conflict",
                 Conflict = hasConflict
             });
         }
@@ -59,8 +60,8 @@ namespace Makeen._Planner.Controllers
         }
 
         [EndpointSummary("Marks a list of tasks as complete")]
-        [HttpPatch("/complete")]
-        public async Task MarkTaskAsComplete(List<Guid>? tasksid, DateOnly? date)
+        [HttpPatch("complete")]
+        public async Task MarkTaskAsComplete(List<Guid>? tasksid, DateTime? date)
         {
             await _taskService.Done(tasksid, date);
         }
@@ -74,7 +75,7 @@ namespace Makeen._Planner.Controllers
 
         [HttpGet("calendar")]
         [EndpointSummary("Fetches tasks for the user or a group on a specific date")]
-        public async Task<IActionResult> GetTheUserTasksByCalander([FromQuery] DateOnly? date, [FromQuery] Guid? groupid, [FromQuery] bool isGrouptask)
+        public async Task<IActionResult> GetTheUserTasksByCalander([FromQuery] DateTime? date, [FromQuery] Guid? groupid, [FromQuery] bool isGrouptask)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
             return Ok(await _taskService.GetTheUserOrGroupTasksByCalander(date, userid, groupid, isGrouptask));

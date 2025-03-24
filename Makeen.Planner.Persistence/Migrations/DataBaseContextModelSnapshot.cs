@@ -17,7 +17,7 @@ namespace Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -47,7 +47,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Groups", (string)null);
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Domain.GroupMembership", b =>
@@ -65,7 +65,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("GroupMemberships", (string)null);
+                    b.ToTable("GroupMemberships");
                 });
 
             modelBuilder.Entity("Domain.Notification", b =>
@@ -74,7 +74,7 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsActivated")
+                    b.Property<bool>("IsDelivered")
                         .HasColumnType("bit");
 
                     b.Property<string>("Message")
@@ -92,10 +92,10 @@ namespace Persistence.Migrations
 
                     b.HasIndex("Userid");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("Domain.Task.Task", b =>
+            modelBuilder.Entity("Domain.Task", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -113,6 +113,10 @@ namespace Persistence.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("From")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid?>("GroupId")
                         .HasColumnType("uniqueidentifier");
 
@@ -127,6 +131,9 @@ namespace Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Repeat")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Result")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("SenderId")
@@ -148,7 +155,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tasks", (string)null);
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("Domain.User", b =>
@@ -382,7 +389,7 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Notification", b =>
                 {
-                    b.HasOne("Domain.Task.Task", "Task")
+                    b.HasOne("Domain.Task", "Task")
                         .WithMany()
                         .HasForeignKey("TaskId");
 
@@ -393,7 +400,7 @@ namespace Persistence.Migrations
                     b.Navigation("Task");
                 });
 
-            modelBuilder.Entity("Domain.Task.Task", b =>
+            modelBuilder.Entity("Domain.Task", b =>
                 {
                     b.HasOne("Domain.Group", null)
                         .WithMany("Tasks")

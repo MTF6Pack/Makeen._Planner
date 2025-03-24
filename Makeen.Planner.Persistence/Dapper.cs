@@ -1,13 +1,13 @@
 ﻿using Dapper;
 using Infrastructure;
 using Microsoft.Data.SqlClient;
-using Task = Domain.Task.Task;
+using System.IO;
 
 namespace Persistence;
 
 public static class Dapper
 {
-    public static async Task<Dictionary<object, object>> TasksReport(Guid id)
+    public static async Task<Dictionary<string, object>> TasksReport(Guid id)
     {
         string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
 
@@ -15,144 +15,194 @@ public static class Dapper
         connection.Open();
 
         var today = DateTime.Now.Date;
-        var yesterday = DateTime.Now.AddDays(-1).Date;
-        var twodaysago = DateTime.Now.AddDays(-2).Date;
-        var threedaysago = DateTime.Now.AddDays(-3).Date;
-        var fourdaysago = DateTime.Now.AddDays(-4).Date;
-        var fivedaysago = DateTime.Now.AddDays(-5).Date;
-        var sixdaysago = DateTime.Now.AddDays(-6).Date;
+        var userWeekReport = (await connection.QueryAsync<TaskDapperDto>(
+            $"SELECT status, CONVERT(date, DeadLine) AS DeadLine, " +
+            $"(SELECT COUNT(*) FROM [Planner].[dbo].[Tasks] " +
+            $" WHERE DeadLine > GETDATE() " +
+            $" AND (UserId = '{id}' OR GroupId = '{id}') " +
+            $" AND Status = 'Pending') AS UpcomingTasksCount " +
+            $"FROM [Planner].[dbo].[Tasks] " +
+            $"WHERE (UserId = '{id}' OR GroupId = '{id}') and DeadLine BETWEEN DATEADD(DAY, -6, CAST(GETDATE() AS DATE)) And " +
+            $"DATEADD(SECOND, -1, DATEADD(DAY, 1, CONVERT(DATETIME, CAST(GETDATE() AS DATE))))"
+        )).ToList();
 
-        var userweekreport = (await connection.QueryAsync<TaskDapperDto>($"SELECT status, Convert(date, DeadLine) AS DeadLine," +
-            $"(SELECT COUNT(*) FROM [Planner].[dbo].[Tasks] WHERE DeadLine > '{today:yyyy-MM-dd}'" +
-            $"AND(userid = '{id}' OR groupid = '{id}')" +
-            $"AND Status = 'Pending') AS FutureTasksCount FROM [Planner].[dbo].[Tasks]" +
-            $"WHERE DeadLine BETWEEN '{sixdaysago:yyyy-MM-dd}' AND '{today.AddDays(1):yyyy-MM-dd}'")).ToList();
+        // Aggregate week-level statistics
+        int weekAllTasksCount = userWeekReport.Count;
+        int weekAllCompletedTaskscount = userWeekReport.Count(x => x.Status == "Done");
+        int weekPendingCount = weekAllTasksCount - weekAllCompletedTaskscount;
+        int UpcomingTasksCount = userWeekReport.FirstOrDefault()?.UpcomingTasksCount ?? 0;
+        string weekLabel = $"{weekAllCompletedTaskscount}/{weekAllTasksCount}";
 
-        int weekAllTasksCount = userweekreport.Count;
-        int weekAllCompeletedTaskscount = userweekreport.Count(x => x.Status == "Done");
-        int weekPendingCount = weekAllTasksCount - weekAllCompeletedTaskscount;
-        var firstReport = userweekreport.FirstOrDefault();
-        int allremainingFutureTasksCount = firstReport != null ? firstReport.FutureTasksCount : 0;
-        string weeklabel = $"{weekAllCompeletedTaskscount}/{weekAllTasksCount}";
+        var barCharts = new List<Dictionary<string, object>>();
 
-        var todayDayOfWeek = HelperMethods.GetPersianDayName(today.DayOfWeek);
-        int todayAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == today);
-        int todayAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == today && x.Status == "Done");
-        string todayLabel = $"{todayAllCompeletedTaskscount}/{todayAllTaskscount}";
+        for (int i = 0; i < 7; i++)
+        {
+            var Id = i + 1;
+            var day = DateTime.Now.AddDays(-i).Date;
+            var dayName = HelperMethods.GetPersianDayName(day.DayOfWeek);
+            int totalTasks = userWeekReport.Count(x => x.DeadLine.Date == day);
+            int completedTasks = userWeekReport.Count(x => x.DeadLine.Date == day && x.Status == "Done");
+            string dayLabel = $"{completedTasks}/{totalTasks}";
 
-        var yesterdayDayOfWeek = HelperMethods.GetPersianDayName(yesterday.DayOfWeek);
-        int yesterdayAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == yesterday);
-        int yesterdayAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == yesterday && x.Status == "Done");
-        string yesterdayLabel = $"{yesterdayAllCompeletedTaskscount}/{yesterdayAllTaskscount}";
+            barCharts.Add(new Dictionary<string, object>
+            {
+        { "id", Id},
+        { "Date", DateHelper.ConvertGregorianToPersian(day)},
+        { "DayName", dayName },
+        { "CompletedTasks", completedTasks },
+        { "PendingTasks", totalTasks-completedTasks },
+        { "Label", dayLabel }
+    });
+        }
+        var linechart = new Dictionary<string, object>
+        {
+            { "AllTasks", weekAllTasksCount },
+             { "CompletedTasks", weekAllCompletedTaskscount },
+             { "PendingTasks", weekPendingCount },
+            { "UpcomingTasks", UpcomingTasksCount },
+        };
+        var pieChart = new List<Dictionary<string, object>>
+        {
+            new() { { "id", 1 }, { "Done", weekAllCompletedTaskscount } },
+            new() { { "id", 2 }, { "Pending", weekPendingCount } }
+        };
 
-        var twodaysagoDayOfWeek = HelperMethods.GetPersianDayName(twodaysago.DayOfWeek);
-        int twodaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == twodaysago);
-        int twodaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == twodaysago && x.Status == "Done");
-        string twodaysagoLabel = $"{twodaysagoAllCompeletedTaskscount}/{twodaysagoAllTaskscount}";
+        var result = new Dictionary<string, object>
+{
+    { "WeekLabel", weekLabel },
+    { "BarCharts", barCharts  },
+    { "LineChart", linechart },
+    { "PieChart", pieChart },
+};
 
-
-        var threedaysagoDayOfWeek = HelperMethods.GetPersianDayName(threedaysago.DayOfWeek);
-        int threedaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == threedaysago);
-        int threedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == threedaysago && x.Status == "Done");
-        string threedaysagoLabel = $"{threedaysagoAllCompeletedTaskscount}/{threedaysagoAllTaskscount}";
-
-        var fourdaysagoDayOfWeek = HelperMethods.GetPersianDayName(fourdaysago.DayOfWeek);
-        int fourdaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == fourdaysago);
-        int fourdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == fourdaysago && x.Status == "Done");
-        string fourdaysagoLabel = $"{fourdaysagoAllCompeletedTaskscount}/{fourdaysagoAllTaskscount}";
-
-        var fivedaysagoDayOfWeek = HelperMethods.GetPersianDayName(fivedaysago.DayOfWeek);
-        int fivedaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == fivedaysago);
-        int fivedaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == fivedaysago && x.Status == "Done");
-        string fivedaysagoLabel = $"{fivedaysagoAllCompeletedTaskscount}/{fivedaysagoAllTaskscount}";
-
-        var sixdaysagoDayOfWeek = HelperMethods.GetPersianDayName(sixdaysago.DayOfWeek);
-        int sixdaysagoAllTaskscount = userweekreport.Count(x => x.DeadLine.Date == sixdaysago);
-        int sixdaysagoAllCompeletedTaskscount = userweekreport.Count(x => x.DeadLine.Date == sixdaysago && x.Status == "Done");
-        string sixdaysagoLabel = $"{sixdaysagoAllCompeletedTaskscount}/{sixdaysagoAllTaskscount}";
-
-        Dictionary<object, object> myDictionary = [];
-        myDictionary.Add(nameof(weekAllTasksCount), weekAllTasksCount);
-        myDictionary.Add(nameof(weekAllCompeletedTaskscount), weekAllCompeletedTaskscount);
-        myDictionary.Add(nameof(weekPendingCount), weekPendingCount);
-        myDictionary.Add(nameof(allremainingFutureTasksCount), allremainingFutureTasksCount);
-        myDictionary.Add(nameof(weeklabel), weeklabel);
-        myDictionary.Add(nameof(todayAllTaskscount), todayAllTaskscount);
-        myDictionary.Add(nameof(todayAllCompeletedTaskscount), todayAllCompeletedTaskscount);
-        myDictionary.Add(nameof(todayLabel), todayLabel);
-        myDictionary.Add(nameof(todayDayOfWeek), todayDayOfWeek);
-        myDictionary.Add(nameof(yesterdayAllTaskscount), yesterdayAllTaskscount);
-        myDictionary.Add(nameof(yesterdayAllCompeletedTaskscount), yesterdayAllCompeletedTaskscount);
-        myDictionary.Add(nameof(yesterdayLabel), yesterdayLabel);
-        myDictionary.Add(nameof(yesterdayDayOfWeek), yesterdayDayOfWeek);
-        myDictionary.Add(nameof(twodaysagoAllTaskscount), twodaysagoAllTaskscount);
-        myDictionary.Add(nameof(twodaysagoAllCompeletedTaskscount), twodaysagoAllCompeletedTaskscount);
-        myDictionary.Add(nameof(twodaysagoLabel), twodaysagoLabel);
-        myDictionary.Add(nameof(twodaysagoDayOfWeek), twodaysagoDayOfWeek);
-        myDictionary.Add(nameof(threedaysagoAllTaskscount), threedaysagoAllTaskscount);
-        myDictionary.Add(nameof(threedaysagoAllCompeletedTaskscount), threedaysagoAllCompeletedTaskscount);
-        myDictionary.Add(nameof(threedaysagoLabel), threedaysagoLabel);
-        myDictionary.Add(nameof(threedaysagoDayOfWeek), threedaysagoDayOfWeek);
-        myDictionary.Add(nameof(fourdaysagoAllTaskscount), fourdaysagoAllTaskscount);
-        myDictionary.Add(nameof(fourdaysagoAllCompeletedTaskscount), fourdaysagoAllCompeletedTaskscount);
-        myDictionary.Add(nameof(fourdaysagoLabel), fourdaysagoLabel);
-        myDictionary.Add(nameof(fourdaysagoDayOfWeek), fourdaysagoDayOfWeek);
-        myDictionary.Add(nameof(fivedaysagoAllTaskscount), fivedaysagoAllTaskscount);
-        myDictionary.Add(nameof(fivedaysagoAllCompeletedTaskscount), fivedaysagoAllCompeletedTaskscount);
-        myDictionary.Add(nameof(fivedaysagoLabel), fivedaysagoLabel);
-        myDictionary.Add(nameof(fivedaysagoDayOfWeek), fivedaysagoDayOfWeek);
-        myDictionary.Add(nameof(sixdaysagoAllTaskscount), sixdaysagoAllTaskscount);
-        myDictionary.Add(nameof(sixdaysagoAllCompeletedTaskscount), sixdaysagoAllCompeletedTaskscount);
-        myDictionary.Add(nameof(sixdaysagoLabel), sixdaysagoLabel);
-        myDictionary.Add(nameof(sixdaysagoDayOfWeek), sixdaysagoDayOfWeek);
-
-        return myDictionary;
+        return result;
     }
 
-    public static async Task<List<Task>> UserDoneTasks(Guid userid)
+    public static async Task<Dictionary<string, List<NotificationDto>>> UserTasks(Guid userId, bool beSorted)
     {
         string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
 
         using var connection = new SqlConnection(connectionString);
-        connection.Open();
+        await connection.OpenAsync();
 
-        var userDoneTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-            $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime," +
-            $"FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
-            $" AS SenderName FROM [Planner].[dbo].[Tasks]t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-            $" = 'done' and t.[UserId] = '{userid}'")).OrderByDescending(t => t.StartTime).ToList();
+        var query = $@"
+        SELECT 
+            n.Id,
+            n.Message,
+            n.Userid,
+            t.CreationTime,
+            -- When the task belongs to a group
+            CASE WHEN t.GroupId IS NOT NULL THEN g.Title END AS GroupName,
+            CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
+            CASE WHEN t.GroupId IS NOT NULL THEN g.Color END AS GroupColor,
+            t.Result,
+            -- When the task is sent by an individual user
+            CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto,
+            CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName END AS SenderUserName,
+            CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname END AS SenderName
+        FROM [Planner].[dbo].[Notifications] AS n
+        LEFT JOIN [Planner].[dbo].[Tasks] AS t ON t.Id = n.TaskId
+        LEFT JOIN [Planner].[dbo].[Groups] AS g ON t.GroupId = g.Id
+        LEFT JOIN [dbo].[AspNetUsers] AS s ON t.SenderId = s.Id
+        WHERE n.Userid = '{userId}'
+        ORDER BY t.StartTime DESC";
 
-        return userDoneTasks;
-    }
+        var rawNotifications = (await connection.QueryAsync<RawNotificationDto>(query)).ToList();
 
-    public static async Task<List<Task>> UserFutureTasks(Guid userid)
-    {
-        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+        var notifications = rawNotifications.Select(raw =>
+        {
+            SenderInfo? senderInfo = null;
+            if (!string.IsNullOrEmpty(raw.GroupName))
+            {
+                senderInfo = new SenderInfo
+                {
+                    SenderName = raw.GroupName,
+                    SenderColor = raw.GroupColor,
+                    SenderPhoto = raw.GroupPhoto
+                };
+            }
+            else if (!string.IsNullOrEmpty(raw.SenderUserName))
+            {
+                senderInfo = new SenderInfo
+                {
+                    SenderName = raw.SenderName,
+                    SenderUsername = raw.SenderUserName,
+                    SenderPhoto = raw.SenderPhoto
+                };
+            }
+            return new NotificationDto
+            {
+                Id = raw.Id,
+                Message = raw.Message,
+                CreationTime = DateHelper.ConvertGregorianToPersian(raw.CreationTime, true).persianDate,
+                Result = raw.Result,
+                SenderInfo = senderInfo
+            };
+        }).ToList();
 
-        using var connection = new SqlConnection(connectionString);
-        connection.Open();
+        var resultDictionary = new Dictionary<string, List<NotificationDto>>();
 
-        var userFutureTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-          $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime,FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory], t.[SenderId],t.[Description],u.[Fullname]" +
-          $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-          $" = 'pending' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
+        if (beSorted)
+        {
+            var completedTasks = notifications.Where(n => n.Result == "Completed").ToList();
+            var failedTasks = notifications.Where(n => n.Result == "Failed").ToList();
+            var upcomingTasks = notifications.Where(n => n.Result == "Upcoming").ToList();
 
-        return userFutureTasks;
-    }
+            resultDictionary.Add("Completed", completedTasks);
+            resultDictionary.Add("Failed", failedTasks);
+            resultDictionary.Add("Upcoming", upcomingTasks);
+        }
+        else
+        {
+            resultDictionary.Add("Notifications", notifications);
+        }
 
-    public static async Task<List<Task>> UserFailedTasks(Guid userid)
-    {
-        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
-        using var connection = new SqlConnection(connectionString);
-        connection.Open();
-
-        var userFailedTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-          $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime" +
-          $",FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
-          $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-          $" != 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
-
-        return userFailedTasks;
+        return resultDictionary;
     }
 }
+//public static async Task<List<Task>> UserDoneTasks(Guid userid)
+//{
+//    string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+//    using var connection = new SqlConnection(connectionString);
+//    connection.Open();
+
+//    var userDoneTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
+//        $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime," +
+//        $"FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
+//        $" AS SenderName FROM [Planner].[dbo].[Tasks]t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+//        $" = 'done' and t.[UserId] = '{userid}'")).OrderByDescending(t => t.StartTime).ToList();
+
+//    return userDoneTasks;
+//}
+
+//public static async Task<List<Task>> UserFutureTasks(Guid userid)
+//{
+//    string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+//    using var connection = new SqlConnection(connectionString);
+//    connection.Open();
+
+//    var userFutureTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
+//      $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime,FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory], t.[SenderId],t.[Description],u.[Fullname]" +
+//      $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+//      $" = 'pending' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
+
+//    return userFutureTasks;
+//}
+
+//public static async Task<List<Task>> UserFailedTasks(Guid userid)
+//{
+//    string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+//    using var connection = new SqlConnection(connectionString);
+//    connection.Open();
+
+//    var userFailedTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
+//      $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime" +
+//      $",FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
+//      $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
+//      $" != 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
+
+//    return userFailedTasks;
+//}

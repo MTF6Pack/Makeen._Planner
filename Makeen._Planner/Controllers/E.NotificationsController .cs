@@ -3,22 +3,25 @@ using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence;
+using System.ComponentModel.DataAnnotations;
 
 namespace Makeen._Planner.Controllers
 {
     [ApiController]
-    [Route("api/v1/due-tasks")]
+    [Route("api/v1/notifications")]
     public class NotificationsController(DataBaseContext dbContext, INotificationService notificationService) : ControllerBase
     {
         private readonly DataBaseContext _dbContext = dbContext;
         private readonly INotificationService _notificationService = notificationService;
         [Authorize]
         [HttpGet]
-        public async Task<IActionResult> GetDueTasks()
+        [EndpointSummary("Fetches all Notifs")]
+        public async Task<IActionResult> UserTasks([Required] bool beSorted)
         {
-            var userId = new Guid(User.FindFirst("id")!.Value);
-            return Ok(await _notificationService.GetDueTasks(userId));
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await Persistence.Dapper.UserTasks(userid, beSorted));
         }
+
         [Authorize]
         [HttpGet("{notificationid:guid}")]
         public async Task<IActionResult> GetDueTasks([FromRoute] Guid notificationid)

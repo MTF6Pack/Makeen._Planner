@@ -1,128 +1,71 @@
-﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//using Microsoft.AspNetCore.Http;
+//using Microsoft.Extensions.Primitives;
+//using System;
+//using System.Collections.Generic;
+//using System.Globalization;
+//using System.Linq;
+//using System.Threading.Tasks;
 
-namespace Infrastructure
-{
-    public class GlobalDateTimeMiddleware
-    {
-        private readonly RequestDelegate _next;
+//namespace Infrastructure
+//{
+//    public class GlobalDateTimeMiddleware(RequestDelegate next)
+//    {
+//        private readonly RequestDelegate _next = next;
 
-        public GlobalDateTimeMiddleware(RequestDelegate next)
-        {
-            _next = next;
-        }
+//        public async Task InvokeAsync(HttpContext context)
+//        {
+//            if (context.Request.Query.Count == 0)
+//            {
+//                await _next(context);
+//                return;
+//            }
 
-        public async Task InvokeAsync(HttpContext context)
-        {
-            // Handle query string date conversion globally
-            await HandleQueryStringDateConversionAsync(context);
+//            // Build new query parameters with converted date values.
+//            var newQueryParameters = new Dictionary<string, StringValues>();
+//            foreach (var kvp in context.Request.Query)
+//            {
+//                var convertedValues = kvp.Value.Select(ConvertValue!).ToArray();
+//                newQueryParameters[kvp.Key] = new StringValues(convertedValues);
+//            }
 
-            // Process the request body for POST/PUT if necessary
-            if (context.Request.Method == HttpMethods.Post || context.Request.Method == HttpMethods.Put)
-            {
-                await HandleRequestBodyDateConversionAsync(context);
-            }
+//            // Update the QueryString (this is the public property).
+//            context.Request.QueryString = QueryString.Create(newQueryParameters);
+//            Console.WriteLine($"Updated QueryString: {context.Request.QueryString}");
 
-            // Continue to the next middleware
-            await _next(context);
-        }
+//            await _next(context);
+//        }
 
-        private async Task HandleQueryStringDateConversionAsync(HttpContext context)
-        {
-            var query = context.Request.Query;
+//        private static string ConvertValue(string value)
+//        {
+//            if (string.IsNullOrWhiteSpace(value))
+//                return value;
 
-            if (query.Count != 0)
-            {
-                var newQueryParameters = new Dictionary<string, List<string>>();
+//            if (TryConvertToGregorian(value, out DateTime dt))
+//            {
+//                // Return only the date if time is exactly midnight.
+//                return dt.Hour == 0 && dt.Minute == 0 && dt.Second == 0
+//                    ? dt.ToString("yyyy-MM-dd")
+//                    : dt.ToString("yyyy-MM-dd HH:mm");
+//            }
 
-                foreach (var kvp in query)
-                {
-                    var key = kvp.Key;
-                    var values = kvp.Value;
-                    var newValues = new List<string>();
+//            return value;
+//        }
 
-                    foreach (var value in values)
-                    {
-                        bool isDate = false;
-                        DateTime dt;
+//        private static bool TryConvertToGregorian(string value, out DateTime dt)
+//        {
+//            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
+//                return true;
 
-                        // Try parsing as Persian date if applicable
-                        if (DateHelper.IsPersianDate(value))
-                        {
-                            try
-                            {
-                                dt = DateHelper.ConvertPersianToGregorian(value);
-                                isDate = true;
-                            }
-                            catch
-                            {
-                                isDate = false;
-                            }
-                        }
-                        else
-                        {
-                            // Try parsing as Gregorian date
-                            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out dt))
-                            {
-                                isDate = true;
-                            }
-                        }
-
-                        if (isDate)
-                        {
-                            // Format the date to a standard Gregorian format
-                            if (dt.Hour == 0 && dt.Minute == 0 && dt.Second == 0)
-                                newValues.Add(dt.ToString("yyyy-MM-dd"));
-                            else
-                                newValues.Add(dt.ToString("yyyy-MM-dd HH:mm"));
-                        }
-                        else
-                        {
-                            newValues.Add(value);
-                        }
-                    }
-
-                    newQueryParameters[key] = newValues;
-                }
-
-                // Rebuild the query string from the updated parameters
-                var newQueryString = QueryString.Create(
-                    newQueryParameters.SelectMany(kvp => kvp.Value.Select(val => new KeyValuePair<string, string>(kvp.Key, val)))
-                );
-                context.Request.QueryString = newQueryString;
-            }
-        }
-
-        private async Task HandleRequestBodyDateConversionAsync(HttpContext context)
-        {
-            var originalBodyStream = context.Request.Body;
-            using (var memoryStream = new MemoryStream())
-            {
-                await context.Request.Body.CopyToAsync(memoryStream);
-                memoryStream.Seek(0, SeekOrigin.Begin);
-
-                // Assuming the request body is JSON, you can deserialize it and handle date conversion
-                var bodyString = new StreamReader(memoryStream).ReadToEnd();
-
-                // Modify the body string by converting Persian dates to Gregorian
-                bodyString = ConvertDatesInRequestBody(bodyString);
-
-                // Write the modified body back to the request body stream
-                context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes(bodyString));
-            }
-        }
-
-        private string ConvertDatesInRequestBody(string bodyString)
-        {
-            // Add logic to convert Persian dates in the JSON body to Gregorian
-            // Example: Regex or JSON deserialization could be used to replace Persian dates
-            bodyString = bodyString.Replace("1404-01-01", "2025-03-20"); // Example placeholder logic
-            return bodyString;
-        }
-    }
-}
+//            try
+//            {
+//                dt = DateHelper.ConvertPersianToGregorian(value);
+//                return true;
+//            }
+//            catch
+//            {
+//                dt = default;
+//                return false;
+//            }
+//        }
+//    }
+//}

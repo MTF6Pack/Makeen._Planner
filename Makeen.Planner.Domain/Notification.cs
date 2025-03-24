@@ -4,11 +4,11 @@
     {
         public Guid Id { get; private set; }
         public Guid? Userid { get; private set; }
-        public Task.Task? Task { get; private set; }
+        public Domain.Task? Task { get; private set; }
         public string? Message { get; private set; }
-        public bool IsActivated { get; private set; }
+        public bool IsDelivered { get; private set; }
 
-        public Notification(Task.Task? task, string? message, Guid? userid)
+        public Notification(Domain.Task? task, string? message, Guid? userid)
         {
             Id = Guid.NewGuid();
             Task = task;
@@ -16,9 +16,9 @@
             Userid = userid;
         }
 
-        public void Activate()
+        public void Deliver()
         {
-            IsActivated = true;
+            IsDelivered = true;
         }
 
         public Notification()

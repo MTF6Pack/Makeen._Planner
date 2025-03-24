@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Task
+namespace Domain.TaskEnums
 {
     public enum Alarm
     {

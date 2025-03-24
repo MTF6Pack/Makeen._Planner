@@ -42,7 +42,7 @@ namespace Application.Group_Service
                     GroupName = g.Title,
                     IsUserAdmin = g.GroupMemberships
                                    .Where(m => m.UserId == userid) // Filter memberships by userId
-                                   .Select(m => m.IsAdmin) // Get the IsAdmin value from the membership
+                                   .Select(m => m.IsAdmin) // Get the IsAdmin value from the targetMembership
                                    .FirstOrDefault(), // This should give the IsAdmin value for the user, or false if not found
                     AvatarUrl = g.AvatarUrl,
                     Color = g.Color,
@@ -63,6 +63,7 @@ namespace Application.Group_Service
                 g.Title,
                 g.Color,
                 g.AvatarUrl,
+                IsUserAdmin = g.GroupMemberships!.Select(gm => gm.IsAdmin).FirstOrDefault(),
                 Members = g.GroupMemberships!.Select(m => new
                 {
                     m.User.Fullname,
@@ -72,7 +73,7 @@ namespace Application.Group_Service
                     m.User.Id,
                     m.User.PhoneNumber,
                     m.IsAdmin
-                }).ToList()
+                }).ToList(),
             }).FirstOrDefaultAsync();
 
             return thegroup ?? throw new NotFoundException(nameof(thegroup));
@@ -184,15 +185,17 @@ namespace Application.Group_Service
 
         public async Task RemoveMember(Guid groupId, Guid userid, Guid targetuserId)
         {
-            var membership = await _repository.StraitAccess.Set<GroupMembership>()
+            var group = await _repository.GetByIdAsync(groupId) ?? throw new NotFoundException("Group");
+            var targetMembership = await _repository.StraitAccess.Set<GroupMembership>()
                 .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == targetuserId)
                 ?? throw new NotFoundException("Membership not found");
 
             var callerMembership = await _repository.StraitAccess.Set<GroupMembership>()
                 .FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userid);
             if (callerMembership == null || !callerMembership.IsAdmin) throw new UnauthorizedException("You are not an admin");
-
-            _repository.StraitAccess.Set<GroupMembership>().Remove(membership);
+            if (targetMembership.UserId == callerMembership.UserId) throw new BadRequestException("You cannot remove yourself");
+            if (callerMembership.UserId != group.OwnerId && targetMembership.IsAdmin) throw new UnauthorizedException("Only group owner can remove an admins from group");
+            _repository.StraitAccess.Set<GroupMembership>().Remove(targetMembership);
             await _unitOfWork.SaveChangesAsync();
         }
     }

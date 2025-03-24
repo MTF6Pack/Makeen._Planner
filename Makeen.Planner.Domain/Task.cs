@@ -1,9 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using Domain.TaskEnums;
 using System.Text.Json.Serialization;
+using Status = Domain.TaskEnums.Status;
 
-namespace Domain.Task
+namespace Domain
 {
     public class Task
     {
@@ -14,7 +13,7 @@ namespace Domain.Task
         public string Name { get; private set; } = string.Empty;
         public Guid? GroupId { get; private set; }
         public bool? IsInGroup { get; private set; }
-        public TaskStatus Status { get; private set; }
+        public Status Status { get; private set; }
         public DateTime DeadLine { get; private set; }
         public DateTime StartTime { get; private set; }
         public DateTime CreationTime { get; private set; }
@@ -22,6 +21,8 @@ namespace Domain.Task
         public Alarm? Alarm { get; private set; }
         public Repeat? Repeat { get; private set; }
         public string? Description { get; private set; }
+        public string? Result { get; private set; }
+        public From From { get; private set; }
         public Task(Guid? groupId, string name, DateTime deadLine,
                PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
         {
@@ -30,14 +31,17 @@ namespace Domain.Task
             Id = Guid.NewGuid();
             DeadLine = deadLine;
             StartTime = starttime;
-            Status = (TaskStatus)2;
+            Status = (Status)2;
             CreationTime = DateTime.Now;
             SenderId = senderId;
             IsInGroup = SenderId.HasValue;
-            PriorityCategory = priorityCategory == null ? Domain.Task.PriorityCategory.none : priorityCategory;
-            Alarm = alarm == null ? Domain.Task.Alarm.None : alarm;
-            Repeat = repeat == null ? Domain.Task.Repeat.None : repeat;
+            PriorityCategory = priorityCategory == null ? TaskEnums.PriorityCategory.none : priorityCategory;
+            Alarm = alarm == null ? TaskEnums.Alarm.None : alarm;
+            Repeat = repeat == null ? TaskEnums.Repeat.None : repeat;
             Description = description;
+            if (SenderId.HasValue && groupId is not null) From = From.Admin;
+            else if (SenderId.HasValue && groupId is null) From = From.Friend;
+            else From = From.MySelf;
         }
 
 
@@ -53,13 +57,13 @@ namespace Domain.Task
                 StartTime = starttime.Value;
 
             if (priorityCategory.HasValue)
-                PriorityCategory = (PriorityCategory)priorityCategory.Value;
+                PriorityCategory = priorityCategory.Value;
 
             if (repeat.HasValue)
-                Repeat = (Repeat)repeat.Value;
+                Repeat = repeat.Value;
 
             if (alarm.HasValue)
-                Alarm = (Alarm)alarm.Value;
+                Alarm = alarm.Value;
 
             if (!string.IsNullOrWhiteSpace(description))
                 Description = description;
@@ -67,10 +71,10 @@ namespace Domain.Task
 
         public void Done()
         {
-            Status = (TaskStatus)1;
+            Status = (Status)1;
         }
 
-        public void UpdateTaskStatus(TaskStatus status)
+        public void UpdateStatus(Status status)
         {
             Status = status;
         }

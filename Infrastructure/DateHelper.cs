@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Text.Json.Serialization;
 
 namespace Infrastructure
 {
@@ -7,66 +8,39 @@ namespace Infrastructure
     {
         private static readonly PersianCalendar persianCalendar = new();
 
-        /// <summary>
-        /// Converts a Persian (Jalali) date string to a Gregorian DateTime.
-        /// </summary>
-        public static DateTime ConvertPersianToGregorian(string persianDateString)
+        public static DateTime ConvertPersianToGregorian(DateTime persianDate, bool includeTime)
         {
-            if (string.IsNullOrWhiteSpace(persianDateString))
-                throw new ArgumentNullException(nameof(persianDateString));
+            if (persianDate.Year > 1600) return persianDate;
 
-            string[] persianFormats =
-            {
-                "yyyy/MM/dd HH:mm",
-                "yyyy-MM-dd HH:mm",
-                "yyyy/MM/dd",
-                "yyyy-MM-dd"
-            };
+            int year = persianCalendar.GetYear(persianDate);
+            int month = persianCalendar.GetMonth(persianDate);
+            int day = persianCalendar.GetDayOfMonth(persianDate);
 
-            CultureInfo persianCulture = new("fa-IR");
+            int hour = includeTime ? persianDate.Hour : 0;
+            int minute = includeTime ? persianDate.Minute : 0;
 
-            // Check for valid Persian date parsing
-            foreach (var format in persianFormats)
-            {
-                if (DateTime.TryParseExact(persianDateString, format, persianCulture, DateTimeStyles.None, out DateTime persianDate))
-                {
-                    DateTime gregorianDate = persianCalendar.ToDateTime(persianDate.Year, persianDate.Month, persianDate.Day, 0, 0, 0, 0);
-                    bool hasTime = persianDateString.Contains(':');
-                    if (hasTime)
-                    {
-                        return new DateTime(gregorianDate.Year, gregorianDate.Month, gregorianDate.Day, persianDate.Hour, persianDate.Minute, 0);
-                    }
-                    else
-                    {
-                        return gregorianDate.Date;
-                    }
-                }
-            }
-
-            return DateTime.Parse(persianDateString, CultureInfo.InvariantCulture);
+            return persianCalendar.ToDateTime(year, month, day, hour, minute, 0, 0);
         }
 
-        /// <summary>
-        /// Checks if a string is in Persian date format.
-        /// </summary>
-        public static bool IsPersianDate(string dateString)
+        public static (DateTime persianDate, string formatted) ConvertGregorianToPersian(DateTime gregorianDate, bool includeTime = false)
         {
-            string[] persianFormats =
-            {
-                "yyyy/MM/dd HH:mm",
-                "yyyy-MM-dd HH:mm",
-                "yyyy/MM/dd",
-                "yyyy-MM-dd"
-            };
+            if (gregorianDate.Year < 1600) return (gregorianDate, "");
 
-            foreach (var format in persianFormats)
-            {
-                if (DateTime.TryParseExact(dateString, format, new CultureInfo("fa-IR"), DateTimeStyles.None, out _))
-                {
-                    return true;
-                }
-            }
-            return false;
+            int year = persianCalendar.GetYear(gregorianDate);
+            int month = persianCalendar.GetMonth(gregorianDate);
+            int day = persianCalendar.GetDayOfMonth(gregorianDate);
+            int hour = includeTime ? gregorianDate.Hour : 0;
+            int minute = includeTime ? gregorianDate.Minute : 0;
+
+            DateTime persianDate = new(year, month, day, hour, minute, 0, persianCalendar);
+
+            // Use a format string that always displays the time if includeTime is true.
+            string formatted = includeTime
+                ? persianDate.ToString("yyyy/MM/dd HH:mm", CultureInfo.InvariantCulture)
+                : persianDate.ToString("yyyy/MM/dd", CultureInfo.InvariantCulture);
+
+            return (persianDate, formatted);
         }
+
     }
 }

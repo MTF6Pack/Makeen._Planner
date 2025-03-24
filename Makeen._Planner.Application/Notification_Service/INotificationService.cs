@@ -9,7 +9,7 @@ namespace Application.Notification_Service
     public interface INotificationService
     {
         //Task<object?> DeleteNotification(Guid notificationid);
-        Task<object> GetDueTasks(Guid userid);
+        //Task<object> GetDueTasks(Guid userid);
         Task<object?> GetTheDueTask(Guid userId, Guid notificationid);
         Task Respond(Guid notificationId, bool isOkay);
     }

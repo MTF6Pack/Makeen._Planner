@@ -13,7 +13,7 @@ namespace Domain
         public string? AvatarUrl { get; private set; }
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public List<GroupMembership> GroupMemberships { get; private set; } = [];
-        public List<Task.Task>? Tasks { get; private set; }
+        public List<Domain.Task>? Tasks { get; private set; }
 
         public Group(string title, string? avatar, string color, Guid ownerId, bool grouptype = false)
         {

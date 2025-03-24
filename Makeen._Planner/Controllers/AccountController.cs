@@ -17,11 +17,11 @@ namespace Makeen._Planner.Controllers
         private readonly IUserService _userService = userService;
         private readonly UserManager<User> _userManager = userManager;
 
-        [HttpGet("test-error")]
-        public IActionResult TestError()
-        {
-            throw new BadRequestException("This is a test exception!");
-        }
+        //[HttpGet("test-error")]
+        //public IActionResult TestError()
+        //{
+        //    throw new BadRequestException("This is a test exception!");
+        //}
 
         [HttpPost("SignUp")]
         [EndpointSummary("Registers a user and sends token")]

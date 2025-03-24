@@ -18,6 +18,7 @@ using System.Net.Sockets;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
+using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner
 {
@@ -136,6 +137,7 @@ namespace Makeen._Planner
             // Add controllers and configure JSON serializer settings.
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
+                options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeConverter());
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });

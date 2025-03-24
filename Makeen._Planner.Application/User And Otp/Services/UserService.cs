@@ -1,18 +1,13 @@
 ﻿using Application.DataSeeder;
 using Application.EmailConfirmation;
 using Application.User_And_Otp.Commands;
-using Azure.Core;
 using Domain;
 using Infrastructure;
 using Makeen._Planner.Service;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Task = System.Threading.Tasks.Task;
 
 namespace Application.UserAndOtp.Services
 {
@@ -234,7 +229,7 @@ namespace Application.UserAndOtp.Services
 
             return user == null
                 ? throw new NotFoundException("User")
-                : user.Contacts.Select(u => new GetContactDto
+                : [.. user.Contacts.Select(u => new GetContactDto
                 {
                     Id = u.Id,
                     UserName = u.UserName,
@@ -242,13 +237,13 @@ namespace Application.UserAndOtp.Services
                     PhoneNumber = u.PhoneNumber,
                     AvatarUrl = u.AvatarUrl,
                     Fullname = u.Fullname
-                }).ToList();
+                })];
         }
         public async Task DeleteContact(string theuserid, Guid targetuserid)
         {
             var user = await _userManager.FindByIdAsync(theuserid);
-            var targetuser = await _userManager.FindByIdAsync(theuserid) ?? throw new NotFoundException("Target user");
-            user!.Contacts.Remove(targetuser);
+            var Targetuser = await _userManager.FindByIdAsync(targetuserid.ToString()) ?? throw new NotFoundException("Target user");
+            user!.Contacts.Remove(Targetuser);
             await _userManager.UpdateAsync(user);
         }
     }

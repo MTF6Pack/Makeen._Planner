@@ -12,15 +12,15 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    [Migration("20250313092834_Reinit")]
-    partial class Reinit
+    [Migration("20250322134606_Kir")]
+    partial class Kir
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("ProductVersion", "9.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -77,9 +77,6 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("IsActivated")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
 
@@ -98,13 +95,13 @@ namespace Persistence.Migrations
                     b.ToTable("Notifications");
                 });
 
-            modelBuilder.Entity("Domain.Task.Task", b =>
+            modelBuilder.Entity("Domain.Task", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Alarm")
+                    b.Property<int?>("Alarm")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreationTime")
@@ -114,6 +111,10 @@ namespace Persistence.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("From")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("GroupId")
@@ -130,6 +131,9 @@ namespace Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Repeat")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Result")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("SenderId")
@@ -385,7 +389,7 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Notification", b =>
                 {
-                    b.HasOne("Domain.Task.Task", "Task")
+                    b.HasOne("Domain.Task", "Task")
                         .WithMany()
                         .HasForeignKey("TaskId");
 
@@ -396,7 +400,7 @@ namespace Persistence.Migrations
                     b.Navigation("Task");
                 });
 
-            modelBuilder.Entity("Domain.Task.Task", b =>
+            modelBuilder.Entity("Domain.Task", b =>
                 {
                     b.HasOne("Domain.Group", null)
                         .WithMany("Tasks")

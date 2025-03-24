@@ -2,7 +2,7 @@
 
 namespace Persistence.Repository.Interface
 {
-    public interface ITaskRepository : IRepository<Domain.Task.Task>
+    public interface ITaskRepository : IRepository<Domain.Task>
     {
     }
 }

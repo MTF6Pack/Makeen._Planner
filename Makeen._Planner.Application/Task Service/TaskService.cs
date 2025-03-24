@@ -1,8 +1,13 @@
 ﻿using Domain;
 using Infrastructure;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Task_Service
@@ -61,6 +66,7 @@ namespace Makeen._Planner.Task_Service
         }
         private async Task HandleAdminForAllUsers(AddTaskCommand command, Guid userId, Guid? senderId)
         {
+            var group = await _repository.StraitAccess.Set<Group>().FindAsync(command.GroupId) ?? throw new NotFoundException("Group");
             bool isAdmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(m => m.GroupId == command.GroupId && m.UserId == userId && m.IsAdmin);
             if (!isAdmin) throw new UnauthorizedException("User is not an admin in this group");
 
@@ -71,21 +77,23 @@ namespace Makeen._Planner.Task_Service
                 {
                     var taskForMember = command.ToModel(senderId);
                     member.User.Tasks.Add(taskForMember);
-                    _repository.StraitAccess.Set<Domain.Task.Task>().Add(taskForMember);
+                    _repository.StraitAccess.Set<Domain.Task>().Add(taskForMember);
                 }
             }
             await _unitOfWork.SaveChangesAsync();
         }
-        private async Task HandleAdminForSingleUser(AddTaskCommand command, Guid userId, Guid? senderId)
+        private async Task<bool> HandleAdminForSingleUser(AddTaskCommand command, Guid userId, Guid? senderId)
         {
-            bool isAdmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(m => m.GroupId == command.GroupId && m.UserId == userId && m.IsAdmin);
-            if (!isAdmin) throw new UnauthorizedException("User is not an admin in this group");
+            var group = await _repository.StraitAccess.Set<Group>().FindAsync(command.GroupId) ?? throw new NotFoundException("Group");
+            var isadmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(m => m.GroupId == command.GroupId && m.UserId == userId && m.IsAdmin);
+            if (!isadmin) throw new UnauthorizedException("User is not an admin in this group");
 
             var targetUser = await _repository.StraitAccess.Set<User>().Include(u => u.Tasks).FirstOrDefaultAsync(u => u.Id == command.ReceiverId) ?? throw new NotFoundException("User");
             var adminTask = command.ToModel(senderId);
             targetUser.Tasks.Add(adminTask);
-            _repository.StraitAccess.Set<Domain.Task.Task>().Add(adminTask);
+            _repository.StraitAccess.Set<Domain.Task>().Add(adminTask);
             await _unitOfWork.SaveChangesAsync();
+            return await CheckConflict(command, userId, adminTask.Id);
         }
         private async Task HandleUserForUser(AddTaskCommand command, Guid userId, Guid? senderId)
         {
@@ -100,9 +108,13 @@ namespace Makeen._Planner.Task_Service
             var targetUser = await _repository.StraitAccess.Set<User>().Include(u => u.Tasks).FirstOrDefaultAsync(u => u.Id == userId);
             var task = command.ToModel(senderId);
             targetUser?.Tasks.Add(task);
-            _repository.StraitAccess.Set<Domain.Task.Task>().Add(task);
+            _repository.StraitAccess.Set<Domain.Task>().Add(task);
             await _unitOfWork.SaveChangesAsync();
-            return await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => t.User!.Id == userId && t.Id != task.Id).AnyAsync(t =>
+            return await CheckConflict(command, userId, task.Id);
+        }
+        private async Task<bool> CheckConflict(AddTaskCommand command, Guid userId, Guid taskid)
+        {
+            return await _repository.StraitAccess.Set<Domain.Task>().Where(t => t.User!.Id == userId && t.Id != taskid).AnyAsync(t =>
             t.StartTime.Year == command.StartTime.Year &&
             t.StartTime.Month == command.StartTime.Month &&
             t.StartTime.Day == command.StartTime.Day &&
@@ -110,11 +122,11 @@ namespace Makeen._Planner.Task_Service
             t.StartTime.Minute == command.StartTime.Minute);
         }
 
-        public async Task<List<Domain.Task.Task>> GetTheUserOrGroupTasksByCalander(DateOnly? date, Guid userid, Guid? groupid, bool isGrouptask)
+        public async Task<List<Domain.Task>> GetTheUserOrGroupTasksByCalander(DateTime? date, Guid userid, Guid? groupid, bool isGrouptask)
         {
-            var thedate = date ?? DateOnly.FromDateTime(DateTime.Now);
+            var thedate = date ?? DateTime.Now.Date;
 
-            IQueryable<Domain.Task.Task> query;
+            IQueryable<Domain.Task> query;
 
             if (!groupid.HasValue)
             {
@@ -123,21 +135,21 @@ namespace Makeen._Planner.Task_Service
                     query = _repository.StraitAccess.Set<User>()
                         .Where(u => u.Id == userid)
                         .SelectMany(u => u.Tasks!.Where(t =>
-                            DateOnly.FromDateTime(t.StartTime) == thedate &&
-                            t.IsInGroup == false));
+                            t.StartTime.Date == thedate &&
+                            t.IsInGroup == false && t.Status == Domain.TaskEnums.Status.Pending));
                 }
                 else
                 {
-                    query = _repository.StraitAccess.Set<Domain.Task.Task>()
+                    query = _repository.StraitAccess.Set<Domain.Task>()
                         .Where(t => t.User!.Id == userid && t.IsInGroup == true &&
-                            DateOnly.FromDateTime(t.StartTime) == thedate);
+                            t.StartTime.Date.Date == thedate);
                 }
             }
             else
             {
-                query = _repository.StraitAccess.Set<Domain.Task.Task>()
+                query = _repository.StraitAccess.Set<Domain.Task>()
                     .Where(t => t.GroupId == groupid &&
-                        DateOnly.FromDateTime(t.StartTime) == thedate);
+                        t.StartTime.Date == thedate && t.Status == Domain.TaskEnums.Status.Pending);
             }
 
             return await query.OrderByDescending(t => t.CreationTime).ToListAsync();
@@ -145,7 +157,7 @@ namespace Makeen._Planner.Task_Service
 
         public async Task RemoveTask(Guid taskid)
         {
-            Domain.Task.Task? thetask = await _repository.GetByIdAsync(taskid);
+            Domain.Task? thetask = await _repository.GetByIdAsync(taskid);
             if (thetask == null) throw new NotFoundException(nameof(thetask));
             _repository.Delete(thetask);
             await _unitOfWork.SaveChangesAsync();
@@ -153,7 +165,7 @@ namespace Makeen._Planner.Task_Service
         public async Task UpdateTask(Guid taskId, UpdateTaskCommand command)
         {
             // Fetch the task using taskId
-            Domain.Task.Task? thetask = await _repository.GetByIdAsync(taskId)
+            Domain.Task? thetask = await _repository.GetByIdAsync(taskId)
                 ?? throw new NotFoundException("Task");
 
             // Directly use PriorityCategory if it's non-nullable
@@ -166,16 +178,16 @@ namespace Makeen._Planner.Task_Service
         public async Task Done(Guid taskid)
         {
             var task = await _repository.GetByIdAsync(taskid) ?? throw new NotFoundException("Task");
-            if (task.Status == Domain.Task.TaskStatus.Done) throw new BadRequestException("Task is already done");
+            if (task.Status == Domain.TaskEnums.Status.Done) throw new BadRequestException("Task is already done");
             task.Done();
             await _unitOfWork.SaveChangesAsync();
         }
 
-        public async Task Done(List<Guid>? tasksid, DateOnly? date)
+        public async Task Done(List<Guid>? tasksid, DateTime? date)
         {
             if (tasksid is { Count: > 0 } && date is null)
             {
-                var tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => tasksid.Contains(t.Id) && t.Status == Domain.Task.TaskStatus.Pending).ToListAsync();
+                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Where(t => tasksid.Contains(t.Id) && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
 
                 foreach (var task in tasks)
                 {
@@ -187,7 +199,7 @@ namespace Makeen._Planner.Task_Service
 
             if (tasksid is null && date is not null)
             {
-                var tasks = await _repository.StraitAccess.Set<Domain.Task.Task>().Where(t => DateOnly.FromDateTime(t.StartTime) == date && t.Status == Domain.Task.TaskStatus.Pending).ToListAsync();
+                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Where(t => t.StartTime.Date == date && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
                 foreach (var task in tasks)
                 {
                     task.Done();
@@ -197,13 +209,9 @@ namespace Makeen._Planner.Task_Service
             }
             throw new BadRequestException();
         }
-
-
-
-        private async Task SendTaskRequestNotif(Domain.Task.Task task, string message, Guid userid)
+        private async Task SendTaskRequestNotif(Domain.Task task, string message, Guid userid)
         {
             Notification notification = new(task, message, userid);
-            notification.Activate();
             var user = await _repository.StraitAccess.Set<User>().FindAsync(userid);
             user!.Notifications!.Add(notification);
             _repository.StraitAccess.Set<Notification>().Add(notification);

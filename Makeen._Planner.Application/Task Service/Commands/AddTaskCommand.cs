@@ -1,4 +1,4 @@
-﻿using Domain.Task;
+﻿using Domain.TaskEnums;
 using Infrastructure;
 using System.Text.Json.Serialization;
 
@@ -19,9 +19,9 @@ namespace Makeen._Planner.Task_Service
 
     public static class TaskMapper
     {
-        public static Domain.Task.Task ToModel(this AddTaskCommand command, Guid? senderId)
+        public static Domain.Task ToModel(this AddTaskCommand command, Guid? senderId)
         {
-            Domain.Task.Task newtask = new(
+            Domain.Task newtask = new(
 
                 command.GroupId,
                 command.Name,
@@ -37,10 +37,10 @@ namespace Makeen._Planner.Task_Service
             return newtask;
         }
 
-        public static Domain.Task.Task ToModel(Guid? groupid, string name, DateTime deadline, PriorityCategory? priorityCategory,
+        public static Domain.Task ToModel(Guid? groupid, string name, DateTime deadline, PriorityCategory? priorityCategory,
             DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
         {
-            Domain.Task.Task newtask = new(
+            Domain.Task newtask = new(
 
                 groupid,
                 name,
