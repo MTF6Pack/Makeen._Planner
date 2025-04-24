@@ -1,9 +1,6 @@
-﻿using Application.DataSeeder.OTP;
+﻿using Application.Contracts;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
-using System;
 using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
 
 namespace Application.UserAndOtp
 {

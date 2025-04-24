@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
+﻿using Application.Contracts;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Application.EmailConfirmation
 {

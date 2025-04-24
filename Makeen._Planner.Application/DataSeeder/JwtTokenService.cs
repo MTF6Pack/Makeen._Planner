@@ -1,4 +1,6 @@
 ﻿using Domain;
+using Infrastructure;
+using Infrastructure.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,32 +18,33 @@ namespace Application.DataSeeder
 
     public class JwtTokenService(IConfiguration configuration)
     {
-        private readonly string _secretKey = configuration["JWT:Key"] ?? throw new ArgumentNullException("JWT Key is missing in the configuration.");
+        private readonly string _secretKey = configuration["JWT:Key"] ?? throw new UnauthorizedException("JWT Key is missing in the configuration.");
 
         public string GenerateToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_secretKey);
 
-            var claims = new ClaimsIdentity(
-            [
-        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-        new Claim("id", user.Id.ToString()),
-        new Claim("email", user.Email ?? string.Empty)
-    ]);
+            var claims = new List<Claim>
+    {
+        new("id", user.Id.ToString()),
+        new("email", user.Email!),
+        new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+    };
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = claims,
+                Subject = new ClaimsIdentity(claims),
                 Expires = DateTime.Now.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenString = tokenHandler.WriteToken(token);
-
-            //Console.WriteLine($"Generated Token: {tokenString}"); // Debugging line
-            return tokenString;
+            return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
+
+        //public JwtTokenService()
+        //{
+
+        //}
     }
 }

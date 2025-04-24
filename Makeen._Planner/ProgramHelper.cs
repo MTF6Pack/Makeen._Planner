@@ -1,140 +1,131 @@
-﻿using Application.DataSeeder;
+﻿using Application.Contracts.Groups;
+using Application.DataSeeder;
+using Application.Notification_Service.BackGroundServices;
+using Application.Task_Service;
 using Domain;
 using Infrastructure;
-using Makeen._Planner.Service;
+using Infrastructure.Date_and_Time;
+using Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Persistence;
-using Persistence.Repository.Interface;
+using Persistence.Repository;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.IdentityModel.Tokens.Jwt;
+using System.Diagnostics;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Claims;
-using System.Text;
 using System.Text.Json.Serialization;
-using Task = System.Threading.Tasks.Task;
+using static Persistence.Dapper;
 
 namespace Makeen._Planner
 {
     public static class ProgramHelper
     {
-        public static void StartUp(this WebApplicationBuilder builder)
+        public static void ConfigureAppSettings(this WebApplicationBuilder builder)
         {
-            builder.ConfigureJWT();
-            builder.RegisterServices();
-            builder.ConfigureJsonOptions();
+            builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+        }
+        public static void ConfigureServices(this WebApplicationBuilder builder)
+        {
+            builder.ConfigureCors();
+            builder.StartUp();
+            builder.ConfigureSwagger();
+            builder.Services.AddControllers(options => { options.ModelBinderProviders.Insert(0, new PersianDateModelBinderProvider()); });
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                if (!c.SwaggerGeneratorOptions.SecuritySchemes.ContainsKey("Bearer"))
+                {
+                    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                    {
+                        In = ParameterLocation.Header,
+                        Description = "Enter 'Bearer {your_token_here}'",
+                        Name = "Authorization",
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "Bearer"
+                    });
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "Bearer"
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
+                    });
+                }
+                c.OrderActionsBy(apiDesc => apiDesc.GroupName);
+            });
+
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddSignalR().AddHubOptions<NotificationHub>(options => { options.EnableDetailedErrors = true; }).AddJsonProtocol();
+            builder.Services.AddHostedService<TaskReminderBackgroundService>();
+            builder.Services.AddHostedService<NotificationRetryService>();
+        }
+        public static void ConfigureCulture()
+        {
+            var persianCulture = new CultureInfo("fa-IR")
+            {
+                DateTimeFormat = { Calendar = new PersianCalendar() }
+            };
+            CultureInfo.DefaultThreadCurrentCulture = persianCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = persianCulture;
         }
 
-        public static void RegisterServices(this WebApplicationBuilder builder)
+        public static void StartUp(this WebApplicationBuilder builder)
         {
-            builder.Logging.ClearProviders();
-            builder.Logging.AddConsole(options =>
-                options.LogToStandardErrorThreshold = LogLevel.Warning);
-            builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
-            builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
+            builder.ConfigureLogging();
+            builder.InjectDependencies();
+            builder.ConfigureAuthenticationAndIdentity();
+            builder.ConfigureJsonOptions();
+            builder.LogStartupBanner();
+        }
+        public static void InjectDependencies(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddDbContext<DataBaseContext>((services, options) =>
+     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+             //.AddInterceptors(new NotificationInterceptor(builder.Services.BuildServiceProvider().GetRequiredService<IMediator>()))
+             );
 
-            builder.Services.AddDbContext<DataBaseContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+            builder.Services.AddScoped<GroupMapper>();
             builder.Services.AddScoped<JwtTokenService>();
+            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(NotificationSender).Assembly));
+            builder.Services.AddScoped<NotificationQueryService>();
+            builder.Services.AddScoped<NotificationSenderHandler>();
             builder.Services.AddMemoryCache();
 
             builder.Services.Scan(scan => scan
-                .FromAssemblyOf<IUserRepository>()
-                .AddClasses(classes => classes.Where(type =>
-                    !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
+    .FromAssemblies(
+        typeof(TaskService).Assembly,
+        typeof(FileStorageService).Assembly,
+        typeof(TaskRepository).Assembly,
+        typeof(GroupMapper).Assembly
+    )
+    .AddClasses(classes =>
+    classes.Where(type =>
+        !type.Name.EndsWith("Controller", StringComparison.OrdinalIgnoreCase) &&
+        !type.Name.Contains("Middleware") &&
+        !typeof(ControllerBase).IsAssignableFrom(type) &&
+        !typeof(IHostedService).IsAssignableFrom(type) &&
+        !typeof(Exception).IsAssignableFrom(type) &&
+        !typeof(Attribute).IsAssignableFrom(type) &&
+        !typeof(IMiddleware).IsAssignableFrom(type)))
+    .AsImplementedInterfaces()
+    .WithScopedLifetime());
 
-            builder.Services.Scan(scan => scan
-                .FromAssemblyOf<IUserService>()
-                .AddClasses(classes => classes.Where(type =>
-                    !typeof(Microsoft.Extensions.Hosting.IHostedService).IsAssignableFrom(type)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
-            builder.Services.AddIdentity<User, UserRole>()
-                .AddEntityFrameworkStores<DataBaseContext>()
-                .AddDefaultTokenProviders();
-
-            builder.Services.Configure<IdentityOptions>(options =>
-            {
-                options.ClaimsIdentity.UserIdClaimType = "id";
-            });
-
-            builder.Services.AddAuthorizationBuilder()
-                .SetDefaultPolicy(new AuthorizationPolicyBuilder()
-                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-                    .RequireAuthenticatedUser()
-                    .Build());
-
-            // Authentication scheme is configured in ConfigureJWT.
         }
-
-        public static void ConfigureJWT(this WebApplicationBuilder builder)
-        {
-            // Clear default inbound claim mapping.
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-
-            // Bind and register JWT settings.
-            var jwtSettings = new JwtSettings();
-            builder.Configuration.GetSection("JWT").Bind(jwtSettings);
-
-            if (string.IsNullOrEmpty(jwtSettings?.Key))
-                throw new UnauthorizedAccessException("JWT Key is missing in the configuration.");
-
-            builder.Services.AddSingleton(jwtSettings);
-
-            // Add JWT bearer authentication.
-            builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.RequireHttpsMetadata = false;
-                options.SaveToken = true;
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-                    ClockSkew = TimeSpan.Zero
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnMessageReceived = context => Task.CompletedTask,
-                    OnAuthenticationFailed = context =>
-                    {
-                        Console.WriteLine($"❌ Authentication Failed: {context.Exception.Message}");
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = context =>
-                    {
-                        if (context.Principal?.Identity is not ClaimsIdentity)
-                        {
-                            Console.WriteLine("⚠️ Token validated, but no claims found!");
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-        }
-
         public static void ConfigureJsonOptions(this WebApplicationBuilder builder)
         {
-            // Add controllers and configure JSON serializer settings.
             builder.Services.AddControllers().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new FlexibleDateTimeConverter());
@@ -142,15 +133,29 @@ namespace Makeen._Planner
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             });
         }
-
+        public static void ConfigureCors(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAllOrigins", policy =>
+                {
+                    policy.SetIsOriginAllowed(_ => true)
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .AllowCredentials();
+                });
+            });
+        }
         public static void ConfigureSwagger(this WebApplicationBuilder builder)
         {
-            // Configure Swagger/OpenAPI.
             builder.Services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Makeen Planner API", Version = "v1" });
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Makeen Planner API",
+                    Version = "v1"
+                });
                 options.DocumentFilter<TitleFilter>();
-
                 options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
@@ -159,7 +164,6 @@ namespace Makeen._Planner
                     BearerFormat = "JWT",
                     Description = "Enter 'Bearer' followed by a space and your token"
                 });
-
                 options.AddSecurityRequirement(new OpenApiSecurityRequirement
                 {
                     {
@@ -176,25 +180,16 @@ namespace Makeen._Planner
                 });
             });
         }
-
-        public static void ConfigureCors(this WebApplicationBuilder builder)
+        private class TitleFilter : IDocumentFilter
         {
-            // Configure a permissive CORS policy.
-            builder.Services.AddCors(options =>
+            public void Apply(OpenApiDocument doc, DocumentFilterContext context)
             {
-                options.AddPolicy("AllowAllOrigins", policy =>
-                {
-                    policy.SetIsOriginAllowed(_ => true)
-                          .AllowAnyMethod()
-                          .AllowAnyHeader()
-                          .AllowCredentials();
-                });
-            });
+                doc.Info.Title = "For those who seek Success ...";
+                doc.Info.Version = "Phase 1";
+            }
         }
-
         public static void LogStartupBanner(this WebApplicationBuilder builder)
         {
-            // Log a startup banner with color formatting.
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("MTF6Pack God of C#");
             Console.ForegroundColor = ConsoleColor.Green;
@@ -206,15 +201,76 @@ namespace Makeen._Planner
 
             Console.ResetColor();
         }
-
-        // Custom Swagger document filter.
-        public class TitleFilter : IDocumentFilter
+        public static void ConfigureLogging(this WebApplicationBuilder builder)
         {
-            public void Apply(OpenApiDocument doc, DocumentFilterContext context)
+            builder.Logging.ClearProviders();
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
+            builder.Logging.AddConsole();
+            builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning);
+            builder.Logging.AddFilter("Microsoft.Hosting.Lifetime", LogLevel.Warning);
+        }
+        public static void ConfigureMiddleware(this WebApplication app)
+        {
+            app.UseMiddleware<GlobalExceptionMiddleware>();
+            //app.UseMiddleware<WebSocketAuthMiddleware>();
+            app.UseWebSockets(new WebSocketOptions { AllowedOrigins = { "*" } });
+            app.Use(async (context, next) =>
             {
-                doc.Info.Title = "ّFor those who seek Success ...";
-                doc.Info.Version = "Phase 1";
+                if (context.WebSockets.IsWebSocketRequest)
+                {
+                    Console.WriteLine($"WebSocket request to: {context.Request.Path}");
+                }
+                await next();
+            });
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<DataBaseContext>();
+                if (dbContext.Database.GetPendingMigrations().Any()) dbContext.Database.Migrate();
             }
+
+            app.Urls.Add($"https://*:{app.Configuration["Port"]}");
+
+            if (app.Environment.IsDevelopment())
+            {
+                var hostEntry = Dns.GetHostEntry(Dns.GetHostName());
+                var ipAddress = hostEntry.AddressList
+                    .FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)?.ToString() ?? "localhost";
+                Process.Start("cmd", $"/c start https://{ipAddress}:{app.Configuration["Port"]}/swagger");
+                Process.Start("cmd", $"/c start https://{ipAddress}:{app.Configuration["Port"]}/swagger");
+            }
+
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+
+            app.UseRouting();
+            app.UseCors("AllowAllOrigins");
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.MapHub<NotificationHub>("/notificationhub");
+
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
+            {
+                options.EnableTryItOutByDefault();
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
+                options.OAuthClientId("your-client-id");
+            });
+
+            app.MapControllers();
+        }
+
+        public static void ConfigureAuthenticationAndIdentity(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddCustomIdentity(builder.Configuration);
+            builder.Services.AddJwtAuthentication(builder.Configuration);
+
+            builder.Services.AddAuthorizationBuilder()
+                .SetDefaultPolicy(new AuthorizationPolicyBuilder()
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser()
+                    .Build());
         }
     }
 }

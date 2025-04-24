@@ -8,10 +8,10 @@ namespace Domain.TaskEnums
 {
     public enum Repeat
     {
-        Everyday = 1,
-        EveryWeek = 2,
-        EveryMonth = 3,
-        EveryYear = 4,
-        None = 5
+        None = 0,
+        Daily = 1,
+        Weekly = 2,
+        Monthly = 3,
+        Yearly = 4
     }
 }

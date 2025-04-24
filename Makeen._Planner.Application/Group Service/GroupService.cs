@@ -11,13 +11,18 @@ using Task = System.Threading.Tasks.Task;
 using Microsoft.EntityFrameworkCore;
 using Azure.Core;
 using Microsoft.Data.SqlClient;
+using Application.Contracts.Groups;
+using Infrastructure.Exceptions;
+using Application.Contracts;
 
 namespace Application.Group_Service
 {
-    public class GroupService(IGroupRepository repository, IUnitOfWork unitOfWork) : IGroupService
+    public class GroupService(IGroupRepository repository, IUnitOfWork unitOfWork, IFileStorageService avatar, GroupMapper groupMapper) : IGroupService
     {
         private readonly IGroupRepository _repository = repository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly IFileStorageService _avatar = avatar;
+        private readonly GroupMapper _groupMapper = groupMapper;
 
         public async Task Delete(Guid id)
         {
@@ -55,7 +60,7 @@ namespace Application.Group_Service
             return groupsWithTaskCounts;
         }
 
-        public async Task<object> GetByIdAsync(Guid groupid)
+        public async Task<object> GetByIdAsync(Guid userid, Guid groupid)
         {
             var thegroup = await _repository.StraitAccess.Set<Group>().Where(g => g.Id == groupid).Select(g => new
             {
@@ -63,7 +68,7 @@ namespace Application.Group_Service
                 g.Title,
                 g.Color,
                 g.AvatarUrl,
-                IsUserAdmin = g.GroupMemberships!.Select(gm => gm.IsAdmin).FirstOrDefault(),
+                IsUserAdmin = g.GroupMemberships!.Any(gm => gm.IsAdmin && gm.UserId == userid),
                 Members = g.GroupMemberships!.Select(m => new
                 {
                     m.User.Fullname,
@@ -81,7 +86,7 @@ namespace Application.Group_Service
 
         public async Task AddGroup(AddGroupCommand command, Guid ownerid)
         {
-            Group newgroup = await command.ToModel(ownerid);
+            Group newgroup = await _groupMapper.ToModel(command, ownerid);
 
             newgroup.AddMember(ownerid, true); // Owner is admin by default
 
@@ -89,33 +94,13 @@ namespace Application.Group_Service
             await _unitOfWork.SaveChangesAsync();
         }
 
-        //public async Task AddMemberByEmail(Guid groupid, string email)
-        //{
-        //    User? theuser = await _repository.StraitAccess.Set<User>().FirstOrDefaultAsync(u => u.Email == email);
-        //    Group? thegroup = await _repository.StraitAccess.Set<Group>().Include(x => x.GroupMemberships).FirstOrDefaultAsync(x => x.Id == groupid) ?? throw new NotFoundException("Group");
-
-        //    if (thegroup!.Grouptype == false) throw new BadRequestException("You cannot add User to your personal task lists");
-        //    if (theuser != null && thegroup != null)
-        //    {
-        //        if (thegroup.GroupMemberships!.Any(m => m.UserId == theuser.Id))
-        //            throw new Exception("User is already a member of this group.");
-
-        //        thegroup.GroupMemberships.Add(new GroupMembership(theuser.Id, thegroup.Id));
-        //        await _unitOfWork.SaveChangesAsync();
-        //    }
-        //    else throw new NotFoundException("User or Group not found");
-        //}
-
         public async Task AddMembers(Guid userid, Guid groupid, List<Guid> membersId)
         {
-            var isAdmin = await _repository.StraitAccess.Set<GroupMembership>()
-                .AnyAsync(gm => gm.GroupId == groupid && gm.UserId == userid && gm.IsAdmin);
-
+            var isAdmin = await _repository.StraitAccess.Set<GroupMembership>().AnyAsync(gm => gm.GroupId == groupid && gm.UserId == userid && gm.IsAdmin);
             if (!isAdmin) throw new UnauthorizedException("You are not admin");
             if (membersId == null || membersId.Count == 0) throw new BadRequestException("Member list cannot be null or empty.");
 
             var group = await _repository.GetByIdAsync(groupid) ?? throw new NotFoundException("Group");
-
             var existingMemberIds = await _repository.StraitAccess.Set<GroupMembership>()
                 .Where(gm => gm.GroupId == groupid && membersId.Contains(gm.UserId))
                 .Select(gm => gm.UserId)
@@ -126,9 +111,7 @@ namespace Application.Group_Service
                 .ToListAsync();
 
             if (newMembers.Count == 0) throw new BadRequestException("All selected users are already members of this group.");
-
             var newMemberships = newMembers.Select(member => new GroupMembership(member.Id, groupid)).ToList();
-
             await _repository.StraitAccess.Set<GroupMembership>().AddRangeAsync(newMemberships);
 
             try
@@ -148,7 +131,7 @@ namespace Application.Group_Service
             // Upload the avatar before fetching the group (prevents blocking DB access)
             if (command.AvatarUrl != null)
             {
-                newAvatarUrl = await IFormFileToUrl.UploadFileAsync(command.AvatarUrl);
+                newAvatarUrl = await _avatar.UploadFileAsync(command.AvatarUrl);
             }
 
             var thegroup = await _repository.GetByIdAsync(id);
@@ -167,7 +150,7 @@ namespace Application.Group_Service
 
                 if (!string.IsNullOrEmpty(oldAvatarUrl))
                 {
-                    await IFormFileToUrl.DeleteFileAsync(oldAvatarUrl); // Ensure async execution
+                    await _avatar.DeleteFileAsync(oldAvatarUrl); // Ensure async execution
                 }
             }
 
@@ -178,7 +161,7 @@ namespace Application.Group_Service
         {
             var group = await _repository.GetByIdAsync(groupId) ?? throw new NotFoundException("Group not found.");
             var membership = await _repository.StraitAccess.Set<GroupMembership>().FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId) ?? throw new NotFoundException("Membership not found");
-            if (group.OwnerId == userId) throw new InvalidOperationException("The group owner cannot be demoted.");
+            if (group.OwnerId == userId) throw new BadRequestException("The group owner cannot be demoted.");
             membership.ToggleAdmin();
             await _unitOfWork.SaveChangesAsync();
         }

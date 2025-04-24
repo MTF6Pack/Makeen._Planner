@@ -20,12 +20,14 @@ namespace Domain
         public PriorityCategory? PriorityCategory { get; private set; }
         public Alarm? Alarm { get; private set; }
         public Repeat? Repeat { get; private set; }
+        public List<Instance> Instances { get; private set; } = [];
         public string? Description { get; private set; }
-        public string? Result { get; private set; }
         public From From { get; private set; }
-        public Task(Guid? groupId, string name, DateTime deadLine,
-               PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
+        public string? Result { get; private set; }
+
+        public Task(Guid? groupId, string name, DateTime deadLine, PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
         {
+
             Name = name;
             GroupId = groupId;
             Id = Guid.NewGuid();
@@ -42,42 +44,64 @@ namespace Domain
             if (SenderId.HasValue && groupId is not null) From = From.Admin;
             else if (SenderId.HasValue && groupId is null) From = From.Friend;
             else From = From.MySelf;
+            NextInstance = CalculateNextInstance();
         }
-
 
         public void UpdateTask(string? name, DateTime? deadLine, PriorityCategory? priorityCategory, DateTime? starttime, Repeat? repeat, Alarm? alarm, string? description)
         {
-            if (!string.IsNullOrWhiteSpace(name))
-                Name = name;
-
-            if (deadLine.HasValue)
-                DeadLine = deadLine.Value;
-
-            if (starttime.HasValue)
-                StartTime = starttime.Value;
-
-            if (priorityCategory.HasValue)
-                PriorityCategory = priorityCategory.Value;
-
-            if (repeat.HasValue)
-                Repeat = repeat.Value;
-
-            if (alarm.HasValue)
-                Alarm = alarm.Value;
-
-            if (!string.IsNullOrWhiteSpace(description))
-                Description = description;
+            if (!string.IsNullOrWhiteSpace(name)) Name = name;
+            if (deadLine.HasValue) DeadLine = deadLine.Value;
+            if (starttime.HasValue) StartTime = starttime.Value;
+            if (priorityCategory.HasValue) PriorityCategory = priorityCategory.Value;
+            if (repeat.HasValue) Repeat = repeat.Value;
+            if (alarm.HasValue) Alarm = alarm.Value;
+            if (!string.IsNullOrWhiteSpace(description)) Description = description;
+            NextInstance = CalculateNextInstance();
         }
-
         public void Done()
         {
             Status = (Status)1;
+            Result = "Completed";
+        }
+        public void UpdateResult()
+        {
+            if (DateTime.Now >= DeadLine && Status != Status.Done) Result = "Failed";
+            else if (DateTime.Now.Date < DeadLine.Date && Status != Status.Done) Result = "Upcoming";
         }
 
-        public void UpdateStatus(Status status)
+        private DateTime? CalculateNextInstance()
         {
-            Status = status;
+            if (Repeat.HasValue && Repeat.Value != TaskEnums.Repeat.None)
+            {
+                return Repeat.Value switch
+                {
+                    TaskEnums.Repeat.Daily => (DateTime?)StartTime.AddDays(1),
+                    TaskEnums.Repeat.Weekly => (DateTime?)StartTime.AddDays(7),
+                    TaskEnums.Repeat.Monthly => (DateTime?)StartTime.AddMonths(1),
+                    TaskEnums.Repeat.Yearly => (DateTime?)StartTime.AddYears(1),
+                    _ => null,
+                };
+            }
+            return null;
         }
+        private DateTime? _nextInstance;
+        public DateTime? NextInstance
+        {
+            get => _nextInstance;
+            private set => _nextInstance = value;
+        }
+        private void HandleInstanceCompletion(bool wasCompleted)
+        {
+            if (NextInstance is null) return;
+            var newInstance = new Instance(NextInstance.Value);
+            newInstance.MarkAsCompleted(wasCompleted);
+            Instances.Add(newInstance);
+            NextInstance = CalculateNextInstance();
+        }
+        //private void SetNextInstance(DateTime? nextOccurrence)
+        //{
+        //    _nextInstance = nextOccurrence;
+        //}
         public Task()
         {
         }

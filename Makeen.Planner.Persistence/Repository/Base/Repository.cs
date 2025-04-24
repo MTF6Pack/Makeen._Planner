@@ -1,6 +1,4 @@
-﻿using Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Persistence;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Persistence.Repository.Base
 {
@@ -28,7 +26,7 @@ namespace Persistence.Repository.Base
         public async Task<T?> GetByIdAsync(Guid id)
         {
             var t = _DbSet.FindAsync(id);
-            return await t ?? throw new NotFoundException(nameof(t));
+            return await t;
         }
 
         public async Task<List<T>?> GetAllAsync()
@@ -38,7 +36,7 @@ namespace Persistence.Repository.Base
 
         public async Task<T?> GetObjectByName(string name)
         {
-            return await _DbSet.FindAsync(name) ?? throw new NotFoundException(nameof(name));
+            return await _DbSet.FindAsync(name);
         }
     }
 }

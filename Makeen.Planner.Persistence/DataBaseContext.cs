@@ -7,7 +7,7 @@ using Task = Domain.Task;
 
 namespace Persistence
 {
-    public class DataBaseContext(DbContextOptions<DataBaseContext> options) : IdentityDbContext<User, UserRole, Guid>(options)
+    public class DataBaseContext : IdentityDbContext<User, UserRole, Guid>
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -53,7 +53,15 @@ namespace Persistence
         public required DbSet<GroupMembership> GroupMemberships { get; set; }
         public required DbSet<Task> Tasks { get; set; }
         public required DbSet<Notification> Notifications { get; set; }
+        public required DbSet<QueuedNotification> QueuedNotifications { get; set; }
 
+        public DataBaseContext(DbContextOptions<DataBaseContext> options) : base(options)
+        {
+        }
 
+        public DataBaseContext()
+        {
+
+        }
     }
 }

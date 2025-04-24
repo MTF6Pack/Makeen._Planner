@@ -7,14 +7,6 @@
         public int UpcomingTasksCount { get; set; }
     }
 
-    public record SenderInfo
-    {
-        public string? SenderColor { get; set; }
-        public string? SenderName { get; set; }
-        public string? SenderUsername { get; set; }
-        public string? SenderPhoto { get; set; }
-    }
-
     public record RawNotificationDto
     {
         public Guid Id { get; set; }
@@ -36,5 +28,13 @@
         public DateTime CreationTime { get; set; }
         public string Result { get; set; } = string.Empty;
         public SenderInfo? SenderInfo { get; set; }
+    }
+
+    public record SenderInfo
+    {
+        public string? SenderColor { get; set; }
+        public string? SenderName { get; set; }
+        public string? SenderUsername { get; set; }
+        public string? SenderPhoto { get; set; }
     }
 }

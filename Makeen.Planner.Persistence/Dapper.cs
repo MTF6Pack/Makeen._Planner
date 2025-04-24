@@ -1,7 +1,6 @@
 ﻿using Dapper;
-using Infrastructure;
+using Domain.Helpers;
 using Microsoft.Data.SqlClient;
-using System.IO;
 
 namespace Persistence;
 
@@ -10,7 +9,6 @@ public static class Dapper
     public static async Task<Dictionary<string, object>> TasksReport(Guid id)
     {
         string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
         using var connection = new SqlConnection(connectionString);
         connection.Open();
 
@@ -78,131 +76,85 @@ public static class Dapper
         return result;
     }
 
-    public static async Task<Dictionary<string, List<NotificationDto>>> UserTasks(Guid userId, bool beSorted)
+    public class NotificationQueryService
     {
-        string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
-        using var connection = new SqlConnection(connectionString);
-        await connection.OpenAsync();
-
-        var query = $@"
-        SELECT 
-            n.Id,
-            n.Message,
-            n.Userid,
-            t.CreationTime,
-            -- When the task belongs to a group
-            CASE WHEN t.GroupId IS NOT NULL THEN g.Title END AS GroupName,
-            CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
-            CASE WHEN t.GroupId IS NOT NULL THEN g.Color END AS GroupColor,
-            t.Result,
-            -- When the task is sent by an individual user
-            CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto,
-            CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName END AS SenderUserName,
-            CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname END AS SenderName
-        FROM [Planner].[dbo].[Notifications] AS n
-        LEFT JOIN [Planner].[dbo].[Tasks] AS t ON t.Id = n.TaskId
-        LEFT JOIN [Planner].[dbo].[Groups] AS g ON t.GroupId = g.Id
-        LEFT JOIN [dbo].[AspNetUsers] AS s ON t.SenderId = s.Id
-        WHERE n.Userid = '{userId}'
-        ORDER BY t.StartTime DESC";
-
-        var rawNotifications = (await connection.QueryAsync<RawNotificationDto>(query)).ToList();
-
-        var notifications = rawNotifications.Select(raw =>
+        public static async Task<Dictionary<string, List<NotificationDto>>> GetUserNotificationsAsync(Guid userId, bool beSorted)
         {
-            SenderInfo? senderInfo = null;
-            if (!string.IsNullOrEmpty(raw.GroupName))
+            string _connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var query = @"
+            SELECT 
+                n.Id,
+                n.Message,
+                n.Userid,
+                t.CreationTime,
+                CASE WHEN t.GroupId IS NOT NULL THEN g.Title END AS GroupName,
+                CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
+                CASE WHEN t.GroupId IS NOT NULL THEN g.Color END AS GroupColor,
+                t.Result,
+                CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto,
+                CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName END AS SenderUserName,
+                CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname END AS SenderName
+            FROM [Planner].[dbo].[Notifications] AS n
+            LEFT JOIN [Planner].[dbo].[Tasks] AS t ON t.Id = n.TaskId
+            LEFT JOIN [Planner].[dbo].[Groups] AS g ON t.GroupId = g.Id
+            LEFT JOIN [dbo].[AspNetUsers] AS s ON t.SenderId = s.Id
+            WHERE n.Userid = @UserId
+            ORDER BY t.StartTime DESC";
+
+            var rawNotifications = (await connection.QueryAsync<RawNotificationDto>(query, new { UserId = userId })).ToList();
+
+            var notifications = rawNotifications.Select(raw =>
             {
-                senderInfo = new SenderInfo
+                SenderInfo? senderInfo = null;
+                if (!string.IsNullOrEmpty(raw.GroupName))
                 {
-                    SenderName = raw.GroupName,
-                    SenderColor = raw.GroupColor,
-                    SenderPhoto = raw.GroupPhoto
-                };
-            }
-            else if (!string.IsNullOrEmpty(raw.SenderUserName))
-            {
-                senderInfo = new SenderInfo
+                    senderInfo = new SenderInfo
+                    {
+                        SenderName = raw.GroupName,
+                        SenderColor = raw.GroupColor,
+                        SenderPhoto = raw.GroupPhoto
+                    };
+                }
+                else if (!string.IsNullOrEmpty(raw.SenderUserName))
                 {
-                    SenderName = raw.SenderName,
-                    SenderUsername = raw.SenderUserName,
-                    SenderPhoto = raw.SenderPhoto
+                    senderInfo = new SenderInfo
+                    {
+                        SenderName = raw.SenderName,
+                        SenderUsername = raw.SenderUserName,
+                        SenderPhoto = raw.SenderPhoto
+                    };
+                }
+                return new NotificationDto
+                {
+                    Id = raw.Id,
+                    Message = raw.Message,
+                    CreationTime = DateHelper.ConvertGregorianToPersian(raw.CreationTime, true).persianDate,
+                    Result = raw.Result,
+                    SenderInfo = senderInfo
                 };
-            }
-            return new NotificationDto
+            }).ToList();
+
+            var resultDictionary = new Dictionary<string, List<NotificationDto>>();
+
+            if (beSorted)
             {
-                Id = raw.Id,
-                Message = raw.Message,
-                CreationTime = DateHelper.ConvertGregorianToPersian(raw.CreationTime, true).persianDate,
-                Result = raw.Result,
-                SenderInfo = senderInfo
-            };
-        }).ToList();
+                var completedTasks = notifications.Where(n => n.Result == "Completed").ToList();
+                var failedTasks = notifications.Where(n => n.Result == "Failed").ToList();
+                var upcomingTasks = notifications.Where(n => n.Result == "Upcoming").ToList();
 
-        var resultDictionary = new Dictionary<string, List<NotificationDto>>();
+                resultDictionary.Add("Completed", completedTasks);
+                resultDictionary.Add("Failed", failedTasks);
+                resultDictionary.Add("Upcoming", upcomingTasks);
+            }
+            else
+            {
+                resultDictionary.Add("Notifications", notifications);
+            }
 
-        if (beSorted)
-        {
-            var completedTasks = notifications.Where(n => n.Result == "Completed").ToList();
-            var failedTasks = notifications.Where(n => n.Result == "Failed").ToList();
-            var upcomingTasks = notifications.Where(n => n.Result == "Upcoming").ToList();
-
-            resultDictionary.Add("Completed", completedTasks);
-            resultDictionary.Add("Failed", failedTasks);
-            resultDictionary.Add("Upcoming", upcomingTasks);
+            return resultDictionary;
         }
-        else
-        {
-            resultDictionary.Add("Notifications", notifications);
-        }
-
-        return resultDictionary;
     }
 }
-//public static async Task<List<Task>> UserDoneTasks(Guid userid)
-//{
-//    string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
-//    using var connection = new SqlConnection(connectionString);
-//    connection.Open();
-
-//    var userDoneTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-//        $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime," +
-//        $"FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
-//        $" AS SenderName FROM [Planner].[dbo].[Tasks]t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-//        $" = 'done' and t.[UserId] = '{userid}'")).OrderByDescending(t => t.StartTime).ToList();
-
-//    return userDoneTasks;
-//}
-
-//public static async Task<List<Task>> UserFutureTasks(Guid userid)
-//{
-//    string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
-//    using var connection = new SqlConnection(connectionString);
-//    connection.Open();
-
-//    var userFutureTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-//      $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime,FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory], t.[SenderId],t.[Description],u.[Fullname]" +
-//      $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-//      $" = 'pending' and t.[UserId] = '{userid}' and DeadLine > '{DateTime.Now.Date.AddDays(1)}'")).OrderByDescending(t => t.StartTime).ToList();
-
-//    return userFutureTasks;
-//}
-
-//public static async Task<List<Task>> UserFailedTasks(Guid userid)
-//{
-//    string connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-
-//    using var connection = new SqlConnection(connectionString);
-//    connection.Open();
-
-//    var userFailedTasks = (await connection.QueryAsync<Task>($"SELECT t.[Id],t.[UserId],t.[Name] AS TaskName,t.[GroupId]," +
-//      $"t.[Status],FORMAT(t.deadline, 'yyyy/MM/dd', 'fa-IR') AS deadline,FORMAT(t.creationtime, 'yyyy/MM/dd', 'fa-IR') as creationtime" +
-//      $",FORMAT(t.starttime, 'yyyy/MM/dd', 'fa-IR') as starttime,t.[PriorityCategory],t.[SenderId],t.[Description],u.[Fullname]" +
-//      $" AS SenderName FROM [Planner].[dbo].[Tasks] t left JOIN[Planner].[dbo].[AspNetUsers]u ON t.SenderId = u.Id where t.[Status]" +
-//      $" != 'done' and t.[UserId] = '{userid}' and DeadLine < '{DateTime.Now}'")).OrderByDescending(t => t.StartTime).ToList();
-
-//    return userFailedTasks;
-//}

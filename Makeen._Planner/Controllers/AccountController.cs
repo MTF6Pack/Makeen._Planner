@@ -1,27 +1,25 @@
-﻿using Application.DataSeeder.OTP;
-using Application.User_And_Otp.Commands;
+﻿using Application.Contracts;
+using Application.Contracts.Users;
+using Application.Contracts.Users.Commands;
 using Domain;
-using Infrastructure;
-using Makeen._Planner.Service;
+using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Persistence;
 using System.ComponentModel.DataAnnotations;
+using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Controllers
 {
     [Route("api/v1/accounts")]
     [ApiController]
-    public class AccountController(IOtpEmailService otpEmailService, IUserService userService, UserManager<User> userManager) : ControllerBase
+    public class AccountController(IOtpEmailService otpEmailService, IUserService userService, UserManager<User> userManager, DataBaseContext context) : ControllerBase
     {
         private readonly IOtpEmailService _otpEmailService = otpEmailService;
         private readonly IUserService _userService = userService;
         private readonly UserManager<User> _userManager = userManager;
-
-        //[HttpGet("test-error")]
-        //public IActionResult TestError()
-        //{
-        //    throw new BadRequestException("This is a test exception!");
-        //}
+        private readonly DataBaseContext _Context = context;
 
         [HttpPost("SignUp")]
         [EndpointSummary("Registers a user and sends token")]
@@ -77,29 +75,3 @@ namespace Makeen._Planner.Controllers
         }
     }
 }
-
-// هدایت به صفحه گوگل برای لاگین
-//////////////////////[HttpGet("google-login")]
-//////////////////////[EndpointSummary("Not working yet!")]
-//////////////////////public IActionResult GoogleLogin(string returnUrl = "/")
-//////////////////////{
-//////////////////////    var redirectUrl = Url.Action("GoogleResponse", "Account", new { returnUrl });
-//////////////////////    var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-//////////////////////    return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-//////////////////////}
-
-//////////////////////// دریافت اطلاعات پس از ورود موفق
-//////////////////////[HttpGet("google-response")]
-//////////////////////[EndpointSummary("Not working yet!")]
-//////////////////////public async Task<IActionResult> GoogleResponse(string returnUrl = "/")
-//////////////////////{
-//////////////////////    var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-
-//////////////////////    // اطلاعات کاربر
-//////////////////////    var claims = result.Principal!.Identities.FirstOrDefault()?.Claims;
-//////////////////////    var email = claims?.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-
-//////////////////////    // ذخیره اطلاعات کاربر در سیستم شما (در صورت نیاز)
-//////////////////////    // و سپس هدایت به صفحه مورد نظر
-//////////////////////    return LocalRedirect(returnUrl);
-//////////////////////}

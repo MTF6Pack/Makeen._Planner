@@ -68,11 +68,39 @@ namespace Persistence.Migrations
                     b.ToTable("GroupMemberships");
                 });
 
+            modelBuilder.Entity("Domain.Instance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("OccurrenceDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("Instance");
+                });
+
             modelBuilder.Entity("Domain.Notification", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("DeliveryTime")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDelivered")
                         .HasColumnType("bit");
@@ -82,6 +110,10 @@ namespace Persistence.Migrations
 
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("Userid")
                         .HasColumnType("uniqueidentifier");
@@ -126,6 +158,9 @@ namespace Persistence.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("NextInstance")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("PriorityCategory")
                         .HasColumnType("nvarchar(max)");
@@ -368,6 +403,39 @@ namespace Persistence.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Persistence.QueuedNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("LastRetryTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RetryCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("QueuedNotifications");
+                });
+
             modelBuilder.Entity("Domain.GroupMembership", b =>
                 {
                     b.HasOne("Domain.Group", "Group")
@@ -385,6 +453,13 @@ namespace Persistence.Migrations
                     b.Navigation("Group");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Instance", b =>
+                {
+                    b.HasOne("Domain.Task", null)
+                        .WithMany("Instances")
+                        .HasForeignKey("TaskId");
                 });
 
             modelBuilder.Entity("Domain.Notification", b =>
@@ -476,6 +551,11 @@ namespace Persistence.Migrations
                     b.Navigation("GroupMemberships");
 
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("Domain.Task", b =>
+                {
+                    b.Navigation("Instances");
                 });
 
             modelBuilder.Entity("Domain.User", b =>

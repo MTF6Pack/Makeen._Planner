@@ -1,6 +1,11 @@
-﻿using Domain;
-using Infrastructure;
-using Makeen._Planner.Task_Service;
+﻿using Application.Contracts.Notifications;
+using Application.Contracts.Tasks.Commands;
+using Domain;
+using Domain.Events;
+using Infrastructure.Date_and_Time;
+using Infrastructure.Exceptions;
+using Infrastructure.SignalR;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,12 +15,15 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Application.Notification_Service
 {
-    public class NotificationService(DataBaseContext dbContext, IHttpContextAccessor httpContextAccessor, IConfiguration configuration, IUnitOfWork unitofwork) : INotificationService
+    public class NotificationService(DataBaseContext dbContext, IHttpContextAccessor httpContextAccessor,
+        IConfiguration configuration, IUnitOfWork unitofwork, IMediator mediator, NotificationSenderHandler notificationSender) : INotificationService
     {
         private readonly DataBaseContext _dbContext = dbContext;
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly string _defaultBaseUrl = configuration["BaseUrl"] ?? "https://your-default-domain.com";
         private readonly IUnitOfWork _UnitOfWork = unitofwork;
+        private readonly IMediator _mediator = mediator;
+        private readonly NotificationSenderHandler _notificationSender = notificationSender;
 
         private string GetBaseUrl()
         {
@@ -32,7 +40,7 @@ namespace Application.Notification_Service
                     .Select(user => new SenderInfoDto
                     {
                         SenderName = user.Fullname ?? "This field is null",
-                        SenderUserName = user.UserName, // Groups don't have usernames, so this can be null
+                        SenderUserName = user.UserName,
                         SenderAvatarUrl = user.AvatarUrl ?? defaultAvatarUrl
                     })
                     .FirstOrDefault()
@@ -51,7 +59,6 @@ namespace Application.Notification_Service
                     .FirstOrDefault()
                 : null;
 
-            // ✅ If both exist, return both in an anonymous object
             if (userInfo != null && groupInfo != null)
             {
                 return new
@@ -60,17 +67,8 @@ namespace Application.Notification_Service
                     Group = groupInfo
                 };
             }
-
-            // ✅ If only one exists, return it
             return userInfo ?? groupInfo ?? null;
-            //new SenderInfoDto
-            //{
-            //    SenderName = "زمان یار من",
-            //    SenderUserName = null,
-            //    SenderAvatarUrl = defaultAvatarUrl
-            //};
         }
-
 
         public async Task<object?> GetTheDueTask(Guid userId, Guid notificationId)
         {
@@ -87,8 +85,8 @@ namespace Application.Notification_Service
                 {
                     n.Id,
                     TaskId = n.Task!.Id,
-                    CreationTime = DateHelper.ConvertGregorianToPersian(n.Task.CreationTime, true),
-                    DeadLine = DateHelper.ConvertGregorianToPersian(n.Task.DeadLine, true),
+                    CreationTime = DateHelper.ConvertGregorianToPersian(n.Task.CreationTime, true).persianDate,
+                    DeadLine = DateHelper.ConvertGregorianToPersian(n.Task.DeadLine, true).persianDate,
                     n.Task.Name,
                     n.Task.Description,
                     n.Task.PriorityCategory,
@@ -121,20 +119,20 @@ namespace Application.Notification_Service
         }
         public async Task Respond(Guid notificationId, bool isOkay)
         {
-            var taskEntity = await _dbContext.Tasks.Include(t => t.User).FirstOrDefaultAsync(n => n.Id == notificationId) ?? throw new NotFoundException("Notification");
-            var user = await _dbContext.Users.FindAsync(taskEntity.User!.Id) ?? throw new NotFoundException("User");
+            var taskEntity = await _dbContext.Notifications.Include(n => n.Task).ThenInclude(t => t!.User).FirstOrDefaultAsync(n => n.Id == notificationId) ?? throw new NotFoundException("Notification");
+            var user = await _dbContext.Users.FindAsync(taskEntity.Task!.User) ?? throw new NotFoundException("User");
 
 
             var task = TaskMapper.ToModel(
-                taskEntity.GroupId,
-                taskEntity.Name,
-                taskEntity.DeadLine,
-                taskEntity.PriorityCategory,
-                taskEntity.StartTime,
-                taskEntity.Repeat,
-                taskEntity.Alarm,
-                taskEntity.Description,
-                taskEntity.SenderId);
+                taskEntity.Task.GroupId,
+                taskEntity.Task.Name,
+                taskEntity.Task.DeadLine,
+                taskEntity.Task.PriorityCategory,
+                taskEntity.Task.StartTime,
+                taskEntity.Task.Repeat,
+                taskEntity.Task.Alarm,
+                taskEntity.Task.Description,
+                taskEntity.Task.SenderId);
 
             if (isOkay)
             {
@@ -143,51 +141,15 @@ namespace Application.Notification_Service
             }
 
             string message = isOkay ? "درخواست شما پذیرفته شد" : "درخواست شما رد شد";
-            var notification = new Notification(task, message, taskEntity.SenderId);
+            var notification = new Notification(task, message, taskEntity.Task.SenderId, NotificationType.Response);
             user.Notifications!.Add(notification);
             _dbContext.Notifications.Add(notification);
+            // Publish the TaskReminderEvent
+            await _mediator.Publish(new TaskReminderEvent((Guid)taskEntity.Task.SenderId!, notification));
+
+            // Attempt to deliver the notification or queue it if the user is not connected
+            await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);
             await _dbContext.SaveChangesAsync();
         }
-
     }
 }
-//public async Task DeleteNotification(Guid notificationid)
-//{
-//    var notif = await _dbContext.Notifications.FindAsync(notificationid) ?? throw new NotFoundException("Notification");
-//    _dbContext.Notifications.Remove(notif);
-//    await _UnitOfWork.SaveChangesAsync();
-//}
-//public async Task<object> GetDueTasks(Guid userId)
-//{
-//    string baseUrl = GetBaseUrl();
-//    string defaultAvatarUrl = $"{baseUrl}/images/default-avatar.svg";
-
-//    // First, fetch the required fields from the database without calling GetSenderInfo.
-//    var notifications = await _dbContext.Notifications
-//        .Include(n => n.Task)
-//            .ThenInclude(t => t!.User)
-//        .Where(n => n.Userid == userId)
-//        .OrderByDescending(n => n.Task!.CreationTime)
-//        .Select(n => new
-//        {
-//            n.Id,
-//            TaskId = n.Task!.Id,
-//            CreationTime = DateHelper.ConvertGregorianToPersian(n.Task.CreationTime, true),
-//            n.Message,
-//            n.Task.SenderId,
-//            n.Task.GroupId
-//        })
-//        .ToListAsync();
-
-//    // Now, on the client side, compute SenderInfo.
-//    var tasksDue = notifications.Select(n => new
-//    {
-//        n.Id,
-//        n.TaskId,
-//        n.CreationTime,
-//        n.Message,
-//        SenderInfo = GetSenderInfo(n.SenderId, n.GroupId, defaultAvatarUrl)
-//    }).ToList();
-
-//    return tasksDue;
-//}

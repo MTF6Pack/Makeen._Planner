@@ -1,9 +1,11 @@
-﻿using Application.DataSeeder;
+﻿using Application.Contracts;
+using Application.Contracts.Users;
+using Application.Contracts.Users.Commands;
+using Application.DataSeeder;
 using Application.EmailConfirmation;
-using Application.User_And_Otp.Commands;
 using Domain;
 using Infrastructure;
-using Makeen._Planner.Service;
+using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -11,11 +13,12 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Application.UserAndOtp.Services
 {
-    public class UserService(UserManager<User> userManager, JwtTokenService jwt, IEmailConfirmService emailSender) : IUserService
+    public class UserService(UserManager<User> userManager, JwtTokenService jwt, IEmailConfirmService emailSender, IFileStorageService avatar) : IUserService
     {
         private readonly UserManager<User> _userManager = userManager;
         private readonly JwtTokenService _jwt = jwt;
         private readonly IEmailConfirmService _emailSender = emailSender;
+        private readonly IFileStorageService _fileStorageService = avatar;
 
         public async Task<object?> GetUserById(Guid id)
         {
@@ -125,14 +128,14 @@ namespace Application.UserAndOtp.Services
 
             string? avatarUrl = string.IsNullOrWhiteSpace(command.Avatarurl?.FileName)
             ? theuser.AvatarUrl // If no new avatar, keep old one
-            : await IFormFileToUrl.UploadFileAsync(command.Avatarurl); // Upload new avatar
+            : await _fileStorageService.UploadFileAsync(command.Avatarurl); // Upload new avatar
 
             // Activate user details (if changes occurred)
             theuser.UpdateUser(command.UserName?.Trim() ?? theuser.UserName!,
                                theuser.Email!, // Already validated
                                avatarUrl,
                                command.PhoneNumber ?? theuser.PhoneNumber!,
-                               command.Fullname);
+                               command.Fullname ?? theuser.Fullname);
 
             var updateResult = await _userManager.UpdateAsync(theuser);
             if (!updateResult.Succeeded)
