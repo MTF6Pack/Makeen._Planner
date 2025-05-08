@@ -31,13 +31,8 @@ namespace Infrastructure.SignalR
             {
                 try
                 {
-                    if (notification.Userid == null)
-                    {
-                        logger.LogWarning("Notification {NotificationId} has no user", notification.Id);
-                        continue;
-                    }
 
-                    if (UserConnectionManager.TryGetConnections(notification.Userid.ToString()!, out var connectionIds))
+                    if (UserConnectionManager.TryGetConnections(notification.ReceiverId.ToString()!, out var connectionIds))
                     {
                         var senderInfo = GetSenderInfo(notification, senders);
                         //var notificationDto = CreateNotificationDto(notification, senderInfo);
@@ -50,13 +45,13 @@ namespace Infrastructure.SignalR
 
                         notification.Deliver();
                         logger.LogInformation("Delivered notification {NotificationId} to user {UserId}",
-                            notification.Id, notification.Userid);
+                            notification.Id, notification.ReceiverId);
                     }
                     else
                     {
                         //await QueueNotificationForLater(notification);
                         logger.LogInformation("Queued notification {NotificationId} for offline user {UserId}",
-                            notification.Id, notification.Userid);
+                            notification.Id, notification.ReceiverId);
                     }
                 }
                 catch (Exception ex)

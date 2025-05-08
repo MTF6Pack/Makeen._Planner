@@ -64,7 +64,7 @@ namespace Infrastructure.SignalR
         {
             var queuedNotification = new QueuedNotification
             {
-                UserId = (Guid)notification.Userid!,
+                UserId = (Guid)notification.ReceiverId!,
                 Id = notification.Id,
                 RetryCount = 0,
                 LastRetryTime = DateTime.UtcNow

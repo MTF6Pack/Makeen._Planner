@@ -28,8 +28,7 @@ public class TaskReminderBackgroundService(IServiceScopeFactory serviceScopeFact
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
 
                 DateTime now = DateTime.Now;
-                var tasksToNotify = await dbContext.Tasks
-                    .Include(t => t.User)
+                var tasksToNotify = await dbContext.Tasks.Include(t => t.User)
                     .Where(t => t.User != null && t.Alarm.HasValue && now.AddMinutes(-(int)t.Alarm!.Value) <= t.StartTime && t.Status == Domain.TaskEnums.Status.Pending && t.Result != "Failed")
                     .ToListAsync(stoppingToken);
 
@@ -47,7 +46,7 @@ public class TaskReminderBackgroundService(IServiceScopeFactory serviceScopeFact
                         continue;
                     }
 
-                    var notification = new Notification(task, "زمان فعالیت شما سر رسیده", task.User.Id, NotificationType.Reminder);
+                    var notification = new Notification(task, "زمان فعالیت شما سر رسیده", NotificationType.Reminder, task.SenderId, task.User.Id);
                     dbContext.Notifications.Add(notification);
 
                     await dbContext.SaveChangesAsync(stoppingToken);

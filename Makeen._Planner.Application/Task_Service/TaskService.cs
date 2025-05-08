@@ -13,12 +13,12 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Application.Task_Service
 {
-    public class TaskService : ITaskService
+    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork, IMediator mediator, NotificationSenderHandler notificationSender) : ITaskService
     {
-        private readonly ITaskRepository _repository;
-        private readonly IUnitOfWork _unitOfWork;
-        private readonly IMediator _mediator;
-        private readonly NotificationSenderHandler _notificationSender;
+        private readonly ITaskRepository _repository = repository;
+        private readonly IUnitOfWork _unitOfWork = unitOfWork;
+        private readonly IMediator _mediator = mediator;
+        private readonly NotificationSenderHandler _notificationSender = notificationSender;
 
         public async Task<bool> AddTask(AddTaskCommand command, Guid userId)
         {
@@ -65,6 +65,7 @@ namespace Application.Task_Service
                 var taskForMember = command.ToModel(senderId);
                 member.User.Tasks.Add(taskForMember);
                 _repository.StraitAccess.Set<Domain.Task>().Add(taskForMember);
+                await SendTaskRequestNotif(taskForMember, NotificationType.Order, "تسک جدیدی از طرف ادمین برای شما تعریف شد", member.UserId);
             }
             await _unitOfWork.SaveChangesAsync();
         }
@@ -77,6 +78,7 @@ namespace Application.Task_Service
             var adminTask = command.ToModel(senderId);
             targetUser.Tasks.Add(adminTask);
             _repository.StraitAccess.Set<Domain.Task>().Add(adminTask);
+            await SendTaskRequestNotif(adminTask, NotificationType.Order, "تسک جدیدی از طرف ادمین برای شما تعریف شد", (Guid)command.ReceiverId!);
             await _unitOfWork.SaveChangesAsync();
             return await CheckConflict(command, userId, adminTask.Id);
         }
@@ -85,7 +87,7 @@ namespace Application.Task_Service
             var targetUser = await _repository.StraitAccess.Set<User>().Include(u => u.Tasks).FirstOrDefaultAsync(u => u.Id == command.ReceiverId) ?? throw new NotFoundException("User");
             var taskForUser = command.ToModel(senderId);
             // Notify the receiver; assume SendTaskRequestNotif handles notification and task assignment as needed
-            await SendTaskRequestNotif(taskForUser, "درخواست جدید", (Guid)command.ReceiverId!);
+            await SendTaskRequestNotif(taskForUser, NotificationType.Request, "درخواست جدید", (Guid)command.ReceiverId!);
             await _unitOfWork.SaveChangesAsync();
         }
         private async Task<bool> HandleUserSelf(AddTaskCommand command, Guid userId, Guid? senderId = null)
@@ -208,10 +210,10 @@ namespace Application.Task_Service
             }
             throw new BadRequestException();
         }
-        private async Task SendTaskRequestNotif(Domain.Task task, string message, Guid receiverId)
+        private async Task SendTaskRequestNotif(Domain.Task task, NotificationType notificationType, string message, Guid receiverId)
         {
             // Create the notification
-            Notification notification = new(task, message, receiverId, NotificationType.Request);
+            Notification notification = new(task, message, notificationType, task.SenderId, receiverId);
 
             // Retrieve the user and include their notifications (important for adding the new notification to their list)
             var user = await _repository.StraitAccess.Set<User>().Include(u => u.Notifications).FirstOrDefaultAsync(u => u.Id == receiverId);
@@ -231,14 +233,6 @@ namespace Application.Task_Service
 
             // Attempt to deliver the notification or queue it if the user is not connected
             await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);
-        }
-
-        public TaskService(ITaskRepository repository, IUnitOfWork unitOfWork, IMediator mediator, NotificationSenderHandler notificationSender)
-        {
-            _repository = repository;
-            _unitOfWork = unitOfWork;
-            _mediator = mediator;
-            _notificationSender = notificationSender;
         }
 
         //public TaskService()

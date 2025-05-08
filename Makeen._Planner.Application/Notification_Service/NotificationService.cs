@@ -84,6 +84,7 @@ namespace Application.Notification_Service
                 .Select(n => new
                 {
                     n.Id,
+                    n.Type,
                     TaskId = n.Task!.Id,
                     CreationTime = DateHelper.ConvertGregorianToPersian(n.Task.CreationTime, true).persianDate,
                     DeadLine = DateHelper.ConvertGregorianToPersian(n.Task.DeadLine, true).persianDate,
@@ -105,6 +106,7 @@ namespace Application.Notification_Service
             // Return the complete object.
             return new
             {
+                taskDueData.Type,
                 taskDueData.Id,
                 taskDueData.TaskId,
                 taskDueData.CreationTime,
@@ -119,20 +121,19 @@ namespace Application.Notification_Service
         }
         public async Task Respond(Guid notificationId, bool isOkay)
         {
-            var taskEntity = await _dbContext.Notifications.Include(n => n.Task).ThenInclude(t => t!.User).FirstOrDefaultAsync(n => n.Id == notificationId) ?? throw new NotFoundException("Notification");
-            var user = await _dbContext.Users.FindAsync(taskEntity.Task!.User) ?? throw new NotFoundException("User");
-
+            var notif = await _dbContext.Notifications.Include(n => n.Task).ThenInclude(t => t!.User).FirstOrDefaultAsync(n => n.Id == notificationId) ?? throw new NotFoundException("Notification");
+            var user = await _dbContext.Users.FindAsync(notif.ReceiverId) ?? throw new NotFoundException("User");
 
             var task = TaskMapper.ToModel(
-                taskEntity.Task.GroupId,
-                taskEntity.Task.Name,
-                taskEntity.Task.DeadLine,
-                taskEntity.Task.PriorityCategory,
-                taskEntity.Task.StartTime,
-                taskEntity.Task.Repeat,
-                taskEntity.Task.Alarm,
-                taskEntity.Task.Description,
-                taskEntity.Task.SenderId);
+                notif.Task!.GroupId,
+                notif.Task.Name,
+                notif.Task.DeadLine,
+                notif.Task.PriorityCategory,
+                notif.Task.StartTime,
+                notif.Task.Repeat,
+                notif.Task.Alarm,
+                notif.Task.Description,
+                notif.Task.SenderId);
 
             if (isOkay)
             {
@@ -141,11 +142,11 @@ namespace Application.Notification_Service
             }
 
             string message = isOkay ? "درخواست شما پذیرفته شد" : "درخواست شما رد شد";
-            var notification = new Notification(task, message, taskEntity.Task.SenderId, NotificationType.Response);
+            var notification = new Notification(task, message, NotificationType.Response, notif.Task.SenderId, notif.ReceiverId);
             user.Notifications!.Add(notification);
             _dbContext.Notifications.Add(notification);
             // Publish the TaskReminderEvent
-            await _mediator.Publish(new TaskReminderEvent((Guid)taskEntity.Task.SenderId!, notification));
+            await _mediator.Publish(new TaskReminderEvent((Guid)notif.Task.SenderId!, notification));
 
             // Attempt to deliver the notification or queue it if the user is not connected
             await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);

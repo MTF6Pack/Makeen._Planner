@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 
@@ -11,9 +12,11 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    partial class DataBaseContextModelSnapshot : ModelSnapshot
+    [Migration("20250508151907_FixNotif")]
+    partial class FixNotif
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -47,7 +50,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Groups", (string)null);
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Domain.GroupMembership", b =>
@@ -65,7 +68,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("GroupId");
 
-                    b.ToTable("GroupMemberships", (string)null);
+                    b.ToTable("GroupMemberships");
                 });
 
             modelBuilder.Entity("Domain.Instance", b =>
@@ -87,7 +90,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.ToTable("Instance", (string)null);
+                    b.ToTable("Instance");
                 });
 
             modelBuilder.Entity("Domain.Notification", b =>
@@ -130,7 +133,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications", (string)null);
+                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("Domain.Task", b =>
@@ -196,7 +199,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Tasks", (string)null);
+                    b.ToTable("Tasks");
                 });
 
             modelBuilder.Entity("Domain.User", b =>
@@ -437,7 +440,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("QueuedNotifications", (string)null);
+                    b.ToTable("QueuedNotifications");
                 });
 
             modelBuilder.Entity("Domain.GroupMembership", b =>

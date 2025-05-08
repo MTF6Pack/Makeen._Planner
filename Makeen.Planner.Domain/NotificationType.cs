@@ -10,6 +10,7 @@ namespace Domain
     {
         Request,
         Response,
-        Reminder
+        Reminder,
+        Order
     }
 }
