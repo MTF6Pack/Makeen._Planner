@@ -23,9 +23,7 @@ namespace Infrastructure.SignalR
                     var db = scope.ServiceProvider.GetRequiredService<DataBaseContext>();
                     var sender = scope.ServiceProvider.GetRequiredService<NotificationSenderHandler>();
 
-                    var pending = await db.QueuedNotifications
-                        .Where(q => q.RetryCount < 5)
-                        .ToListAsync(ct);
+                    var pending = await db.QueuedNotifications.Where(q => q.RetryCount < 5).ToListAsync(ct);
 
                     foreach (var queued in pending)
                     {

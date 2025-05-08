@@ -7,10 +7,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Infrastructure.SignalR
 {
-    public class NotificationSenderHandler(
-        IHubContext<NotificationHub> hubContext,
-        DataBaseContext dbContext,
-        ILogger<NotificationSenderHandler> logger)
+    public class NotificationSenderHandler(DataBaseContext dbContext, ILogger<NotificationSenderHandler> logger)
     {
         public async Task HandleUndeliveredNotifications(CancellationToken cancellationToken)
         {
@@ -48,7 +45,7 @@ namespace Infrastructure.SignalR
                         foreach (var connectionId in connectionIds)
                         {
                             //await hubContext.Clients.Client(connectionId)
-                                //.SendAsync("ReceiveNotification", notificationDto, cancellationToken);
+                            //.SendAsync("ReceiveNotification", notificationDto, cancellationToken);
                         }
 
                         notification.Deliver();

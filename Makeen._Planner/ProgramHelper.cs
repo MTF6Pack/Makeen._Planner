@@ -8,6 +8,7 @@ using Infrastructure.Date_and_Time;
 using Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -253,9 +254,9 @@ namespace Makeen._Planner
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
-                options.EnableTryItOutByDefault();
+                options.EnableTryItOutByDefault(); // ✅ Valid here
                 options.SwaggerEndpoint("/swagger/v1/swagger.json", "API V1");
-                options.OAuthClientId("your-client-id");
+                options.OAuthClientId("your-client-id"); // Optional, only if using OAuth
             });
 
             app.MapControllers();

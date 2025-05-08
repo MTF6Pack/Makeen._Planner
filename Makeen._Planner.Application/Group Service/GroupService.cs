@@ -1,19 +1,12 @@
-﻿using Domain;
-using Infrastructure;
-using Microsoft.AspNetCore.Http;
-using Persistence.Repository.Interface;
-using Persistence.Repository;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Task = System.Threading.Tasks.Task;
-using Microsoft.EntityFrameworkCore;
-using Azure.Core;
-using Microsoft.Data.SqlClient;
+﻿using Application.Contracts;
 using Application.Contracts.Groups;
+using Domain;
 using Infrastructure.Exceptions;
-using Application.Contracts;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Persistence.Repository;
+using Persistence.Repository.Interface;
+using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service
 {

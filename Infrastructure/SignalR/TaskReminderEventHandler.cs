@@ -4,10 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Infrastructure.SignalR
 {
-    public class TaskReminderEventHandler(
-        IHubContext<NotificationHub> hubContext,
-        NotificationSenderHandler notificationSender)
-        : INotificationHandler<TaskReminderEvent>
+    public class TaskReminderEventHandler(IHubContext<NotificationHub> hubContext) : INotificationHandler<TaskReminderEvent>
     {
         public async Task Handle(TaskReminderEvent notificationEvent, CancellationToken ct)
         {

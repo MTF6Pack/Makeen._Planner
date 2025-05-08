@@ -1,6 +1,4 @@
 ﻿using Domain;
-using Microsoft.AspNetCore.Http;
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace Application.Contracts.Users.Commands

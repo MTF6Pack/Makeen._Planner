@@ -6,7 +6,7 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Infrastructure.SignalR
 {
-    public class NotificationSender(IHubContext<NotificationHub> hubContext, DataBaseContext dbContext)
+    public class NotificationSender(DataBaseContext dbContext)
     {
         public virtual async Task HandleUndeliveredNotifications(CancellationToken cancellationToken)
         {
