@@ -36,7 +36,7 @@ namespace Makeen._Planner.Controllers
 
         [Authorize]
         [HttpGet("{notificationid:guid}")]
-        public async Task<IActionResult> GetDueTasks([FromRoute] Guid notificationid)
+        public async Task<IActionResult> GetDueTask([FromRoute] Guid notificationid)
         {
             var userId = new Guid(User.FindFirst("id")!.Value);
             return Ok(await _notificationService.GetTheDueTask(userId, notificationid));

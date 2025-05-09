@@ -11,6 +11,7 @@ namespace Domain
         Request,
         Response,
         Reminder,
+        System,
         Order
     }
 }

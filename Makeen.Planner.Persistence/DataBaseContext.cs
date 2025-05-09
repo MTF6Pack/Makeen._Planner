@@ -21,6 +21,12 @@ namespace Persistence
             modelBuilder.Entity<GroupMembership>()
       .HasKey(gm => new { gm.UserId, gm.GroupId });
 
+            modelBuilder.Entity<Task>()
+                .HasMany(t => t.Instances)
+                .WithOne()
+                .HasForeignKey("TaskId")
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<GroupMembership>()
                 .HasOne(gm => gm.User)
                 .WithMany(u => u.Memberships)

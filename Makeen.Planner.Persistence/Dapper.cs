@@ -86,25 +86,25 @@ public static class Dapper
 
             var query = @"
             SELECT 
-                n.Id,
-                n.Message,
-                n.Userid,
-                t.CreationTime,
-                CASE WHEN t.GroupId IS NOT NULL THEN g.Title END AS GroupName,
-                CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
-                CASE WHEN t.GroupId IS NOT NULL THEN g.Color END AS GroupColor,
-                t.Result,
-                CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto,
-                CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName END AS SenderUserName,
-                CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname END AS SenderName
-            FROM [Planner].[dbo].[Notifications] AS n
-            LEFT JOIN [Planner].[dbo].[Tasks] AS t ON t.Id = n.TaskId
-            LEFT JOIN [Planner].[dbo].[Groups] AS g ON t.GroupId = g.Id
-            LEFT JOIN [dbo].[AspNetUsers] AS s ON t.SenderId = s.Id
-            WHERE n.Userid = @UserId
-            ORDER BY t.StartTime DESC";
+          n.Id,
+          n.Message,
+          n.ReceiverId,
+          t.CreationTime,
+          CASE WHEN t.GroupId IS NOT NULL THEN g.Title END AS GroupName,
+          CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
+          CASE WHEN t.GroupId IS NOT NULL THEN g.Color END AS GroupColor,
+          t.Result,
+          CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto,
+          CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName END AS SenderUserName,
+          CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname END AS SenderName
+      FROM [Planner].[dbo].[Notifications] AS n
+      LEFT JOIN [Planner].[dbo].[Tasks] AS t ON t.Id = n.TaskId
+      LEFT JOIN [Planner].[dbo].[Groups] AS g ON t.GroupId = g.Id
+      LEFT JOIN [dbo].[AspNetUsers] AS s ON t.SenderId = s.Id
+      WHERE n.ReceiverId = @ReceiverId
+      ORDER BY n.CreationTime DESC";
 
-            var rawNotifications = (await connection.QueryAsync<RawNotificationDto>(query, new { UserId = userId })).ToList();
+            var rawNotifications = (await connection.QueryAsync<RawNotificationDto>(query, new { ReceiverId = userId })).ToList();
 
             var notifications = rawNotifications.Select(raw =>
             {
@@ -113,7 +113,7 @@ public static class Dapper
                 {
                     senderInfo = new SenderInfo
                     {
-                        SenderName = raw.GroupName,
+                        SenderName = raw.GroupName ?? "",
                         SenderColor = raw.GroupColor,
                         SenderPhoto = raw.GroupPhoto
                     };
@@ -122,9 +122,9 @@ public static class Dapper
                 {
                     senderInfo = new SenderInfo
                     {
-                        SenderName = raw.SenderName,
-                        SenderUsername = raw.SenderUserName,
-                        SenderPhoto = raw.SenderPhoto
+                        SenderName = raw.SenderName ?? "",
+                        SenderUsername = raw.SenderUserName ?? "",
+                        SenderPhoto = raw.SenderPhoto ?? ""
                     };
                 }
                 return new NotificationDto

@@ -2,13 +2,11 @@
 using Application.DataSeeder;
 using Application.Notification_Service.BackGroundServices;
 using Application.Task_Service;
-using Domain;
 using Infrastructure;
 using Infrastructure.Date_and_Time;
 using Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -217,10 +215,7 @@ namespace Makeen._Planner
             app.UseWebSockets(new WebSocketOptions { AllowedOrigins = { "*" } });
             app.Use(async (context, next) =>
             {
-                if (context.WebSockets.IsWebSocketRequest)
-                {
-                    Console.WriteLine($"WebSocket request to: {context.Request.Path}");
-                }
+                if (context.WebSockets.IsWebSocketRequest) Console.WriteLine($"WebSocket request to: {context.Request.Path}");
                 await next();
             });
 
@@ -235,8 +230,7 @@ namespace Makeen._Planner
             if (app.Environment.IsDevelopment())
             {
                 var hostEntry = Dns.GetHostEntry(Dns.GetHostName());
-                var ipAddress = hostEntry.AddressList
-                    .FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)?.ToString() ?? "localhost";
+                var ipAddress = hostEntry.AddressList.FirstOrDefault(x => x.AddressFamily == AddressFamily.InterNetwork)?.ToString() ?? "localhost";
                 Process.Start("cmd", $"/c start https://{ipAddress}:{app.Configuration["Port"]}/swagger");
                 Process.Start("cmd", $"/c start https://{ipAddress}:{app.Configuration["Port"]}/swagger");
             }

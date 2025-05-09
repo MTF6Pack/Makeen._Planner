@@ -58,10 +58,11 @@ namespace Domain
             if (!string.IsNullOrWhiteSpace(description)) Description = description;
             NextInstance = CalculateNextInstance();
         }
-        public void Done()
+        public bool Done()
         {
             Status = (Status)1;
             Result = "Completed";
+            return HandleInstanceCompletion(wasCompleted: true);
         }
         public void UpdateResult()
         {
@@ -90,13 +91,14 @@ namespace Domain
             get => _nextInstance;
             private set => _nextInstance = value;
         }
-        private void HandleInstanceCompletion(bool wasCompleted)
+        private bool HandleInstanceCompletion(bool wasCompleted)
         {
-            if (NextInstance is null) return;
+            if (NextInstance is null) return false;
             var newInstance = new Instance(NextInstance.Value);
             newInstance.MarkAsCompleted(wasCompleted);
             Instances.Add(newInstance);
             NextInstance = CalculateNextInstance();
+            return true;
         }
         //private void SetNextInstance(DateTime? nextOccurrence)
         //{

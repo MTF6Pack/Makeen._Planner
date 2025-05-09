@@ -9,7 +9,8 @@ namespace Application.Contracts.Notifications
 {
     public record SenderInfoDto
     {
-        public string SenderName { get; set; } = string.Empty;
+        public string? SenderName { get; set; } = string.Empty;
+        public string? GroupName { get; set; } = string.Empty;
         public string? SenderUserName { get; set; } // Nullable because groups don't have this
         public string? SenderAvatarUrl { get; set; } = string.Empty;
         public string? SenderColor { get; set; }

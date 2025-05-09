@@ -34,6 +34,7 @@
     {
         public string? SenderColor { get; set; }
         public string? SenderName { get; set; }
+        public string? GroupName { get; set; }
         public string? SenderUsername { get; set; }
         public string? SenderPhoto { get; set; }
     }

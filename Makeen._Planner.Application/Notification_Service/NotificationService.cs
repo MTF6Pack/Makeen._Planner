@@ -32,42 +32,34 @@ namespace Application.Notification_Service
                 ? $"{httpContext.Request.Scheme}://{httpContext.Request.Host}"
                 : _defaultBaseUrl;
         }
+
         private object? GetSenderInfo(Guid? senderId, Guid? groupId, string defaultAvatarUrl)
         {
-            var userInfo = senderId != null
-                ? _dbContext.Users
+            var userInfo = _dbContext.Users
                     .Where(user => user.Id == senderId)
                     .Select(user => new SenderInfoDto
                     {
-                        SenderName = user.Fullname ?? "This field is null",
-                        SenderUserName = user.UserName,
+                        SenderName = user.Fullname ?? "",
+                        SenderUserName = user.UserName ?? "",
                         SenderAvatarUrl = user.AvatarUrl ?? defaultAvatarUrl
                     })
-                    .FirstOrDefault()
-                : null;
+                    .FirstOrDefault();
 
-            var groupInfo = groupId != null
-                ? _dbContext.Groups
+            var groupInfo = _dbContext.Groups
                     .Where(group => group.Id == groupId)
                     .Select(group => new SenderInfoDto
                     {
-                        SenderName = group.Title ?? "This field is null",
-                        SenderUserName = null, // Groups don't have usernames
-                        SenderAvatarUrl = group.AvatarUrl ?? defaultAvatarUrl,
-                        SenderColor = group.Color
+                        GroupName = group.Title ?? ""
                     })
-                    .FirstOrDefault()
-                : null;
+                    .FirstOrDefault();
 
-            if (userInfo != null && groupInfo != null)
+            return new
             {
-                return new
-                {
-                    User = userInfo,
-                    Group = groupInfo
-                };
-            }
-            return userInfo ?? groupInfo ?? null;
+                SenderName = userInfo?.SenderName ?? "",
+                SenderUserName = userInfo?.SenderUserName ?? "",
+                SenderAvatarUrl = userInfo?.SenderAvatarUrl ?? defaultAvatarUrl,
+                GroupName = groupInfo?.GroupName ?? ""
+            };
         }
 
         public async Task<object?> GetTheDueTask(Guid userId, Guid notificationId)
@@ -91,6 +83,7 @@ namespace Application.Notification_Service
                     n.Task.Name,
                     n.Task.Description,
                     n.Task.PriorityCategory,
+                    n.Task.Repeat,
                     n.Message,
                     n.Task.SenderId,
                     n.Task.GroupId

@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.Events;
+using Domain.TaskEnums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ public class TaskReminderBackgroundService(IServiceScopeFactory serviceScopeFact
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("🚀 Task Reminder Background Service Started");
+        _logger.LogInformation("Task Reminder Background Service Started");
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -34,32 +35,19 @@ public class TaskReminderBackgroundService(IServiceScopeFactory serviceScopeFact
 
                 foreach (var task in tasksToNotify)
                 {
-                    if (task.User == null)
-                    {
-                        continue;
-                    }
-
+                    if (task.User == null) continue;
                     bool reminderExists = await dbContext.Notifications.AnyAsync(n => n.Task!.Id == task.Id && n.Type == NotificationType.Reminder, stoppingToken);
+                    if (reminderExists) continue;
 
-                    if (reminderExists)
-                    {
-                        continue;
-                    }
-
-                    var notification = new Notification(task, "زمان فعالیت شما سر رسیده", NotificationType.Reminder, task.SenderId, task.User.Id);
+                    var notification = new Notification(task, $"Your task starts {task.Alarm.ToString()!.Replace('_', ' ')} later", NotificationType.Reminder, task.SenderId, task.User.Id);
                     dbContext.Notifications.Add(notification);
-
                     await dbContext.SaveChangesAsync(stoppingToken);
-
                     await mediator.Publish(new TaskReminderEvent(task.User.Id, notification), stoppingToken);
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "❌ Error in TaskReminderBackgroundService");
-            }
+            catch (Exception ex) { _logger.LogError(ex, "❌ Error in TaskReminderBackgroundService"); }
 
-            await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken); // ⏳ Adjust the interval as needed
+            await Task.Delay(TimeSpan.FromSeconds(20), stoppingToken);
         }
     }
 }

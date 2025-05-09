@@ -2,6 +2,7 @@
 using Application.Contracts.Tasks.Commands;
 using Domain;
 using Domain.Events;
+using Domain.TaskEnums;
 using Infrastructure.Date_and_Time;
 using Infrastructure.Exceptions;
 using Infrastructure.SignalR;
@@ -65,7 +66,7 @@ namespace Application.Task_Service
                 var taskForMember = command.ToModel(senderId);
                 member.User.Tasks.Add(taskForMember);
                 _repository.StraitAccess.Set<Domain.Task>().Add(taskForMember);
-                await SendTaskRequestNotif(taskForMember, NotificationType.Order, "تسک جدیدی از طرف ادمین برای شما تعریف شد", member.UserId);
+                await SendTaskNotif(taskForMember, NotificationType.Order, "تسک جدیدی از طرف ادمین برای شما تعریف شد", member.UserId);
             }
             await _unitOfWork.SaveChangesAsync();
         }
@@ -78,7 +79,7 @@ namespace Application.Task_Service
             var adminTask = command.ToModel(senderId);
             targetUser.Tasks.Add(adminTask);
             _repository.StraitAccess.Set<Domain.Task>().Add(adminTask);
-            await SendTaskRequestNotif(adminTask, NotificationType.Order, "تسک جدیدی از طرف ادمین برای شما تعریف شد", (Guid)command.ReceiverId!);
+            await SendTaskNotif(adminTask, NotificationType.Order, "تسک جدیدی از طرف ادمین برای شما تعریف شد", (Guid)command.ReceiverId!);
             await _unitOfWork.SaveChangesAsync();
             return await CheckConflict(command, userId, adminTask.Id);
         }
@@ -86,8 +87,8 @@ namespace Application.Task_Service
         {
             var targetUser = await _repository.StraitAccess.Set<User>().Include(u => u.Tasks).FirstOrDefaultAsync(u => u.Id == command.ReceiverId) ?? throw new NotFoundException("User");
             var taskForUser = command.ToModel(senderId);
-            // Notify the receiver; assume SendTaskRequestNotif handles notification and task assignment as needed
-            await SendTaskRequestNotif(taskForUser, NotificationType.Request, "درخواست جدید", (Guid)command.ReceiverId!);
+            // Notify the receiver; assume SendTaskNotif handles notification and task assignment as needed
+            await SendTaskNotif(taskForUser, NotificationType.Request, "درخواست جدید", (Guid)command.ReceiverId!);
             await _unitOfWork.SaveChangesAsync();
         }
         private async Task<bool> HandleUserSelf(AddTaskCommand command, Guid userId, Guid? senderId = null)
@@ -109,47 +110,62 @@ namespace Application.Task_Service
             t.StartTime.Minute == command.StartTime.Minute);
         }
 
-        public async Task<List<Domain.Task>> GetTheUserOrGroupTasksByCalander(DateTime? date, Guid userid, Guid? groupid, bool isGrouptask)
+        public async Task<List<Domain.Task>> GetTheUserOrGroupTasksByCalander(DateTime? date, Guid userId, Guid? groupId, bool isGroupTask)
         {
+            // Convert the incoming (possibly Persian) date to a Gregorian range for the day
+            var theDate = date ?? DateTime.Now.Date;
+            DateTime1 greg = DateHelper.ConvertPersianToGregorian(theDate, false);
+            var startOfDay = greg;
+            var endOfDay = greg.AddDays(1);
 
-            var thedate = date ?? DateTime.Now.Date;
-            DateTime1 gregorianDate = DateHelper.ConvertPersianToGregorian(thedate, false);
-            var startOfDay = gregorianDate;
-            var endOfDay = gregorianDate.AddDays(1);
+            // Base query: always include Instances
+            var query = _repository.StraitAccess
+                .Set<Domain.Task>()
+                .Include(t => t.Instances)
+                .AsQueryable();
 
-            IQueryable<Domain.Task> query;
+            // Apply the Pending + date‐range filter
+            query = query.Where(t => (
+                t.StartTime >= startOfDay &&
+                t.StartTime < endOfDay &&
+                t.Status == Domain.TaskEnums.Status.Pending) ||
+    (
+      // recurring tasks by their next occurrence
+      (t.Repeat != Repeat.None &&
+       t.NextInstance >= startOfDay &&
+       t.NextInstance < endOfDay)
+    // you can choose to show even if Status == Done
+    ));
 
-            if (!groupid.HasValue)
+            // Now branch on whether it’s a personal vs. group task
+            if (groupId.HasValue)
             {
-                if (!isGrouptask)
-                {
-                    query = _repository.StraitAccess.Set<User>()
-                        .Where(u => u.Id == userid)
-                        .SelectMany(u => u.Tasks!.Where(t =>
-                            t.StartTime >= startOfDay &&
-                            t.StartTime < endOfDay &&
-                            t.IsInGroup == false && t.Status == Domain.TaskEnums.Status.Pending));
-                }
-                else
-                {
-                    query = _repository.StraitAccess.Set<Domain.Task>()
-                        .Where(t => t.User!.Id == userid && t.IsInGroup == true &&
-                             t.StartTime >= startOfDay &&
-                            t.StartTime < endOfDay &&
-                            t.Status == Domain.TaskEnums.Status.Pending);
-                }
+                query = query.Where(t =>
+                    t.GroupId == groupId.Value &&
+                    t.User!.Id == userId
+                );
+            }
+            else if (isGroupTask)
+            {
+                query = query.Where(t =>
+                    t.IsInGroup == true &&
+                    t.User!.Id == userId
+                );
             }
             else
             {
-                query = _repository.StraitAccess.Set<Domain.Task>()
-                    .Where(t => t.GroupId == groupid && t.User!.Id == userid &&
-                         t.StartTime >= startOfDay &&
-                            t.StartTime < endOfDay &&
-                         t.Status == Domain.TaskEnums.Status.Pending);
+                query = query.Where(t =>
+                    t.IsInGroup == false &&
+                    t.User!.Id == userId
+                );
             }
 
-            return await query.OrderByDescending(t => t.CreationTime).ToListAsync();
+            // Finally, sort and materialize
+            return await query
+                .OrderByDescending(t => t.CreationTime)
+                .ToListAsync();
         }
+
         public async Task<List<Domain.Task>> GetAdminSentTasks(DateTime? date, Guid userid, Guid groupid)
         {
             var thedate = date ?? DateTime.Now.Date;
@@ -179,20 +195,22 @@ namespace Application.Task_Service
         }
         public async Task Done(Guid taskid)
         {
-            var task = await _repository.GetByIdAsync(taskid) ?? throw new NotFoundException("Task");
+            var task = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).FirstOrDefaultAsync(t => t.Id == taskid) ?? throw new NotFoundException("Task");
             if (task.Status == Domain.TaskEnums.Status.Done) throw new BadRequestException("Task is already done");
             task.Done();
+            if (task.Done()) await SendTaskNotif(task, NotificationType.System, $"{task.Repeat!.Value} Task '{task.Name}' repeat is set.", task.User!.Id);
             await _unitOfWork.SaveChangesAsync();
         }
         public async Task Done(List<Guid>? tasksid, DateTime? date)
         {
             if (tasksid is { Count: > 0 } && date is null)
             {
-                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Where(t => tasksid.Contains(t.Id) && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
+                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).Where(t => tasksid.Contains(t.Id) && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
 
                 foreach (var task in tasks)
                 {
                     task.Done();
+                    if (task.Done()) await SendTaskNotif(task, NotificationType.System, $"{task.Repeat!.Value} Task '{task.Name}' repeat is set.", task.User!.Id);
                 }
                 await _unitOfWork.SaveChangesAsync();
                 return;
@@ -200,17 +218,18 @@ namespace Application.Task_Service
 
             if (tasksid is null && date is not null)
             {
-                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Where(t => t.StartTime.Date == date && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
+                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).Where(t => t.StartTime.Date == date && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
                 foreach (var task in tasks)
                 {
                     task.Done();
+                    if (task.Done()) await SendTaskNotif(task, NotificationType.System, $"{task.Repeat!.Value} Task '{task.Name}' repeat is set.", task.User!.Id);
                 }
                 await _unitOfWork.SaveChangesAsync();
                 return;
             }
             throw new BadRequestException();
         }
-        private async Task SendTaskRequestNotif(Domain.Task task, NotificationType notificationType, string message, Guid receiverId)
+        private async Task SendTaskNotif(Domain.Task task, NotificationType notificationType, string message, Guid receiverId)
         {
             // Create the notification
             Notification notification = new(task, message, notificationType, task.SenderId, receiverId);
@@ -234,7 +253,6 @@ namespace Application.Task_Service
             // Attempt to deliver the notification or queue it if the user is not connected
             await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);
         }
-
         //public TaskService()
         //{
 
