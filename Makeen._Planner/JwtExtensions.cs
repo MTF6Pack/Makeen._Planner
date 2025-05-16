@@ -16,10 +16,10 @@ namespace Makeen._Planner
             var tokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = false,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateAudience = false,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(key),
                 NameClaimType = JwtRegisteredClaimNames.Email,
                 ClockSkew = TimeSpan.Zero
             };
@@ -38,12 +38,7 @@ namespace Makeen._Planner
                             var token = context.Request.Query["access_token"];
                             var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
 
-                            // ✅ Check WebSocket first, but fallback to Header
-                            if (!string.IsNullOrEmpty(token) && context.HttpContext.WebSockets.IsWebSocketRequest)
-                            {
-                                context.Token = token;
-                            }
-                            else if (string.IsNullOrEmpty(context.Token) && !string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
+                            if (string.IsNullOrEmpty(context.Token) && !string.IsNullOrEmpty(authHeader) && authHeader.StartsWith("Bearer "))
                             {
                                 context.Token = authHeader["Bearer ".Length..].Trim();
                             }

@@ -4,7 +4,5 @@ using Persistence.Repository.Interface;
 
 namespace Persistence.Repository
 {
-    public class TaskRepository(DataBaseContext context) : Repository<Domain.Task>(context), ITaskRepository
-    {
-    }
+    public class TaskRepository(DataBaseContext context) : Repository<Domain.Task>(context), ITaskRepository { }
 }

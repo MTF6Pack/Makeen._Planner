@@ -1,10 +1,7 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Domain;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Makeen._Planner;
 using Persistence;
-using Domain;
 
 namespace Makeen._Planner
 {
@@ -12,12 +9,9 @@ namespace Makeen._Planner
     {
         public static void AddCustomIdentity(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<DataBaseContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<DataBaseContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<User, UserRole>()
-                .AddEntityFrameworkStores<DataBaseContext>()
-                .AddDefaultTokenProviders();
+            services.AddIdentity<User, UserRole>().AddEntityFrameworkStores<DataBaseContext>().AddDefaultTokenProviders();
 
             services.Configure<IdentityOptions>(options =>
             {

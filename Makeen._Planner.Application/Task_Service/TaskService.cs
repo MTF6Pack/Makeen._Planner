@@ -1,12 +1,9 @@
 ﻿using Application.Contracts.Tasks;
 using Application.Contracts.Tasks.Commands;
 using Domain;
-using Domain.Events;
 using Domain.TaskEnums;
 using Infrastructure.Date_and_Time;
 using Infrastructure.Exceptions;
-using Infrastructure.SignalR;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Repository;
 using Persistence.Repository.Interface;
@@ -14,12 +11,12 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Application.Task_Service
 {
-    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork, IMediator mediator, NotificationSenderHandler notificationSender) : ITaskService
+    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork/*, IMediator mediator*//*, NotificationSenderHandler notificationSender*/) : ITaskService
     {
         private readonly ITaskRepository _repository = repository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
-        private readonly IMediator _mediator = mediator;
-        private readonly NotificationSenderHandler _notificationSender = notificationSender;
+        //private readonly IMediator _mediator = mediator;
+        //private readonly NotificationSenderHandler _notificationSender = notificationSender;
 
         public async Task<bool> AddTask(AddTaskCommand command, Guid userId)
         {
@@ -112,58 +109,21 @@ namespace Application.Task_Service
 
         public async Task<List<Domain.Task>> GetTheUserOrGroupTasksByCalander(DateTime? date, Guid userId, Guid? groupId, bool isGroupTask)
         {
-            // Convert the incoming (possibly Persian) date to a Gregorian range for the day
             var theDate = date ?? DateTime.Now.Date;
             DateTime1 greg = DateHelper.ConvertPersianToGregorian(theDate, false);
             var startOfDay = greg;
             var endOfDay = greg.AddDays(1);
 
-            // Base query: always include Instances
-            var query = _repository.StraitAccess
-                .Set<Domain.Task>()
-                .Include(t => t.Instances)
-                .AsQueryable();
+            var query = _repository.StraitAccess.Set<Domain.Task>().Include(t => t.Instances).AsQueryable();
 
             // Apply the Pending + date‐range filter
-            query = query.Where(t => (
-                t.StartTime >= startOfDay &&
-                t.StartTime < endOfDay &&
-                t.Status == Domain.TaskEnums.Status.Pending) ||
-    (
-      // recurring tasks by their next occurrence
-      (t.Repeat != Repeat.None &&
-       t.NextInstance >= startOfDay &&
-       t.NextInstance < endOfDay)
-    // you can choose to show even if Status == Done
-    ));
+            query = query.Where(t => (t.StartTime >= startOfDay && t.StartTime < endOfDay && t.Status == Domain.TaskEnums.Status.Pending) ||
+    (t.Repeat != Repeat.None && t.NextInstance >= startOfDay && t.NextInstance < endOfDay));
 
-            // Now branch on whether it’s a personal vs. group task
-            if (groupId.HasValue)
-            {
-                query = query.Where(t =>
-                    t.GroupId == groupId.Value &&
-                    t.User!.Id == userId
-                );
-            }
-            else if (isGroupTask)
-            {
-                query = query.Where(t =>
-                    t.IsInGroup == true &&
-                    t.User!.Id == userId
-                );
-            }
-            else
-            {
-                query = query.Where(t =>
-                    t.IsInGroup == false &&
-                    t.User!.Id == userId
-                );
-            }
-
-            // Finally, sort and materialize
-            return await query
-                .OrderByDescending(t => t.CreationTime)
-                .ToListAsync();
+            if (groupId.HasValue) query = query.Where(t => t.GroupId == groupId.Value && t.User!.Id == userId);
+            else if (isGroupTask) query = query.Where(t => t.IsInGroup == true && t.User!.Id == userId);
+            else query = query.Where(t => t.IsInGroup == false && t.User!.Id == userId);
+            return await query.OrderByDescending(t => t.CreationTime).ToListAsync();
         }
 
         public async Task<List<Domain.Task>> GetAdminSentTasks(DateTime? date, Guid userid, Guid groupid)
@@ -248,10 +208,10 @@ namespace Application.Task_Service
             _repository.StraitAccess.Set<Notification>().Add(notification);
 
             // Publish the TaskReminderEvent
-            await _mediator.Publish(new TaskReminderEvent(receiverId, notification));
+            //await _mediator.Publish(new TaskReminderEvent(receiverId, notification));
 
             // Attempt to deliver the notification or queue it if the user is not connected
-            await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);
+            //await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);
         }
         //public TaskService()
         //{

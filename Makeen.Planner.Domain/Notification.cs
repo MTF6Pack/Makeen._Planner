@@ -1,4 +1,6 @@
-﻿namespace Domain
+﻿using System.Runtime.CompilerServices;
+
+namespace Domain
 {
     public class Notification
     {
@@ -10,7 +12,7 @@
         public bool IsDelivered { get; private set; }
         public NotificationType Type { get; private set; }
         public DateTime CreationTime { get; private set; }
-        public DateTime DeliveryTime { get; private set; }
+        public int Snooze { get; private set; }
 
         public Notification(Task? task, string? message, NotificationType notificationType, Guid? senderId, Guid receiverId)
         {
@@ -22,14 +24,18 @@
             ReceiverId = receiverId;
             Type = notificationType;
             IsDelivered = false;
+            Snooze = 0;
         }
 
         public void Deliver()
         {
             IsDelivered = true;
-            DeliveryTime = DateTime.Now;
         }
 
+        public void SetSnooze(int minute)
+        {
+            Snooze = minute;
+        }
         public Notification()
         {
 

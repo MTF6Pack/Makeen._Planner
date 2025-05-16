@@ -18,6 +18,7 @@ namespace Persistence
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             modelBuilder.UseEnumToStringConverter();
+
             modelBuilder.Entity<GroupMembership>()
       .HasKey(gm => new { gm.UserId, gm.GroupId });
 

@@ -4,7 +4,6 @@ using Application.Notification_Service.BackGroundServices;
 using Application.Task_Service;
 using Infrastructure;
 using Infrastructure.Date_and_Time;
-using Infrastructure.SignalR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -67,9 +66,7 @@ namespace Makeen._Planner
             });
 
             builder.Services.AddHttpContextAccessor();
-            builder.Services.AddSignalR().AddHubOptions<NotificationHub>(options => { options.EnableDetailedErrors = true; }).AddJsonProtocol();
             builder.Services.AddHostedService<TaskReminderBackgroundService>();
-            builder.Services.AddHostedService<NotificationRetryService>();
         }
         public static void ConfigureCulture()
         {
@@ -91,16 +88,11 @@ namespace Makeen._Planner
         }
         public static void InjectDependencies(this WebApplicationBuilder builder)
         {
-            builder.Services.AddDbContext<DataBaseContext>((services, options) =>
-     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-             //.AddInterceptors(new NotificationInterceptor(builder.Services.BuildServiceProvider().GetRequiredService<IMediator>()))
-             );
+            builder.Services.AddDbContext<DataBaseContext>((services, options) => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<GroupMapper>();
             builder.Services.AddScoped<JwtTokenService>();
-            builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(NotificationSender).Assembly));
             builder.Services.AddScoped<NotificationQueryService>();
-            builder.Services.AddScoped<NotificationSenderHandler>();
             builder.Services.AddMemoryCache();
 
             builder.Services.Scan(scan => scan
@@ -211,13 +203,6 @@ namespace Makeen._Planner
         public static void ConfigureMiddleware(this WebApplication app)
         {
             app.UseMiddleware<GlobalExceptionMiddleware>();
-            //app.UseMiddleware<WebSocketAuthMiddleware>();
-            app.UseWebSockets(new WebSocketOptions { AllowedOrigins = { "*" } });
-            app.Use(async (context, next) =>
-            {
-                if (context.WebSockets.IsWebSocketRequest) Console.WriteLine($"WebSocket request to: {context.Request.Path}");
-                await next();
-            });
 
             using (var scope = app.Services.CreateScope())
             {
@@ -243,7 +228,7 @@ namespace Makeen._Planner
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.MapHub<NotificationHub>("/notificationhub");
+            //app.MapHub<NotificationHub>("/notificationhub");
 
             app.UseSwagger();
             app.UseSwaggerUI(options =>

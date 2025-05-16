@@ -78,83 +78,165 @@ public static class Dapper
 
     public class NotificationQueryService
     {
-        public static async Task<Dictionary<string, List<NotificationDto>>> GetUserNotificationsAsync(Guid userId, bool beSorted)
+        private const string ConnectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
+
+        public static async Task<Dictionary<string, List<NotificationDto>>> GetUserNotificationsAsync(Guid userId, bool onlyUndelivered = false, bool beSorted = false)
         {
-            string _connectionString = "Server=.;Database=Planner;Trusted_Connection=True;TrustServerCertificate=True;";
-            using var connection = new SqlConnection(_connectionString);
+            using var connection = new SqlConnection(ConnectionString);
             await connection.OpenAsync();
 
-            var query = @"
-            SELECT 
-          n.Id,
-          n.Message,
-          n.ReceiverId,
-          t.CreationTime,
-          CASE WHEN t.GroupId IS NOT NULL THEN g.Title END AS GroupName,
-          CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
-          CASE WHEN t.GroupId IS NOT NULL THEN g.Color END AS GroupColor,
-          t.Result,
-          CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto,
-          CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName END AS SenderUserName,
-          CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname END AS SenderName
-      FROM [Planner].[dbo].[Notifications] AS n
-      LEFT JOIN [Planner].[dbo].[Tasks] AS t ON t.Id = n.TaskId
-      LEFT JOIN [Planner].[dbo].[Groups] AS g ON t.GroupId = g.Id
-      LEFT JOIN [dbo].[AspNetUsers] AS s ON t.SenderId = s.Id
-      WHERE n.ReceiverId = @ReceiverId
-      ORDER BY n.CreationTime DESC";
+            string sql = onlyUndelivered
+          ? UndeliveredSql
+          : beSorted ? SortedNotificationsSql : AllNotificationsSql;
 
-            var rawNotifications = (await connection.QueryAsync<RawNotificationDto>(query, new { ReceiverId = userId })).ToList();
+            var rawList = (await connection.QueryAsync<RawNotificationDto>(sql, new { ReceiverId = userId }))
+                .ToList();
 
-            var notifications = rawNotifications.Select(raw =>
+            // Map raw DTOs to NotificationDto and sort by CreationTime desc
+            var notifications = rawList
+                .Select(MapToDto)
+                .OrderByDescending(n => n.CreationTime)
+                .ToList();
+
+            return GroupResults(notifications, beSorted);
+        }
+
+        private const string UndeliveredSql = @"
+UPDATE n
+SET    IsDelivered = 1
+OUTPUT 
+    inserted.Id,
+    inserted.Message,
+    inserted.CreationTime,
+    t.Result,
+    -- group fields
+    CASE WHEN t.GroupId IS NOT NULL THEN g.Title      END AS GroupName,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.Color     END AS GroupColor,
+    -- sender fields
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname   END AS SenderName,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName   END AS SenderUserName,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto
+FROM [Planner].[dbo].[Notifications] AS n
+LEFT JOIN [Planner].[dbo].[Tasks]      AS t ON t.Id       = n.TaskId
+LEFT JOIN [Planner].[dbo].[Groups]     AS g ON t.GroupId  = g.Id
+LEFT JOIN dbo.AspNetUsers              AS s ON t.SenderId = s.Id
+WHERE n.ReceiverId   = @ReceiverId
+  AND n.IsDelivered = 0;";
+
+        private const string AllNotificationsSql = @"
+BEGIN TRANSACTION;
+
+-- mark all as delivered
+UPDATE n
+SET    IsDelivered = 1
+FROM [Planner].[dbo].[Notifications] AS n
+WHERE n.ReceiverId   = @ReceiverId
+  AND n.IsDelivered = 0;
+
+-- select full payload
+SELECT 
+    n.Id,
+    n.Message,
+    n.CreationTime,
+    t.Result,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.Title      END AS GroupName,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.Color     END AS GroupColor,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname   END AS SenderName,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName   END AS SenderUserName,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto
+FROM [Planner].[dbo].[Notifications] AS n
+LEFT JOIN [Planner].[dbo].[Tasks]      AS t ON t.Id       = n.TaskId
+LEFT JOIN [Planner].[dbo].[Groups]     AS g ON t.GroupId  = g.Id
+LEFT JOIN dbo.AspNetUsers              AS s ON t.SenderId = s.Id
+WHERE n.ReceiverId = @ReceiverId
+ORDER BY t.CreationTime DESC;
+
+COMMIT TRANSACTION;";
+
+        private const string SortedNotificationsSql = @"
+BEGIN TRANSACTION;
+
+-- mark all as delivered except Request and Respond types
+UPDATE n
+SET    IsDelivered = 1
+FROM [Planner].[dbo].[Notifications] AS n
+WHERE n.ReceiverId = @ReceiverId
+  AND n.IsDelivered = 0
+  AND n.Type NOT IN ('Request', 'Respond');
+
+-- select full payload (excluding Request and Respond)
+SELECT 
+    n.Id,
+    n.Message,
+    n.CreationTime,
+    t.Result,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.Title      END AS GroupName,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.AvatarUrl END AS GroupPhoto,
+    CASE WHEN t.GroupId IS NOT NULL THEN g.Color     END AS GroupColor,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.Fullname   END AS SenderName,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.UserName   END AS SenderUserName,
+    CASE WHEN t.GroupId IS NULL AND t.SenderId IS NOT NULL THEN s.AvatarUrl END AS SenderPhoto
+FROM [Planner].[dbo].[Notifications] AS n
+LEFT JOIN [Planner].[dbo].[Tasks]      AS t ON t.Id       = n.TaskId
+LEFT JOIN [Planner].[dbo].[Groups]     AS g ON t.GroupId  = g.Id
+LEFT JOIN dbo.AspNetUsers              AS s ON t.SenderId = s.Id
+WHERE n.ReceiverId = @ReceiverId
+  AND n.Type NOT IN ('Request', 'Respond')
+ORDER BY t.CreationTime DESC;
+
+COMMIT TRANSACTION;";
+
+        private static NotificationDto MapToDto(RawNotificationDto raw)
+        {
+            SenderInfo? sender = null;
+
+            if (!string.IsNullOrEmpty(raw.GroupName))
             {
-                SenderInfo? senderInfo = null;
-                if (!string.IsNullOrEmpty(raw.GroupName))
+                sender = new SenderInfo
                 {
-                    senderInfo = new SenderInfo
-                    {
-                        SenderName = raw.GroupName ?? "",
-                        SenderColor = raw.GroupColor,
-                        SenderPhoto = raw.GroupPhoto
-                    };
-                }
-                else if (!string.IsNullOrEmpty(raw.SenderUserName))
-                {
-                    senderInfo = new SenderInfo
-                    {
-                        SenderName = raw.SenderName ?? "",
-                        SenderUsername = raw.SenderUserName ?? "",
-                        SenderPhoto = raw.SenderPhoto ?? ""
-                    };
-                }
-                return new NotificationDto
-                {
-                    Id = raw.Id,
-                    Message = raw.Message,
-                    CreationTime = DateHelper.ConvertGregorianToPersian(raw.CreationTime, true).persianDate,
-                    Result = raw.Result,
-                    SenderInfo = senderInfo
+                    SenderName = raw.GroupName,
+                    SenderColor = raw.GroupColor,
+                    SenderPhoto = raw.GroupPhoto
                 };
-            }).ToList();
-
-            var resultDictionary = new Dictionary<string, List<NotificationDto>>();
-
-            if (beSorted)
-            {
-                var completedTasks = notifications.Where(n => n.Result == "Completed").ToList();
-                var failedTasks = notifications.Where(n => n.Result == "Failed").ToList();
-                var upcomingTasks = notifications.Where(n => n.Result == "Upcoming").ToList();
-
-                resultDictionary.Add("Completed", completedTasks);
-                resultDictionary.Add("Failed", failedTasks);
-                resultDictionary.Add("Upcoming", upcomingTasks);
             }
-            else
+            else if (!string.IsNullOrEmpty(raw.SenderUserName))
             {
-                resultDictionary.Add("Notifications", notifications);
+                sender = new SenderInfo
+                {
+                    SenderUsername = raw.SenderUserName,
+                    SenderName = raw.SenderName,
+                    SenderPhoto = raw.SenderPhoto
+                };
             }
 
-            return resultDictionary;
+            return new NotificationDto
+            {
+                Id = raw.Id,
+                Message = raw.Message,
+                CreationTime = raw.CreationTime,
+                Result = raw.Result,
+                SenderInfo = sender
+            };
+        }
+
+        private static Dictionary<string, List<NotificationDto>> GroupResults(List<NotificationDto> list, bool beSorted)
+        {
+            if (!beSorted)
+            {
+                return new Dictionary<string, List<NotificationDto>>
+                {
+                    ["Notifications"] = list
+                };
+            }
+
+            return new Dictionary<string, List<NotificationDto>>
+            {
+                ["Completed"] = [.. list.Where(x => x.Result == "Completed")],
+                ["Failed"] = [.. list.Where(x => x.Result == "Failed")],
+                ["Upcoming"] = [.. list.Where(x => x.Result == "Upcoming")],
+            };
         }
     }
 }

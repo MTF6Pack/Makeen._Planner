@@ -41,10 +41,5 @@ namespace Application.DataSeeder
 
             return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
-
-        //public JwtTokenService()
-        //{
-
-        //}
     }
 }

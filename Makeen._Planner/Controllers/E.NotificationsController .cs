@@ -27,11 +27,20 @@ namespace Makeen._Planner.Controllers
 
         [Authorize]
         [HttpGet]
-        [EndpointSummary("Fetches all Notifs")]
-        public async Task<IActionResult> UserTasks([Required] bool beSorted)
+        [EndpointSummary("Fetches all notifs and marks them all as deliverd")]
+        public async Task<IActionResult> GetAllNotifs([Required] bool beSorted)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
             return Ok(await NotificationQueryService.GetUserNotificationsAsync(userid, beSorted));
+        }
+
+        [Authorize]
+        [HttpGet("updates")]
+        [EndpointSummary("fetches only undeliverd notifs and marks them as deliverd")]
+        public async Task<IActionResult> GetUndeliverdNotifs()
+        {
+            var userid = new Guid(User.FindFirst("id")!.Value);
+            return Ok(await NotificationQueryService.GetUserNotificationsAsync(userid, true, false));
         }
 
         [Authorize]
@@ -40,6 +49,14 @@ namespace Makeen._Planner.Controllers
         {
             var userId = new Guid(User.FindFirst("id")!.Value);
             return Ok(await _notificationService.GetTheDueTask(userId, notificationid));
+        }
+
+        [Authorize]
+        [HttpDelete("{notificationid:guid}")]
+        public async Task<IActionResult> DeleteNotif([FromRoute] Guid notificationid)
+        {
+            await _notificationService.DeleteNotification(notificationid);
+            return Ok();
         }
     }
 }
