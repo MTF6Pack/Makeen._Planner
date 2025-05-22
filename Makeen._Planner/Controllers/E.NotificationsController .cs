@@ -9,6 +9,7 @@ using static Persistence.Dapper;
 
 namespace Makeen._Planner.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/v1/notifications")]
     public class NotificationsController(DataBaseContext dbContext, INotificationService notificationService, NotificationQueryService dapper) : ControllerBase
@@ -25,16 +26,14 @@ namespace Makeen._Planner.Controllers
             return Ok();
         }
 
-        [Authorize]
         [HttpGet]
         [EndpointSummary("Fetches all notifs and marks them all as deliverd")]
         public async Task<IActionResult> GetAllNotifs([Required] bool beSorted)
         {
             var userid = new Guid(User.FindFirst("id")!.Value);
-            return Ok(await NotificationQueryService.GetUserNotificationsAsync(userid, beSorted));
+            return Ok(await NotificationQueryService.GetUserNotificationsAsync(userid, false, beSorted));
         }
 
-        [Authorize]
         [HttpGet("updates")]
         [EndpointSummary("fetches only undeliverd notifs and marks them as deliverd")]
         public async Task<IActionResult> GetUndeliverdNotifs()
@@ -43,19 +42,27 @@ namespace Makeen._Planner.Controllers
             return Ok(await NotificationQueryService.GetUserNotificationsAsync(userid, true, false));
         }
 
-        [Authorize]
-        [HttpGet("{notificationid:guid}")]
-        public async Task<IActionResult> GetDueTask([FromRoute] Guid notificationid)
+        [HttpGet("{notificationId:guid}")]
+        [EndpointSummary("fetches the detailed notification by Id")]
+        public async Task<IActionResult> GetDueTask([FromRoute] Guid notificationId)
         {
             var userId = new Guid(User.FindFirst("id")!.Value);
-            return Ok(await _notificationService.GetTheDueTask(userId, notificationid));
+            return Ok(await _notificationService.GetTheDueTask(userId, notificationId));
         }
 
-        [Authorize]
-        [HttpDelete("{notificationid:guid}")]
-        public async Task<IActionResult> DeleteNotif([FromRoute] Guid notificationid)
+        [HttpDelete("{notificationId:guid}")]
+        [EndpointSummary("Deletes the notification by Id")]
+        public async Task<IActionResult> DeleteNotif([FromRoute] Guid notificationId)
         {
-            await _notificationService.DeleteNotification(notificationid);
+            await _notificationService.DeleteNotification(notificationId);
+            return Ok();
+        }
+
+        [HttpPatch("{notificationId:guid}")]
+        [EndpointSummary("Sets Snooz for the notification")]
+        public async Task<IActionResult> SetSnooz([FromRoute] Guid notificationId, [Required] int minute)
+        {
+            await _notificationService.SetSnooze(notificationId, minute);
             return Ok();
         }
     }

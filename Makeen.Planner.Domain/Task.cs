@@ -24,8 +24,9 @@ namespace Domain
         public string? Description { get; private set; }
         public From From { get; private set; }
         public string? Result { get; private set; }
+        public bool IsActivated { get; private set; }
 
-        public Task(Guid? groupId, string name, DateTime deadLine, PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
+        public Task(Guid? groupId, string name, DateTime deadLine, PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId, bool isActivated = true)
         {
 
             Name = name;
@@ -33,7 +34,7 @@ namespace Domain
             Id = Guid.NewGuid();
             DeadLine = deadLine;
             StartTime = starttime;
-            Status = (Status)2;
+            Status = isActivated ? Status.Pending : Status.InActive;
             CreationTime = DateTime.Now;
             SenderId = senderId;
             IsInGroup = SenderId.HasValue;
@@ -45,6 +46,7 @@ namespace Domain
             else if (SenderId.HasValue && groupId is null) From = From.Friend;
             else From = From.MySelf;
             NextInstance = CalculateNextInstance();
+            IsActivated = isActivated;
         }
 
         public void UpdateTask(string? name, DateTime? deadLine, PriorityCategory? priorityCategory, DateTime? starttime, Repeat? repeat, Alarm? alarm, string? description)
@@ -68,6 +70,12 @@ namespace Domain
         {
             if (DateTime.Now >= DeadLine && Status != Status.Done) Result = "Failed";
             else if (DateTime.Now.Date < DeadLine.Date && Status != Status.Done) Result = "Upcoming";
+        }
+
+        public void Activate()
+        {
+            if (!IsActivated) IsActivated = true;
+            if (Status == Status.InActive) Status = Status.Pending;
         }
 
         private DateTime? CalculateNextInstance()
@@ -100,10 +108,7 @@ namespace Domain
             NextInstance = CalculateNextInstance();
             return true;
         }
-        //private void SetNextInstance(DateTime? nextOccurrence)
-        //{
-        //    _nextInstance = nextOccurrence;
-        //}
+
         public Task()
         {
         }

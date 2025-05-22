@@ -17,7 +17,7 @@ namespace Application.Contracts.Tasks.Commands
 
     public static class TaskMapper
     {
-        public static Domain.Task ToModel(this AddTaskCommand command, Guid? senderId)
+        public static Domain.Task ToModel(this AddTaskCommand command, Guid? senderId, bool isActivated = true)
         {
             Domain.Task newtask = new(
 
@@ -29,14 +29,15 @@ namespace Application.Contracts.Tasks.Commands
                 command.Repeat,
                 command.Alarm,
                 command.Description,
-               senderId
+                senderId,
+                isActivated
                 );
 
             return newtask;
         }
 
         public static Domain.Task ToModel(Guid? groupid, string name, DateTime deadline, PriorityCategory? priorityCategory,
-            DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId)
+            DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId, bool isActivated = true)
         {
             Domain.Task newtask = new(
 
@@ -48,7 +49,8 @@ namespace Application.Contracts.Tasks.Commands
                 repeat,
                 alarm,
                 description,
-               senderId
+                senderId,
+                isActivated
                 );
 
             return newtask;

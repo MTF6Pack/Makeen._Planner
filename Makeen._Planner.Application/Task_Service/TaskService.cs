@@ -11,12 +11,10 @@ using Task = System.Threading.Tasks.Task;
 
 namespace Application.Task_Service
 {
-    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork/*, IMediator mediator*//*, NotificationSenderHandler notificationSender*/) : ITaskService
+    public class TaskService(ITaskRepository repository, IUnitOfWork unitOfWork) : ITaskService
     {
         private readonly ITaskRepository _repository = repository;
         private readonly IUnitOfWork _unitOfWork = unitOfWork;
-        //private readonly IMediator _mediator = mediator;
-        //private readonly NotificationSenderHandler _notificationSender = notificationSender;
 
         public async Task<bool> AddTask(AddTaskCommand command, Guid userId)
         {
@@ -83,8 +81,9 @@ namespace Application.Task_Service
         private async Task HandleUserForUser(AddTaskCommand command, Guid? senderId)
         {
             var targetUser = await _repository.StraitAccess.Set<User>().Include(u => u.Tasks).FirstOrDefaultAsync(u => u.Id == command.ReceiverId) ?? throw new NotFoundException("User");
-            var taskForUser = command.ToModel(senderId);
-            // Notify the receiver; assume SendTaskNotif handles notification and task assignment as needed
+            if (senderId == command.ReceiverId) throw new BadRequestException("You cannot add task for yourself as a Task for a friend");
+            var taskForUser = command.ToModel(senderId, false);
+
             await SendTaskNotif(taskForUser, NotificationType.Request, "درخواست جدید", (Guid)command.ReceiverId!);
             await _unitOfWork.SaveChangesAsync();
         }
@@ -150,7 +149,6 @@ namespace Application.Task_Service
             // Directly use PriorityCategory if it's non-nullable
             thetask.UpdateTask(command.Name, command.DeadLine, command.PriorityCategory, command.StartTime, command.Repeat, command.Alarm, command.Description);
 
-            // Commit changes using Unit of Work
             await _unitOfWork.SaveChangesAsync();
         }
         public async Task Done(Guid taskid)
@@ -159,18 +157,20 @@ namespace Application.Task_Service
             if (task.Status == Domain.TaskEnums.Status.Done) throw new BadRequestException("Task is already done");
             task.Done();
             if (task.Done()) await SendTaskNotif(task, NotificationType.System, $"{task.Repeat!.Value} Task '{task.Name}' repeat is set.", task.User!.Id);
+            if (task.SenderId != null) await SendTaskNotif(task, NotificationType.Response, $"{task.User!.Fullname} تسک شما را به انجام رساند", (Guid)task.SenderId);
             await _unitOfWork.SaveChangesAsync();
         }
         public async Task Done(List<Guid>? tasksid, DateTime? date)
         {
             if (tasksid is { Count: > 0 } && date is null)
             {
-                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).Where(t => tasksid.Contains(t.Id) && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
+                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).Where(t => tasksid.Contains(t.Id) && t.Status == Status.Pending).ToListAsync();
 
                 foreach (var task in tasks)
                 {
                     task.Done();
                     if (task.Done()) await SendTaskNotif(task, NotificationType.System, $"{task.Repeat!.Value} Task '{task.Name}' repeat is set.", task.User!.Id);
+                    if (task.SenderId is not null) await SendTaskNotif(task, NotificationType.Response, $"{task.User!.Fullname} تسک شما را به انجام رساند", (Guid)task.SenderId);
                 }
                 await _unitOfWork.SaveChangesAsync();
                 return;
@@ -178,11 +178,12 @@ namespace Application.Task_Service
 
             if (tasksid is null && date is not null)
             {
-                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).Where(t => t.StartTime.Date == date && t.Status == Domain.TaskEnums.Status.Pending).ToListAsync();
+                var tasks = await _repository.StraitAccess.Set<Domain.Task>().Include(t => t.User).Where(t => t.StartTime.Date == date && t.Status == Status.Pending).ToListAsync();
                 foreach (var task in tasks)
                 {
                     task.Done();
                     if (task.Done()) await SendTaskNotif(task, NotificationType.System, $"{task.Repeat!.Value} Task '{task.Name}' repeat is set.", task.User!.Id);
+                    if (task.SenderId is not null) await SendTaskNotif(task, NotificationType.Response, $"{task.User!.Fullname} تسک شما را به انجام رساند", (Guid)task.SenderId);
                 }
                 await _unitOfWork.SaveChangesAsync();
                 return;
@@ -191,31 +192,11 @@ namespace Application.Task_Service
         }
         private async Task SendTaskNotif(Domain.Task task, NotificationType notificationType, string message, Guid receiverId)
         {
-            // Create the notification
             Notification notification = new(task, message, notificationType, task.SenderId, receiverId);
-
-            // Retrieve the user and include their notifications (important for adding the new notification to their list)
             var user = await _repository.StraitAccess.Set<User>().Include(u => u.Notifications).FirstOrDefaultAsync(u => u.Id == receiverId);
-            if (user == null)
-            {
-                return;
-            }
-
-            // Add the new notification to the user's notifications list
+            if (user == null) return;
             user!.Notifications!.Add(notification);
-
-            // Add the notification to the database
             _repository.StraitAccess.Set<Notification>().Add(notification);
-
-            // Publish the TaskReminderEvent
-            //await _mediator.Publish(new TaskReminderEvent(receiverId, notification));
-
-            // Attempt to deliver the notification or queue it if the user is not connected
-            //await _notificationSender.HandleUndeliveredNotifications(CancellationToken.None);
         }
-        //public TaskService()
-        //{
-
-        //}
     }
 }

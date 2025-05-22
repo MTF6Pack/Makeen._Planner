@@ -182,8 +182,7 @@ FROM [Planner].[dbo].[Notifications] AS n
 LEFT JOIN [Planner].[dbo].[Tasks]      AS t ON t.Id       = n.TaskId
 LEFT JOIN [Planner].[dbo].[Groups]     AS g ON t.GroupId  = g.Id
 LEFT JOIN dbo.AspNetUsers              AS s ON t.SenderId = s.Id
-WHERE n.ReceiverId = @ReceiverId
-  AND n.Type NOT IN ('Request', 'Respond')
+WHERE n.ReceiverId = @ReceiverId AND n.Type NOT IN ('Request', 'Respond')
 ORDER BY t.CreationTime DESC;
 
 COMMIT TRANSACTION;";
@@ -231,7 +230,7 @@ COMMIT TRANSACTION;";
                 };
             }
 
-            return new Dictionary<string, List<NotificationDto>>
+            else return new Dictionary<string, List<NotificationDto>>
             {
                 ["Completed"] = [.. list.Where(x => x.Result == "Completed")],
                 ["Failed"] = [.. list.Where(x => x.Result == "Failed")],

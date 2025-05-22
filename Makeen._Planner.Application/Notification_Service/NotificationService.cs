@@ -79,12 +79,14 @@ namespace Application.Notification_Service
                 taskDueData.Type,
                 taskDueData.Id,
                 taskDueData.TaskId,
+                taskDueData.Snooze,
                 taskDueData.CreationTime,
                 taskDueData.DeadLine,
                 taskDueData.Name,
                 taskDueData.Description,
                 taskDueData.PriorityCategory,
                 taskDueData.Message,
+                taskDueData.Status,
 
                 SenderInfo = senderInfo
             };
@@ -108,8 +110,10 @@ namespace Application.Notification_Service
 
             if (isOkay)
             {
+                task.Activate();
                 _dbContext.Tasks.Add(task);
                 user.Tasks.Add(task);
+
                 var messageForReciever = $"این تسک برای شما تنظیم شد";
                 var notifForReceiver = new Notification(task, messageForReciever, NotificationType.System, notif.SenderId, notif.ReceiverId);
                 user.Notifications!.Add(notifForReceiver);
@@ -127,6 +131,7 @@ namespace Application.Notification_Service
         {
             var notif = await _dbContext.Notifications.FindAsync(notificationId) ?? throw new NotFoundException("Notification");
             notif.SetSnooze(minute);
+            await _UnitOfWork.SaveChangesAsync();
         }
         public async Task DeleteNotification(Guid notificationid)
         {
