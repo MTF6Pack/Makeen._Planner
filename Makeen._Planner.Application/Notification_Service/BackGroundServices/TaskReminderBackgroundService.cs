@@ -1,5 +1,6 @@
 ﻿using Domain;
 using Domain.Events;
+using Domain.Helpers;
 using Domain.TaskEnums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -33,29 +34,21 @@ public class TaskReminderBackgroundService(IServiceScopeFactory serviceScopeFact
 
                 foreach (var task in tasksToNotify)
                 {
-                    if (task.User == null) continue;
-                    bool reminderExists = await dbContext.Notifications.AnyAsync(n => n.Task!.Id == task.Id && n.Type == NotificationType.Reminder && n.IsDelivered == true, stoppingToken);
+                    if (task.ReminderDismissed) continue;
+                    bool reminderExists = await dbContext.Notifications.AnyAsync(n => n.Task!.Id == task.Id && n.Type == NotificationType.Reminder, stoppingToken);
                     if (reminderExists) continue;
                     if (task.Alarm!.Value != Alarm.None)
                     {
-                        string alarmTranslate;
-                        if (task.Alarm.Value == Alarm.Fifteen_Minutes) alarmTranslate = "یک ربع";
-                        else if (task.Alarm.Value == Alarm.Thirty_Minutes) alarmTranslate = "نیم ساعت";
-                        else if (task.Alarm.Value == Alarm.One_Hour) alarmTranslate = "یک ساعت";
-                        else alarmTranslate = "یک روز";
-
-                        var notification = new Notification(task, $"تسک شما {alarmTranslate} دیگر شروع می‌شود", NotificationType.Reminder, task.SenderId, task.User.Id);
+                        var notification = new Notification(task, $"تسک شما {HelperMethods.TranslateAlarm(task.Alarm.Value)} دیگر شروع می‌شود", NotificationType.Reminder, task.SenderId, task.User!.Id);
                         dbContext.Notifications.Add(notification);
                     }
                 }
 
-                var taskNotifsToSnooze = await dbContext.Notifications.Include(n => n.Task).Where(n => n.Snooze != 0 && n.CreationTime.AddMinutes(n.Snooze) <= now).ToListAsync(cancellationToken: stoppingToken);
+                var taskNotifsToSnooze = await dbContext.Notifications.Include(n => n.Task).Where(n => n.Snooze != 0 && n.CreationTime <= now).ToListAsync(cancellationToken: stoppingToken);
 
                 foreach (var notif in taskNotifsToSnooze)
                 {
-                    dbContext.Remove(notif);
-                    var newNotif = new Notification(notif.Task, notif.Message, notif.Type, notif.SenderId, notif.ReceiverId);
-                    dbContext.Notifications.Add(newNotif);
+                    notif.UnDeliver();
                 }
 
                 await dbContext.SaveChangesAsync(stoppingToken);

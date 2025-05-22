@@ -25,10 +25,10 @@ namespace Domain
         public From From { get; private set; }
         public string? Result { get; private set; }
         public bool IsActivated { get; private set; }
+        public bool ReminderDismissed { get; set; } = false;
 
         public Task(Guid? groupId, string name, DateTime deadLine, PriorityCategory? priorityCategory, DateTime starttime, Repeat? repeat, Alarm? alarm, string? description, Guid? senderId, bool isActivated = true)
         {
-
             Name = name;
             GroupId = groupId;
             Id = Guid.NewGuid();
@@ -71,11 +71,14 @@ namespace Domain
             if (DateTime.Now >= DeadLine && Status != Status.Done) Result = "Failed";
             else if (DateTime.Now.Date < DeadLine.Date && Status != Status.Done) Result = "Upcoming";
         }
-
         public void Activate()
         {
             if (!IsActivated) IsActivated = true;
             if (Status == Status.InActive) Status = Status.Pending;
+        }
+        public void DismissReminder()
+        {
+            ReminderDismissed = true;
         }
 
         private DateTime? CalculateNextInstance()

@@ -94,7 +94,7 @@ namespace Application.Notification_Service
         public async Task Respond(Guid notificationId, bool isOkay)
         {
             var notif = await _dbContext.Notifications.Include(n => n.Task).ThenInclude(t => t!.User).FirstOrDefaultAsync(n => n.Id == notificationId) ?? throw new NotFoundException("Notification");
-            var user = await _dbContext.Users.FindAsync(notif.ReceiverId) ?? throw new NotFoundException("User");
+            var user = await _dbContext.Users.Include(u => u.Notifications).FirstOrDefaultAsync(u => u.Id == notif.ReceiverId) ?? throw new NotFoundException("User");
 
 
             var task = TaskMapper.ToModel(
@@ -135,7 +135,8 @@ namespace Application.Notification_Service
         }
         public async Task DeleteNotification(Guid notificationid)
         {
-            var notif = await _dbContext.Notifications.FindAsync(notificationid) ?? throw new NotFoundException("Notification");
+            var notif = await _dbContext.Notifications.Include(n => n.Task).FirstOrDefaultAsync(n => n.Id == notificationid) ?? throw new NotFoundException("Notification");
+            notif.Task?.DismissReminder();
             _dbContext.Notifications.Remove(notif);
             await _UnitOfWork.SaveChangesAsync();
         }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.TaskEnums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -25,5 +26,14 @@ namespace Domain.Helpers
 
             return persianDays[dayOfWeek];
         }
+
+        public static string TranslateAlarm(Alarm alarm) => alarm switch
+        {
+            Alarm.Fifteen_Minutes => "یک ربع",
+            Alarm.Thirty_Minutes => "نیم ساعت",
+            Alarm.One_Hour => "یک ساعت",
+            Alarm.One_Day => "یک روز",
+            _ => "نامشخص"
+        };
     }
 }

@@ -32,9 +32,16 @@ namespace Domain
             IsDelivered = true;
         }
 
+        public void UnDeliver()
+        {
+            IsDelivered = false;
+            Snooze = 0;
+        }
+
         public void SetSnooze(int minute)
         {
             Snooze = minute;
+            if (minute != 0) CreationTime = DateTime.Now.AddMinutes(minute);
         }
         public Notification()
         {
