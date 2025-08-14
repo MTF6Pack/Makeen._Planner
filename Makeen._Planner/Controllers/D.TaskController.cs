@@ -1,10 +1,7 @@
 ﻿using Application.Contracts.Tasks;
 using Application.Contracts.Tasks.Commands;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {

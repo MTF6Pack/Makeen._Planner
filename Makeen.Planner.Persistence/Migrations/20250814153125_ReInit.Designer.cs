@@ -12,8 +12,8 @@ using Persistence;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(DataBaseContext))]
-    [Migration("20250508132712_Pleaseeee")]
-    partial class Pleaseeee
+    [Migration("20250814153125_ReInit")]
+    partial class ReInit
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -102,14 +102,20 @@ namespace Persistence.Migrations
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("DeliveryTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("IsDelivered")
                         .HasColumnType("bit");
 
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("ReceiverId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Snooze")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("TaskId")
                         .HasColumnType("uniqueidentifier");
@@ -118,14 +124,14 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("Userid")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TaskId");
 
-                    b.HasIndex("Userid");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Notifications");
                 });
@@ -155,6 +161,9 @@ namespace Persistence.Migrations
                     b.Property<Guid?>("GroupId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("IsActivated")
+                        .HasColumnType("bit");
+
                     b.Property<bool?>("IsInGroup")
                         .HasColumnType("bit");
 
@@ -167,6 +176,9 @@ namespace Persistence.Migrations
 
                     b.Property<string>("PriorityCategory")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("ReminderDismissed")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Repeat")
                         .HasColumnType("nvarchar(max)");
@@ -460,7 +472,8 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("Domain.Task", null)
                         .WithMany("Instances")
-                        .HasForeignKey("TaskId");
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade);
                 });
 
             modelBuilder.Entity("Domain.Notification", b =>
@@ -471,7 +484,7 @@ namespace Persistence.Migrations
 
                     b.HasOne("Domain.User", null)
                         .WithMany("Notifications")
-                        .HasForeignKey("Userid");
+                        .HasForeignKey("UserId");
 
                     b.Navigation("Task");
                 });

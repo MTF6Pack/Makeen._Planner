@@ -174,6 +174,9 @@ namespace Persistence.Migrations
                     b.Property<string>("PriorityCategory")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("ReminderDismissed")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Repeat")
                         .HasColumnType("nvarchar(max)");
 

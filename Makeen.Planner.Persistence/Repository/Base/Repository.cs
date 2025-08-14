@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Domain.RepositoryInterfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace Persistence.Repository.Base
 {

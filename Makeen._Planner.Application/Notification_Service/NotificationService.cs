@@ -1,13 +1,13 @@
 ﻿using Application.Contracts.Notifications;
 using Application.Contracts.Tasks.Commands;
 using Domain;
+using Domain.RepositoryInterfaces;
 using Infrastructure.Date_and_Time;
 using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Persistence;
-using Persistence.Repository;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Notification_Service

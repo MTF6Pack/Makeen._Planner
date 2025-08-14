@@ -5,10 +5,8 @@ using Domain;
 using Infrastructure.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Persistence;
 using System.ComponentModel.DataAnnotations;
-using Task = System.Threading.Tasks.Task;
 
 namespace Makeen._Planner.Controllers
 {

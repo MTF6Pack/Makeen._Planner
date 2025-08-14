@@ -1,6 +1,4 @@
 ﻿using Application.Contracts.Notifications;
-using Application.Notification_Service;
-using Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Persistence;

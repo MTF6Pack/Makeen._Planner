@@ -1,11 +1,10 @@
 ﻿using Application.Contracts;
 using Application.Contracts.Groups;
 using Domain;
+using Domain.RepositoryInterfaces;
 using Infrastructure.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Repository;
-using Persistence.Repository.Interface;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Group_Service

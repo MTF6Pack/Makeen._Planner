@@ -1,9 +1,5 @@
-﻿using Infrastructure;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Runtime.InteropServices;
-using System.Security.Claims;
 
 
 namespace Makeen._Planner.Controllers

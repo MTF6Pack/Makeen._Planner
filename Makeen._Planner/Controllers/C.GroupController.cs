@@ -1,8 +1,6 @@
 ﻿using Application.Contracts.Groups;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 
 namespace Makeen._Planner.Controllers
 {

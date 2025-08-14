@@ -1,12 +1,11 @@
 ﻿using Application.Contracts.Tasks;
 using Application.Contracts.Tasks.Commands;
 using Domain;
+using Domain.RepositoryInterfaces;
 using Domain.TaskEnums;
 using Infrastructure.Date_and_Time;
 using Infrastructure.Exceptions;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Repository;
-using Persistence.Repository.Interface;
 using Task = System.Threading.Tasks.Task;
 
 namespace Application.Task_Service
